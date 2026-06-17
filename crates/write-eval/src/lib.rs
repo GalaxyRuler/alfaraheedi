@@ -29,7 +29,9 @@ pub struct EvalReport {
 
 pub fn seed_cases() -> anyhow::Result<Vec<EvalCase>> {
     let mut cases = Vec::new();
-    cases.extend(read_cases(include_str!("../../../datasets/eval/seed.json"))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/seed.json"
+    ))?);
     cases.extend(read_cases(include_str!(
         "../../../datasets/eval/known-correct.json"
     ))?);
