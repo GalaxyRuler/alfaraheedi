@@ -192,6 +192,15 @@ pub struct Analysis {
     pub suggestions: Vec<Suggestion>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RuleInfo {
+    pub source: String,
+    pub language: Language,
+    pub category: Category,
+    pub safe_auto_apply: bool,
+    pub description: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApplyOutcome {
     pub text: String,

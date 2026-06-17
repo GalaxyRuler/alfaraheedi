@@ -10,7 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use tower_http::trace::TraceLayer;
 pub use write_arabic::default_rule_set;
-use write_core::{Analysis, ApplyOutcome, Engine};
+use write_core::{Analysis, ApplyOutcome, Engine, RuleInfo};
 
 pub fn router() -> Router {
     let engine = Arc::new(default_rule_set());
@@ -20,6 +20,7 @@ pub fn router() -> Router {
         .route("/v1/health", get(health))
         .route("/v1/analyze", post(analyze))
         .route("/v1/apply", post(apply))
+        .route("/v1/rules", get(rules))
         .layer(TraceLayer::new_for_http())
         .with_state(engine)
 }
@@ -54,6 +55,11 @@ pub struct ApplyRequest {
     pub mode: ApplyMode,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct RulesResponse {
+    pub rules: Vec<RuleInfo>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ApplyMode {
@@ -72,6 +78,12 @@ async fn analyze(
     Json(request): Json<AnalyzeRequest>,
 ) -> Json<Analysis> {
     Json(engine.analyze(request.text))
+}
+
+async fn rules() -> Json<RulesResponse> {
+    Json(RulesResponse {
+        rules: write_arabic::rule_catalog(),
+    })
 }
 
 async fn apply(

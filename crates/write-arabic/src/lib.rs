@@ -1,4 +1,4 @@
-use write_core::{Category, Document, Engine, Language, Rule, Severity, Suggestion};
+use write_core::{Category, Document, Engine, Language, Rule, RuleInfo, Severity, Suggestion};
 
 const TATWEEL: char = '\u{0640}';
 
@@ -7,6 +7,39 @@ pub struct ArabicRuleSet;
 
 pub fn default_rule_set() -> Engine {
     Engine::new().with_rule(ArabicRuleSet)
+}
+
+pub fn rule_catalog() -> Vec<RuleInfo> {
+    vec![
+        RuleInfo {
+            source: "arabic:tatweel".to_owned(),
+            language: Language::Arabic,
+            category: Category::Orthography,
+            safe_auto_apply: true,
+            description: "Remove tatweel elongation marks.".to_owned(),
+        },
+        RuleInfo {
+            source: "arabic:repeated-space".to_owned(),
+            language: Language::Arabic,
+            category: Category::Spacing,
+            safe_auto_apply: true,
+            description: "Collapse repeated spaces in Arabic text.".to_owned(),
+        },
+        RuleInfo {
+            source: "arabic:latin-comma".to_owned(),
+            language: Language::Arabic,
+            category: Category::Punctuation,
+            safe_auto_apply: false,
+            description: "Use Arabic punctuation in Arabic text.".to_owned(),
+        },
+        RuleInfo {
+            source: "arabic:latin-question-mark".to_owned(),
+            language: Language::Arabic,
+            category: Category::Punctuation,
+            safe_auto_apply: false,
+            description: "Use Arabic punctuation in Arabic text.".to_owned(),
+        },
+    ]
 }
 
 impl Rule for ArabicRuleSet {
