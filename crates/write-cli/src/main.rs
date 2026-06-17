@@ -22,6 +22,15 @@ enum Command {
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         format: OutputFormat,
     },
+    Fix {
+        path: PathBuf,
+        #[arg(long)]
+        safe: bool,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        format: OutputFormat,
+    },
     Serve {
         #[arg(long, default_value = "127.0.0.1:3000")]
         addr: SocketAddr,
@@ -40,6 +49,12 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Command::Check { path, format } => check(path, format),
+        Command::Fix {
+            path,
+            safe,
+            output,
+            format,
+        } => fix(path, safe, output, format),
         Command::Serve { addr } => {
             init_tracing();
             write_api::serve(addr).await
@@ -70,6 +85,42 @@ fn check(path: Option<PathBuf>, format: OutputFormat) -> anyhow::Result<()> {
                         suggestion.replacements
                     );
                 }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn fix(
+    path: PathBuf,
+    safe: bool,
+    output: Option<PathBuf>,
+    format: OutputFormat,
+) -> anyhow::Result<()> {
+    anyhow::ensure!(safe, "MVP only supports --safe fixes");
+
+    let text = std::fs::read_to_string(&path)
+        .with_context(|| format!("failed to read input file {}", path.display()))?;
+    let engine = write_api::default_rule_set();
+    let outcome = engine.apply_safe(text)?;
+
+    match format {
+        OutputFormat::Json => {
+            let json = serde_json::to_string_pretty(&outcome)?;
+            if let Some(output) = output {
+                std::fs::write(&output, format!("{json}\n"))
+                    .with_context(|| format!("failed to write output file {}", output.display()))?;
+            } else {
+                println!("{json}");
+            }
+        }
+        OutputFormat::Text => {
+            if let Some(output) = output {
+                std::fs::write(&output, &outcome.text)
+                    .with_context(|| format!("failed to write output file {}", output.display()))?;
+            } else {
+                println!("{}", outcome.text);
             }
         }
     }
