@@ -11,6 +11,13 @@ pub struct EvalCase {
     pub max_false_positives: usize,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EvalFailure {
+    pub case_id: String,
+    pub source: String,
+    pub original: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RuleEvalReport {
     pub true_positives: usize,
@@ -23,6 +30,7 @@ pub struct EvalReport {
     pub case_count: usize,
     pub true_positives: usize,
     pub false_positives: usize,
+    pub failures: Vec<EvalFailure>,
     pub precision: f32,
     pub rules: BTreeMap<String, RuleEvalReport>,
 }
@@ -57,6 +65,7 @@ fn read_cases(raw: &str) -> anyhow::Result<Vec<EvalCase>> {
 pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
     let mut true_positives = 0usize;
     let mut false_positives = 0usize;
+    let mut failures = Vec::new();
     let mut by_rule = BTreeMap::<String, (usize, usize)>::new();
 
     for case in cases {
@@ -69,6 +78,11 @@ pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
             } else {
                 false_positives += 1;
                 entry.1 += 1;
+                failures.push(EvalFailure {
+                    case_id: case.id.clone(),
+                    source: suggestion.source.clone(),
+                    original: suggestion.original.clone(),
+                });
             }
         }
     }
@@ -104,6 +118,7 @@ pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
         case_count: cases.len(),
         true_positives,
         false_positives,
+        failures,
         precision,
         rules,
     }

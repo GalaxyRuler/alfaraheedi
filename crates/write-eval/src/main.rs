@@ -10,9 +10,9 @@ fn main() -> anyhow::Result<()> {
     println!("{}", serde_json::to_string_pretty(&report)?);
 
     ensure!(
-        report.false_positives == 0,
-        "seed eval produced {} false positives",
-        report.false_positives
+        report.failures.is_empty(),
+        "seed eval produced {} failures",
+        report.failures.len()
     );
     ensure!(
         report.precision >= 0.98,
