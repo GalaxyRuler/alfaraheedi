@@ -26,6 +26,13 @@ pub fn rule_catalog() -> Vec<RuleInfo> {
             description: "Collapse repeated spaces in Arabic text.".to_owned(),
         },
         RuleInfo {
+            source: "arabic:space-before-punctuation".to_owned(),
+            language: Language::Arabic,
+            category: Category::Spacing,
+            safe_auto_apply: false,
+            description: "Suggest removing spaces before Arabic punctuation.".to_owned(),
+        },
+        RuleInfo {
             source: "arabic:latin-comma".to_owned(),
             language: Language::Arabic,
             category: Category::Punctuation,
@@ -51,6 +58,7 @@ impl Rule for ArabicRuleSet {
         let mut suggestions = Vec::new();
         suggestions.extend(tatweel_suggestions(document));
         suggestions.extend(punctuation_suggestions(document));
+        suggestions.extend(space_before_punctuation_suggestions(document));
         suggestions.extend(spacing_suggestions(document));
         suggestions
     }
@@ -150,6 +158,50 @@ fn spacing_suggestions(document: &Document) -> Vec<Suggestion> {
         && has_arabic_before(document.text(), start)
     {
         push_spacing_suggestion(document, start, document.text().len(), &mut suggestions);
+    }
+
+    suggestions
+}
+
+fn space_before_punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
+    let mut suggestions = Vec::new();
+    let text = document.text();
+
+    for (punctuation_start, character) in text.char_indices() {
+        if !matches!(character, '،' | '؛' | '؟') {
+            continue;
+        }
+
+        let Some(prefix) = text.get(..punctuation_start) else {
+            continue;
+        };
+        let Some((space_start, space)) = prefix.char_indices().last() else {
+            continue;
+        };
+        if space != ' ' || document.range_is_protected(space_start..punctuation_start) {
+            continue;
+        }
+        if !has_arabic_before(text, space_start) {
+            continue;
+        }
+
+        if let (Ok(span), Some(original)) = (
+            document.span_for_byte_range(space_start..punctuation_start),
+            text.get(space_start..punctuation_start),
+        ) {
+            suggestions.push(Suggestion::replacement(
+                "arabic:space-before-punctuation",
+                span,
+                Language::Arabic,
+                Category::Spacing,
+                Severity::Warning,
+                0.95,
+                original,
+                vec![String::new()],
+                "Remove the space before Arabic punctuation.",
+                false,
+            ));
+        }
     }
 
     suggestions

@@ -4,5 +4,14 @@
     "text": "مرحبا, كيف حالك?",
     "expected_sources": ["arabic:latin-comma", "arabic:latin-question-mark"],
     "max_false_positives": 0
+  },
+  {
+    "id": "punctuation-002",
+    "text": "مرحبا ، كيف الحال ؟",
+    "expected_sources": [
+      "arabic:space-before-punctuation",
+      "arabic:space-before-punctuation"
+    ],
+    "max_false_positives": 0
   }
 ]

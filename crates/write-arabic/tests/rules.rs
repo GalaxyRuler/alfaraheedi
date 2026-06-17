@@ -44,6 +44,28 @@ fn arabic_rules_replace_latin_punctuation_in_arabic_context() {
 }
 
 #[test]
+fn arabic_rules_suggest_removing_space_before_arabic_punctuation() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("مرحبا ، كيف الحال ؟");
+
+    let sources = analysis
+        .suggestions
+        .iter()
+        .map(|suggestion| suggestion.source.as_str())
+        .collect::<Vec<_>>();
+
+    assert!(sources.contains(&"arabic:space-before-punctuation"));
+    assert!(
+        analysis
+            .suggestions
+            .iter()
+            .filter(|suggestion| suggestion.source == "arabic:space-before-punctuation")
+            .all(|suggestion| !suggestion.safe_auto_apply)
+    );
+}
+
+#[test]
 fn arabic_rules_collapse_repeated_spaces_in_arabic_context() {
     let analysis = Engine::new()
         .with_rule(ArabicRuleSet::default())
