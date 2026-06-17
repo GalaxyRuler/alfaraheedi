@@ -1,0 +1,20 @@
+[
+  {
+    "id": "known-correct-arabic",
+    "text": "مرحبا بالعالم",
+    "expected_sources": [],
+    "max_false_positives": 0
+  },
+  {
+    "id": "tatweel-safe",
+    "text": "مرحبــا",
+    "expected_sources": ["arabic:tatweel"],
+    "max_false_positives": 0
+  },
+  {
+    "id": "repeated-space-safe",
+    "text": "مرحبا  بالعالم",
+    "expected_sources": ["arabic:repeated-space"],
+    "max_false_positives": 0
+  }
+]

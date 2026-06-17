@@ -1,0 +1,11 @@
+/target/
+/.idea/
+/.vscode/
+*.pdb
+.env
+.env.*
+!.env.example
+
+# Local planning artifacts, not part of the public release history.
+/docs/plans/
+/docs/superpowers/

@@ -1,0 +1,32 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/write-core",
+    "crates/write-arabic",
+    "crates/write-english",
+    "crates/write-mixed",
+    "crates/write-spell",
+    "crates/write-cli",
+    "crates/write-api",
+    "crates/write-wasm",
+    "crates/write-eval",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/alfaraheedi/alfaraheedi"
+
+[workspace.dependencies]
+anyhow = "1"
+axum = "0.8"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
+tower-http = { version = "0.6", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+unicode-segmentation = "1"

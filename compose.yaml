@@ -1,0 +1,7 @@
+services:
+  write-api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      WRITECHECK_ADDR: 0.0.0.0:3000

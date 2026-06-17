@@ -1,0 +1,9 @@
+[package]
+name = "write-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+write-core = { path = "../write-core", version = "0.1.0" }

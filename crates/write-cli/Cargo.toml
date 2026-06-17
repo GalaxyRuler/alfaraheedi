@@ -1,0 +1,18 @@
+[package]
+name = "write-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing-subscriber.workspace = true
+write-api = { path = "../write-api", version = "0.1.0" }
+
+[[bin]]
+name = "writecheck"
+path = "src/main.rs"
