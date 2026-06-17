@@ -1,0 +1,20 @@
+[
+  {
+    "id": "known-correct-001",
+    "text": "مرحبا بالعالم",
+    "expected_sources": [],
+    "max_false_positives": 0
+  },
+  {
+    "id": "known-correct-002",
+    "text": "هذا نص عربي بسيط.",
+    "expected_sources": [],
+    "max_false_positives": 0
+  },
+  {
+    "id": "known-correct-003",
+    "text": "اللغة العربية جميلة وواضحة.",
+    "expected_sources": [],
+    "max_false_positives": 0
+  }
+]

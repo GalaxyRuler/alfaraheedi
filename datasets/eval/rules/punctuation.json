@@ -1,0 +1,8 @@
+[
+  {
+    "id": "punctuation-001",
+    "text": "مرحبا, كيف حالك?",
+    "expected_sources": ["arabic:latin-comma", "arabic:latin-question-mark"],
+    "max_false_positives": 0
+  }
+]

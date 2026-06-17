@@ -1,0 +1,14 @@
+[
+  {
+    "id": "tatweel-001",
+    "text": "مرحبــا",
+    "expected_sources": ["arabic:tatweel"],
+    "max_false_positives": 0
+  },
+  {
+    "id": "tatweel-002",
+    "text": "الســلام عليكم",
+    "expected_sources": ["arabic:tatweel"],
+    "max_false_positives": 0
+  }
+]

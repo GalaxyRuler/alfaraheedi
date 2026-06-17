@@ -1,0 +1,14 @@
+[
+  {
+    "id": "repeated-space-001",
+    "text": "مرحبا  بالعالم",
+    "expected_sources": ["arabic:repeated-space"],
+    "max_false_positives": 0
+  },
+  {
+    "id": "repeated-space-002",
+    "text": "هذا  نص عربي",
+    "expected_sources": ["arabic:repeated-space"],
+    "max_false_positives": 0
+  }
+]

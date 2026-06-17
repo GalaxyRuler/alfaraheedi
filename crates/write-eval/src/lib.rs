@@ -28,7 +28,27 @@ pub struct EvalReport {
 }
 
 pub fn seed_cases() -> anyhow::Result<Vec<EvalCase>> {
-    let raw = include_str!("../../../datasets/eval/seed.json");
+    let mut cases = Vec::new();
+    cases.extend(read_cases(include_str!("../../../datasets/eval/seed.json"))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/known-correct.json"
+    ))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/rules/tatweel.json"
+    ))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/rules/repeated-space.json"
+    ))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/rules/punctuation.json"
+    ))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/protected-spans.json"
+    ))?);
+    Ok(cases)
+}
+
+fn read_cases(raw: &str) -> anyhow::Result<Vec<EvalCase>> {
     serde_json::from_str(raw).map_err(Into::into)
 }
 
