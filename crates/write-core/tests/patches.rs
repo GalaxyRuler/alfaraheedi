@@ -1,4 +1,50 @@
-use write_core::{Category, Document, Language, Patch, Severity, Suggestion, safe_patches};
+use write_core::{
+    Category, Document, Engine, Language, Patch, Rule, Severity, Suggestion, safe_patches,
+};
+
+#[derive(Debug, Clone)]
+struct TestSafeRule;
+
+impl Rule for TestSafeRule {
+    fn id(&self) -> &'static str {
+        "test-safe-rule"
+    }
+
+    fn check(&self, document: &Document) -> Vec<Suggestion> {
+        let Some(start) = document.text().find("ــ") else {
+            return Vec::new();
+        };
+        let end = start + "ــ".len();
+        let span = document
+            .span_for_byte_range(start..end)
+            .expect("test span must be valid");
+
+        vec![Suggestion::replacement(
+            "test:tatweel",
+            span,
+            Language::Arabic,
+            Category::Orthography,
+            Severity::Warning,
+            0.99,
+            "ــ",
+            vec![String::new()],
+            "Remove tatweel.",
+            true,
+        )]
+    }
+}
+
+#[test]
+fn engine_apply_safe_returns_fixed_text_and_remaining_suggestions() {
+    let engine = Engine::new().with_rule(TestSafeRule);
+
+    let outcome = engine.apply_safe("مرحبــا").expect("safe apply");
+
+    assert_eq!(outcome.text, "مرحبا");
+    assert_eq!(outcome.applied_count, 1);
+    assert_eq!(outcome.skipped_count, 0);
+    assert!(outcome.remaining_suggestions.is_empty());
+}
 
 #[test]
 fn protected_spans_detect_urls_emails_and_inline_code() {

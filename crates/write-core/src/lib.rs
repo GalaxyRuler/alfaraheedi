@@ -192,6 +192,14 @@ pub struct Analysis {
     pub suggestions: Vec<Suggestion>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ApplyOutcome {
+    pub text: String,
+    pub applied_count: usize,
+    pub skipped_count: usize,
+    pub remaining_suggestions: Vec<Suggestion>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Document {
     text: String,
@@ -636,6 +644,29 @@ impl Engine {
     pub fn with_rule(mut self, rule: impl Rule + 'static) -> Self {
         self.rules.push(Box::new(rule));
         self
+    }
+
+    pub fn apply_safe(&self, text: impl Into<String>) -> Result<ApplyOutcome, PatchError> {
+        let original_text = text.into();
+        let analysis = self.analyze(original_text.clone());
+        let patches = safe_patches(&analysis.suggestions);
+        let applied_count = patches.len();
+        let skipped_count = analysis
+            .suggestions
+            .iter()
+            .filter(|suggestion| Patch::from_suggestion(suggestion).is_none())
+            .count();
+
+        let document = Document::new(original_text);
+        let applied = document.apply(&patches)?;
+        let next = self.analyze(applied.text().to_owned());
+
+        Ok(ApplyOutcome {
+            text: applied.text().to_owned(),
+            applied_count,
+            skipped_count,
+            remaining_suggestions: next.suggestions,
+        })
     }
 
     pub fn analyze(&self, text: impl Into<String>) -> Analysis {
