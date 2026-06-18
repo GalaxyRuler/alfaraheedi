@@ -67,6 +67,13 @@ Run the local API server through the CLI:
 cargo run -p write-cli -- serve --addr 127.0.0.1:3000
 ```
 
+Inspect the optional local LLM policy and CPU model candidates:
+
+```powershell
+cargo run -p write-cli -- llm status
+cargo run -p write-cli -- llm status --format json
+```
+
 CLI smoke test:
 
 ```powershell
@@ -81,6 +88,7 @@ The API exposes the same default rule set as the CLI.
 GET  /healthz
 GET  /v1/health
 GET  /v1/rules
+GET  /v1/llm/status
 POST /v1/analyze
 POST /v1/apply
 ```
@@ -142,6 +150,10 @@ Project policy treats raw user text logging, retained analyzed text, and unredac
 The code is licensed under `MIT OR Apache-2.0`. Code licenses and data licenses are tracked separately.
 
 The repository does not bundle corpora, dictionaries, model weights, GPL-linked code, or non-commercial datasets. See `docs/model-data-policy.md`.
+
+## Optional Local LLM
+
+The local LLM track is suggestion-only. The built-in catalog currently points at CPU-capable GGUF candidates such as `qwen3-1.7b-q4_k_m`, but Alfaraheedi does not download or redistribute model weights by default. LLM output is not eligible for `fix --safe`.
 
 ## Roadmap
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Optional local LLM catalog and policy status surfaces.
+
 ## v0.1.0 - 2026-06-18
 
 ### Verification

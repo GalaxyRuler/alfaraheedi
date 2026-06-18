@@ -35,6 +35,18 @@ enum Command {
         #[arg(long, default_value = "127.0.0.1:3000")]
         addr: SocketAddr,
     },
+    Llm {
+        #[command(subcommand)]
+        command: LlmCommand,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum LlmCommand {
+    Status {
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        format: OutputFormat,
+    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -59,6 +71,9 @@ async fn main() -> anyhow::Result<()> {
             init_tracing();
             write_api::serve(addr).await
         }
+        Command::Llm { command } => match command {
+            LlmCommand::Status { format } => llm_status(format),
+        },
     }
 }
 
@@ -121,6 +136,45 @@ fn fix(
                     .with_context(|| format!("failed to write output file {}", output.display()))?;
             } else {
                 println!("{}", outcome.text);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn llm_status(format: OutputFormat) -> anyhow::Result<()> {
+    let status = write_llm::default_status();
+
+    match format {
+        OutputFormat::Json => {
+            println!("{}", serde_json::to_string_pretty(&status)?);
+        }
+        OutputFormat::Text => {
+            println!(
+                "Local LLM: {}",
+                if status.available {
+                    "available"
+                } else {
+                    "not configured"
+                }
+            );
+            println!("Reason: {}", status.reason);
+            println!("Default model: {}", status.catalog.policy.default_model_id);
+            println!(
+                "Policy: suggestion-only; no bundled weights; no hosted fallback; no raw text logging"
+            );
+            println!("Candidates:");
+            for model in status.catalog.models {
+                println!(
+                    "- {} ({}, {}, ~{} MB RAM): {}/{}",
+                    model.id,
+                    model.display_name,
+                    model.quantization,
+                    model.estimated_min_ram_mb,
+                    model.repo,
+                    model.filename
+                );
             }
         }
     }

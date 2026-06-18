@@ -15,6 +15,7 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 write-arabic = { path = "../write-arabic", version = "0.1.0" }
 write-core = { path = "../write-core", version = "0.1.0" }
+write-llm = { path = "../write-llm", version = "0.1.0" }
 
 [dev-dependencies]
 serde_json.workspace = true

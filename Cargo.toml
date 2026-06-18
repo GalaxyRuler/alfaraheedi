@@ -6,6 +6,7 @@ members = [
     "crates/write-english",
     "crates/write-mixed",
     "crates/write-spell",
+    "crates/write-llm",
     "crates/write-cli",
     "crates/write-api",
     "crates/write-wasm",

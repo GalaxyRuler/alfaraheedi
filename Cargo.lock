@@ -833,6 +833,7 @@ dependencies = [
  "tracing-subscriber",
  "write-arabic",
  "write-core",
+ "write-llm",
 ]
 
 [[package]]
@@ -852,6 +853,7 @@ dependencies = [
  "tokio",
  "tracing-subscriber",
  "write-api",
+ "write-llm",
 ]
 
 [[package]]
@@ -879,6 +881,13 @@ dependencies = [
  "serde_json",
  "write-arabic",
  "write-core",
+]
+
+[[package]]
+name = "write-llm"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

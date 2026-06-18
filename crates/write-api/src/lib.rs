@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use tower_http::trace::TraceLayer;
 pub use write_arabic::default_rule_set;
 use write_core::{Analysis, ApplyOutcome, Engine, RuleInfo};
+use write_llm::LlmStatus;
 
 pub fn router() -> Router {
     let engine = Arc::new(default_rule_set());
@@ -21,6 +22,7 @@ pub fn router() -> Router {
         .route("/v1/analyze", post(analyze))
         .route("/v1/apply", post(apply))
         .route("/v1/rules", get(rules))
+        .route("/v1/llm/status", get(llm_status))
         .layer(TraceLayer::new_for_http())
         .with_state(engine)
 }
@@ -84,6 +86,10 @@ async fn rules() -> Json<RulesResponse> {
     Json(RulesResponse {
         rules: write_arabic::rule_catalog(),
     })
+}
+
+async fn llm_status() -> Json<LlmStatus> {
+    Json(write_llm::default_status())
 }
 
 async fn apply(

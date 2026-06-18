@@ -10,3 +10,13 @@ Code licenses and data licenses are tracked separately. The public MVP ships sou
 - Model registry entries must be per variant, with a `commercial_ok` flag per variant rather than per family.
 - Hosted/default profiles may only fetch `commercial_ok = true` assets.
 - New eval data must be project-owned, permissively licensed, or documented with explicit redistribution rights before it is committed.
+
+## Optional Local LLM Policy
+
+The built-in LLM catalog is metadata only. It may name CPU-capable GGUF variants, but the repository and default Docker image do not include model weights.
+
+- Model weights must be installed manually or by a future explicit opt-in downloader.
+- Hosted fallback is disabled by default.
+- Every model entry must identify the exact repo, filename, license, quantization, and `commercial_ok` value.
+- LLM output is suggestion-only unless a future release adds a separate eval gate proving a narrow safe-auto-apply behavior.
+- Raw user text must not be logged by the LLM layer.
