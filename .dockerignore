@@ -1,0 +1,13 @@
+target/
+.git/
+.github/
+.codex/
+.agents/
+.claude/
+.idea/
+.vscode/
+docs/plans/
+docs/superpowers/
+.env
+.env.*
+*.pdb
