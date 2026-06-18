@@ -33,6 +33,14 @@ POST /v1/analyze
 .\scripts\smoke-api.ps1
 ```
 
+## Docker
+
+```powershell
+docker build -t alfaraheedi:local .
+docker run -p 3000:3000 alfaraheedi:local
+Invoke-RestMethod -Uri http://127.0.0.1:3000/healthz
+```
+
 ## MVP Boundary
 
 English/Harper, spell dictionaries, WASM editor integration, LSP, desktop, ML, and Python sidecars are intentionally deferred until the core apply/eval/API contract is stable.
