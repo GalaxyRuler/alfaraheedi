@@ -1,6 +1,9 @@
 /target/
 /.idea/
 /.vscode/
+/.agents/
+/.claude/
+/.codex/
 *.pdb
 .env
 .env.*
