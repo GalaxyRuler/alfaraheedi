@@ -1,6 +1,6 @@
 # Privacy
 
-The default product posture is local-first and no text retention.
+The default product posture is local-first and no text retention. The CLI, local API server, Docker image, and eval tooling do not require sending user text to a hosted service.
 
 Implementation rules:
 
@@ -10,4 +10,4 @@ Implementation rules:
 - Treat debug logging of raw text as a privacy bug.
 - Add redaction wrappers before any telemetry or hosted mode.
 
-Future hosted mode must document retention, redaction, and deletion behavior before release.
+Future hosted mode must document retention, redaction, access controls, and deletion behavior before release.

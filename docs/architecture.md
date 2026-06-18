@@ -5,8 +5,8 @@
 The MVP spine is:
 
 1. `write-core`: shared schema, bidirectional offset maps, protected spans, patch application.
-2. `write-arabic`: Arabic-only default rule set with high-precision safe rules.
-3. `write-eval`: tiny seed gate for false positives and precision.
+2. `write-arabic`: Arabic-only default rule set with high-precision safe rules and suggest-only punctuation rules.
+3. `write-eval`: small seed gate for false positives, protected-span behavior, and explicit failure reporting.
 4. `write-api`: Axum JSON API over the same default rule set.
 5. `write-cli`: local CLI and server launcher.
 
@@ -25,9 +25,19 @@ The MVP spine is:
 
 MVP Arabic rules must be high precision. Context-free hamza, final ya/alef-maqsura, and taa-marbuta/haa fixes are deferred because they need morphology and can be correct in multiple forms.
 
-Safe MVP additions after the current spine:
+Current safe auto-apply rules:
+
+- Tatweel removal.
+- Repeated-space collapse in Arabic context.
+
+Current suggest-only rules:
+
+- Latin comma in Arabic context.
+- Latin question mark in Arabic context.
+- Space before Arabic punctuation.
+
+Potential additions after the current spine:
 
 - Arabic-Indic and ASCII digit normalization as explicit suggestions.
-- Space-before-punctuation checks.
 - NFC composed/decomposed checks with reversible normalization maps.
 - Dictionary spelling as suggest-only, never auto-apply.
