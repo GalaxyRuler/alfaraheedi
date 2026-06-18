@@ -26,6 +26,13 @@ GET  /v1/health
 POST /v1/analyze
 ```
 
+## Smoke Tests
+
+```powershell
+.\scripts\smoke-cli.ps1
+.\scripts\smoke-api.ps1
+```
+
 ## MVP Boundary
 
 English/Harper, spell dictionaries, WASM editor integration, LSP, desktop, ML, and Python sidecars are intentionally deferred until the core apply/eval/API contract is stable.
