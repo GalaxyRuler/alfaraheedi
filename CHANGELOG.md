@@ -5,6 +5,7 @@
 ### Added
 
 - Optional local LLM catalog and policy status surfaces.
+- Local React/Vite writing workbench with editor, suggestions, rule catalog, settings, and local LLM status panels.
 
 ## v0.1.0 - 2026-06-18
 

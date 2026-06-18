@@ -4,10 +4,11 @@ use anyhow::Context;
 use axum::{
     Json, Router,
     extract::State,
-    http::StatusCode,
+    http::{HeaderValue, Method, StatusCode, header},
     routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 pub use write_arabic::default_rule_set;
 use write_core::{Analysis, ApplyOutcome, Engine, RuleInfo};
@@ -23,8 +24,41 @@ pub fn router() -> Router {
         .route("/v1/apply", post(apply))
         .route("/v1/rules", get(rules))
         .route("/v1/llm/status", get(llm_status))
+        .layer(local_dev_cors())
         .layer(TraceLayer::new_for_http())
         .with_state(engine)
+}
+
+/// CORS for local development only.
+///
+/// The local-first frontend is served by a separate dev server, such as Vite
+/// on `http://localhost:5173`, and talks to this API on another port. This
+/// layer allows only loopback origins so a local frontend works without
+/// exposing the API to arbitrary websites.
+fn local_dev_cors() -> CorsLayer {
+    CorsLayer::new()
+        .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _| {
+            origin.to_str().is_ok_and(is_local_origin)
+        }))
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([header::CONTENT_TYPE])
+}
+
+fn is_local_origin(origin: &str) -> bool {
+    let Some(authority) = origin
+        .strip_prefix("http://")
+        .or_else(|| origin.strip_prefix("https://"))
+    else {
+        return false;
+    };
+
+    let authority = authority.split('/').next().unwrap_or(authority);
+    let host = match authority.rsplit_once(':') {
+        Some((host, port)) if !port.is_empty() && port.bytes().all(|b| b.is_ascii_digit()) => host,
+        _ => authority,
+    };
+
+    matches!(host, "localhost" | "127.0.0.1" | "[::1]")
 }
 
 pub async fn serve(addr: SocketAddr) -> anyhow::Result<()> {

@@ -113,6 +113,33 @@ API smoke test:
 .\scripts\smoke-api.ps1
 ```
 
+## Web App
+
+`frontend/` is a local-first writing workbench built with TypeScript, React, Vite, and CodeMirror 6. It talks to the local API and makes no telemetry, analytics, hosted LLM, or external service calls at runtime.
+
+Run the API and web app in two terminals:
+
+```powershell
+# Terminal 1
+cargo run -p write-cli -- serve --addr 127.0.0.1:3000
+
+# Terminal 2
+cd frontend
+npm install
+npm run dev
+```
+
+The app defaults to `http://127.0.0.1:3000` for the API. You can change that in Settings. Draft persistence is off by default; enabling "Remember draft" stores text only in browser `localStorage`.
+
+Frontend checks:
+
+```powershell
+cd frontend
+npm run lint
+npm run test
+npm run build
+```
+
 ## Docker
 
 Build and run the local image:

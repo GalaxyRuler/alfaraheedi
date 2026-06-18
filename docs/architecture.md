@@ -10,6 +10,7 @@ The MVP spine is:
 4. `write-api`: Axum JSON API over the same default rule set.
 5. `write-cli`: local CLI and server launcher.
 6. `write-llm`: optional local LLM model catalog and policy contract.
+7. `frontend`: TypeScript/React/Vite local web workbench over the API.
 
 ## Decisions
 
@@ -23,6 +24,8 @@ The MVP spine is:
 - Use `tower-lsp-community/tower-lsp-server` if LSP is added later.
 - Keep the LLM path local, explicit, and suggestion-only. LLM output must not feed safe auto-apply without a separate measured eval gate.
 - Use a local OpenAI-compatible llama.cpp-style runtime boundary for GGUF models rather than linking native inference into the core engine.
+- Use CodeMirror 6 in the web app for the writing surface because RTL editing, selection, and decorations are editor concerns, not string-textarea concerns.
+- Allow CORS for loopback origins only so local Vite development can call the API without enabling hosted or arbitrary website access.
 
 ## Arabic MVP Scope
 
