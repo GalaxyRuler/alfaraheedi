@@ -15,3 +15,7 @@
 - [ ] Changelog updated
 - [ ] GitHub release notes written
 - [ ] Tag created
+
+## Release Candidate Notes
+
+- [x] `v0.1.0-rc.1` passed fresh-clone verification on Windows.

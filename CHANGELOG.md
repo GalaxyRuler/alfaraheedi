@@ -2,6 +2,10 @@
 
 ## v0.1.0 - Unreleased
 
+### Verification
+
+Release candidate `v0.1.0-rc.1` passed fresh-clone verification on Windows.
+
 ### Added
 
 - Rust-native core engine.
