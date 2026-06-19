@@ -4,6 +4,9 @@ use std::process::Command;
 fn llm_status_prints_default_cpu_model() {
     let output = Command::new(env!("CARGO_BIN_EXE_writecheck"))
         .args(["llm", "status"])
+        .env_remove("ALFARAHEEDI_LLM_BASE_URL")
+        .env_remove("ALFARAHEEDI_LLM_MODEL")
+        .env_remove("ALFARAHEEDI_LLM_TIMEOUT_MS")
         .output()
         .expect("run writecheck");
 
@@ -18,6 +21,9 @@ fn llm_status_prints_default_cpu_model() {
 fn llm_status_json_reports_suggestion_only_policy() {
     let output = Command::new(env!("CARGO_BIN_EXE_writecheck"))
         .args(["llm", "status", "--format", "json"])
+        .env_remove("ALFARAHEEDI_LLM_BASE_URL")
+        .env_remove("ALFARAHEEDI_LLM_MODEL")
+        .env_remove("ALFARAHEEDI_LLM_TIMEOUT_MS")
         .output()
         .expect("run writecheck");
 
@@ -37,4 +43,19 @@ fn llm_status_json_reports_suggestion_only_policy() {
         value["catalog"]["policy"]["default_model_id"],
         "qwen3-1.7b-q4_k_m"
     );
+}
+
+#[test]
+fn llm_suggest_requires_local_runtime_config() {
+    let output = Command::new(env!("CARGO_BIN_EXE_writecheck"))
+        .args(["llm", "suggest"])
+        .env_remove("ALFARAHEEDI_LLM_BASE_URL")
+        .env_remove("ALFARAHEEDI_LLM_MODEL")
+        .env_remove("ALFARAHEEDI_LLM_TIMEOUT_MS")
+        .output()
+        .expect("run writecheck");
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).expect("stderr");
+    assert!(stderr.contains("ALFARAHEEDI_LLM_BASE_URL"));
 }

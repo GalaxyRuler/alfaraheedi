@@ -15,9 +15,12 @@ export interface Settings {
   rememberDraft: boolean;
 }
 
+const DEFAULT_API_BASE_URL =
+  import.meta.env.VITE_ALFARAHEEDI_API_BASE_URL ?? "http://127.0.0.1:3000";
+
 export const DEFAULT_SETTINGS: Settings = {
   language: "ar",
-  apiBaseUrl: "http://127.0.0.1:3000",
+  apiBaseUrl: DEFAULT_API_BASE_URL,
   direction: "rtl",
   rememberDraft: false,
 };

@@ -4,7 +4,7 @@
 
 Alfaraheedi is an early Rust-native, local-first Arabic writing checker focused on high-precision safe corrections and correct Unicode offsets. It is not yet a full Arabic grammar checker.
 
-The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, Docker runtime support, and a small release eval gate. It is designed to keep Arabic text on the user's machine by default.
+The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. It is designed to keep Arabic text on the user's machine by default.
 
 ## What It Is Not
 
@@ -65,6 +65,7 @@ Run the local API server through the CLI:
 
 ```powershell
 cargo run -p write-cli -- serve --addr 127.0.0.1:3000
+cargo run -p write-cli -- serve --addr 127.0.0.1:3000 --frontend-dir frontend\dist
 ```
 
 Inspect the optional local LLM policy and CPU model candidates:
@@ -72,6 +73,7 @@ Inspect the optional local LLM policy and CPU model candidates:
 ```powershell
 cargo run -p write-cli -- llm status
 cargo run -p write-cli -- llm status --format json
+cargo run -p write-cli -- llm suggest path\to\file.txt
 ```
 
 CLI smoke test:
@@ -89,6 +91,7 @@ GET  /healthz
 GET  /v1/health
 GET  /v1/rules
 GET  /v1/llm/status
+POST /v1/llm/suggest
 POST /v1/analyze
 POST /v1/apply
 ```
@@ -117,7 +120,13 @@ API smoke test:
 
 `frontend/` is a local-first writing workbench built with TypeScript, React, Vite, and CodeMirror 6. It talks to the local API and makes no telemetry, analytics, hosted LLM, or external service calls at runtime.
 
-Run the API and web app in two terminals:
+Run the API and web app with one command:
+
+```powershell
+.\scripts\dev.ps1
+```
+
+Or run the API and web app in two terminals:
 
 ```powershell
 # Terminal 1
@@ -181,6 +190,26 @@ The repository does not bundle corpora, dictionaries, model weights, GPL-linked 
 ## Optional Local LLM
 
 The local LLM track is suggestion-only. The built-in catalog currently points at CPU-capable GGUF candidates such as `qwen3-1.7b-q4_k_m`, but Alfaraheedi does not download or redistribute model weights by default. LLM output is not eligible for `fix --safe`.
+
+Set `ALFARAHEEDI_LLM_BASE_URL` to an OpenAI-compatible local runtime before starting the API:
+
+```powershell
+$env:ALFARAHEEDI_LLM_BASE_URL = "http://127.0.0.1:8000"
+$env:ALFARAHEEDI_LLM_MODEL = "qwen3-1.7b-q4_k_m"
+cargo run -p write-cli -- serve --addr 127.0.0.1:3000
+```
+
+See `docs/local-llm.md`.
+
+## Packaging
+
+Build the Windows x64 package:
+
+```powershell
+.\scripts\package-windows.ps1 -Version 0.2.0
+```
+
+The package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Alfaraheedi.ps1`.
 
 ## Roadmap
 

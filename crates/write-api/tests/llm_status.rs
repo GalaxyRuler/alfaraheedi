@@ -6,7 +6,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn llm_status_endpoint_reports_local_only_policy() {
-    let app = write_api::router();
+    let app = write_api::router_with_llm_config(None);
     let request = Request::builder()
         .method("GET")
         .uri("/v1/llm/status")
@@ -23,6 +23,7 @@ async fn llm_status_endpoint_reports_local_only_policy() {
     let value: serde_json::Value = serde_json::from_slice(&body).expect("json");
 
     assert_eq!(value["available"], false);
+    assert_eq!(value["runtime"], serde_json::Value::Null);
     assert_eq!(value["catalog"]["policy"]["bundled_weights"], false);
     assert_eq!(
         value["catalog"]["policy"]["decision_role"],
@@ -43,4 +44,19 @@ async fn llm_status_endpoint_reports_local_only_policy() {
             .iter()
             .any(|model| model["id"] == "qwen3-0.6b-q4_0")
     );
+}
+
+#[tokio::test]
+async fn llm_suggest_rejects_when_runtime_is_not_configured() {
+    let app = write_api::router_with_llm_config(None);
+    let request = Request::builder()
+        .method("POST")
+        .uri("/v1/llm/suggest")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"text":"مرحبــا بالعالم"}"#))
+        .expect("request");
+
+    let response = app.oneshot(request).await.expect("response");
+
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
 }

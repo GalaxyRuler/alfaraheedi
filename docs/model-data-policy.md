@@ -16,6 +16,7 @@ Code licenses and data licenses are tracked separately. The public MVP ships sou
 The built-in LLM catalog is metadata only. It may name CPU-capable GGUF variants, but the repository and default Docker image do not include model weights.
 
 - Model weights must be installed manually or by a future explicit opt-in downloader.
+- Runtime calls require explicit `ALFARAHEEDI_LLM_BASE_URL` configuration.
 - Hosted fallback is disabled by default.
 - Every model entry must identify the exact repo, filename, license, quantization, and `commercial_ok` value.
 - LLM output is suggestion-only unless a future release adds a separate eval gate proving a narrow safe-auto-apply behavior.

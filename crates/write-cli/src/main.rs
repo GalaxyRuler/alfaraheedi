@@ -34,6 +34,8 @@ enum Command {
     Serve {
         #[arg(long, default_value = "127.0.0.1:3000")]
         addr: SocketAddr,
+        #[arg(long)]
+        frontend_dir: Option<PathBuf>,
     },
     Llm {
         #[command(subcommand)]
@@ -44,6 +46,11 @@ enum Command {
 #[derive(Debug, Subcommand)]
 enum LlmCommand {
     Status {
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        format: OutputFormat,
+    },
+    Suggest {
+        path: Option<PathBuf>,
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         format: OutputFormat,
     },
@@ -67,12 +74,13 @@ async fn main() -> anyhow::Result<()> {
             output,
             format,
         } => fix(path, safe, output, format),
-        Command::Serve { addr } => {
+        Command::Serve { addr, frontend_dir } => {
             init_tracing();
-            write_api::serve(addr).await
+            write_api::serve(addr, frontend_dir).await
         }
         Command::Llm { command } => match command {
-            LlmCommand::Status { format } => llm_status(format),
+            LlmCommand::Status { format } => llm_status(format).await,
+            LlmCommand::Suggest { path, format } => llm_suggest(path, format).await,
         },
     }
 }
@@ -143,8 +151,12 @@ fn fix(
     Ok(())
 }
 
-fn llm_status(format: OutputFormat) -> anyhow::Result<()> {
-    let status = write_llm::default_status();
+async fn llm_status(format: OutputFormat) -> anyhow::Result<()> {
+    let status = if let Some(config) = write_llm::LlmRuntimeConfig::from_env() {
+        write_llm::runtime_status(&config).await
+    } else {
+        write_llm::default_status()
+    };
 
     match format {
         OutputFormat::Json => {
@@ -176,6 +188,28 @@ fn llm_status(format: OutputFormat) -> anyhow::Result<()> {
                     model.filename
                 );
             }
+        }
+    }
+
+    Ok(())
+}
+
+async fn llm_suggest(path: Option<PathBuf>, format: OutputFormat) -> anyhow::Result<()> {
+    let text = read_input(path)?;
+    let config =
+        write_llm::LlmRuntimeConfig::from_env().ok_or(write_llm::LlmError::NotConfigured)?;
+    let suggestion = write_llm::suggest(&config, &text).await?;
+
+    match format {
+        OutputFormat::Json => {
+            println!("{}", serde_json::to_string_pretty(&suggestion)?);
+        }
+        OutputFormat::Text => {
+            println!("{}", suggestion.replacement);
+            println!();
+            println!("Explanation: {}", suggestion.explanation);
+            println!("Model: {}", suggestion.model_id);
+            println!("Safe auto-apply: {}", suggestion.safe_auto_apply);
         }
     }
 

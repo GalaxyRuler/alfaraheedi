@@ -8,4 +8,4 @@ repository.workspace = true
 [dependencies]
 serde.workspace = true
 thiserror.workspace = true
-write-core = { path = "../write-core", version = "0.1.0" }
+write-core = { path = "../write-core", version = "0.2.0" }

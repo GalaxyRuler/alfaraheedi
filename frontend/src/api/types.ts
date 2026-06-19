@@ -92,10 +92,26 @@ export interface LlmCatalog {
   models: LocalModel[];
 }
 
+export interface LlmRuntimeConfig {
+  base_url: string;
+  model_id: string;
+  timeout_ms: number;
+}
+
 export interface LlmStatus {
   available: boolean;
   reason: string;
+  runtime: LlmRuntimeConfig | null;
   catalog: LlmCatalog;
+}
+
+export interface LlmSuggestion {
+  source: string;
+  model_id: string;
+  replacement: string;
+  explanation: string;
+  confidence: number;
+  safe_auto_apply: boolean;
 }
 
 export interface HealthResponse {

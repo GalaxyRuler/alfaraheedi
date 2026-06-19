@@ -42,6 +42,18 @@ export function LlmPanel({ status, data, errorMessage, onReload }: LlmPanelProps
               <dt>{t("llmDefault")}</dt>
               <dd dir="ltr">{data.catalog.policy.default_model_id}</dd>
             </div>
+            {data.runtime && (
+              <>
+                <div className="kv__row">
+                  <dt>{t("llmRuntime")}</dt>
+                  <dd dir="ltr">{data.runtime.base_url}</dd>
+                </div>
+                <div className="kv__row">
+                  <dt>{t("llmRuntimeModel")}</dt>
+                  <dd dir="ltr">{data.runtime.model_id}</dd>
+                </div>
+              </>
+            )}
             <div className="kv__row">
               <dt>{t("llmPolicy")}</dt>
               <dd>

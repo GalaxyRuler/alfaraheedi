@@ -1,26 +1,35 @@
-import type { Suggestion } from "../api/types";
+import type { LlmSuggestion, Suggestion } from "../api/types";
 import { countSafe, groupByCategory } from "../lib/format";
 import { useI18n } from "../i18n/i18n";
 import { SuggestionCard } from "./SuggestionCard";
 
 export type AnalyzeStatus = "idle" | "loading" | "done" | "error";
+export type LlmSuggestStatus = "idle" | "loading" | "done" | "error";
 
 interface SuggestionsPanelProps {
   status: AnalyzeStatus;
   suggestions: Suggestion[];
+  llmStatus: LlmSuggestStatus;
+  llmSuggestion: LlmSuggestion | null;
+  llmErrorMessage: string | null;
   activeId: string | null;
   errorMessage: string | null;
   onActivate: (id: string) => void;
   onApply: (suggestion: Suggestion, replacement: string) => void;
+  onApplyLlmSuggestion: (replacement: string) => void;
 }
 
 export function SuggestionsPanel({
   status,
   suggestions,
+  llmStatus,
+  llmSuggestion,
+  llmErrorMessage,
   activeId,
   errorMessage,
   onActivate,
   onApply,
+  onApplyLlmSuggestion,
 }: SuggestionsPanelProps) {
   const { t, categoryLabel } = useI18n();
   const groups = groupByCategory(suggestions);
@@ -38,6 +47,52 @@ export function SuggestionsPanel({
       </header>
 
       <div className="panel__body">
+        {llmStatus === "loading" && (
+          <p className="state state--loading" role="status">
+            {t("llmSuggesting")}
+          </p>
+        )}
+
+        {llmStatus === "error" && (
+          <div className="state state--error" role="alert">
+            <p>{t("llmSuggestionFailed")}</p>
+            {llmErrorMessage && <p className="state__detail">{llmErrorMessage}</p>}
+            <p className="state__detail">{t("llmPolicyNote")}</p>
+          </div>
+        )}
+
+        {llmStatus === "done" && llmSuggestion && (
+          <article className="llm-suggestion" data-testid="llm-suggestion">
+            <header className="llm-suggestion__header">
+              <div>
+                <h3>{t("llmSuggestionTitle")}</h3>
+                <p className="muted" dir="ltr">
+                  {llmSuggestion.source} · {llmSuggestion.model_id}
+                </p>
+              </div>
+              <span className="badge badge--suggest">{t("badgeSuggest")}</span>
+            </header>
+            <p className="llm-suggestion__explanation">
+              {llmSuggestion.explanation}
+            </p>
+            <div className="llm-suggestion__replacement" dir="auto">
+              {llmSuggestion.replacement}
+            </div>
+            <footer className="llm-suggestion__footer">
+              <span className="muted">
+                {t("confidence")} {(llmSuggestion.confidence * 100).toFixed(0)}%
+              </span>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => onApplyLlmSuggestion(llmSuggestion.replacement)}
+              >
+                {t("llmApplySuggestion")}
+              </button>
+            </footer>
+          </article>
+        )}
+
         {status === "loading" && (
           <p className="state state--loading" role="status">
             {t("stateAnalyzing")}

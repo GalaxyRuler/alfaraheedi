@@ -1,14 +1,16 @@
 import { useI18n } from "../i18n/i18n";
-import { CheckIcon, CopyIcon, ScanIcon, SparkIcon, TrashIcon } from "./Icons";
+import { CheckIcon, ChipIcon, CopyIcon, ScanIcon, SparkIcon, TrashIcon } from "./Icons";
 
 interface ToolbarProps {
   onAnalyze: () => void;
   onApplySafe: () => void;
+  onLlmSuggest: () => void;
   onCopy: () => void;
   onLoadExample: () => void;
   onClear: () => void;
   analyzing: boolean;
   applying: boolean;
+  llmSuggesting: boolean;
   hasText: boolean;
   safeCount: number;
   copied: boolean;
@@ -17,11 +19,13 @@ interface ToolbarProps {
 export function Toolbar({
   onAnalyze,
   onApplySafe,
+  onLlmSuggest,
   onCopy,
   onLoadExample,
   onClear,
   analyzing,
   applying,
+  llmSuggesting,
   hasText,
   safeCount,
   copied,
@@ -49,6 +53,17 @@ export function Toolbar({
         <CheckIcon />
         {t("applySafe")}
         {safeCount > 0 && <span className="btn__count">{safeCount}</span>}
+      </button>
+
+      <button
+        type="button"
+        className="btn"
+        onClick={onLlmSuggest}
+        disabled={llmSuggesting || !hasText}
+        title={t("llmSuggestHint")}
+      >
+        <ChipIcon />
+        {llmSuggesting ? t("llmSuggesting") : t("llmSuggest")}
       </button>
 
       <div className="toolbar__spacer" />

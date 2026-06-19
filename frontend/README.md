@@ -15,6 +15,9 @@ suggestion decorations.
   engine's `POST /v1/apply { mode: "safe" }`. Suggest-only items are never
   auto-applied; you can apply a single replacement manually (a local text edit),
   after which the app re-analyzes.
+- **Local LLM is opt-in.** The "LLM suggestion" action calls the local API only.
+  The API returns `503` until `ALFARAHEEDI_LLM_BASE_URL` points at a local
+  OpenAI-compatible runtime.
 
 ## Run
 
@@ -23,6 +26,12 @@ Requires Node 20+ and the local API running (default `http://127.0.0.1:3000`).
 ```bash
 npm install
 npm run dev      # Vite dev server on http://localhost:5173
+```
+
+Start both API and frontend from the repository root:
+
+```powershell
+.\scripts\dev.ps1
 ```
 
 Start the API separately: `cargo run -p write-cli -- serve --addr 127.0.0.1:3000`.

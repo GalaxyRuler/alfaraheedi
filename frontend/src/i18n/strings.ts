@@ -23,6 +23,7 @@ export const STRINGS = {
   navRules: { ar: "القواعد", en: "Rules" },
   navLlm: { ar: "النموذج المحلي", en: "Local LLM" },
   navSettings: { ar: "الإعدادات", en: "Settings" },
+  skipEditor: { ar: "انتقال إلى المحرر", en: "Skip to editor" },
 
   analyze: { ar: "تحليل", en: "Analyze" },
   analyzing: { ar: "جارٍ التحليل…", en: "Analyzing…" },
@@ -30,6 +31,12 @@ export const STRINGS = {
   applySafeHint: {
     ar: "يطبّق الإصلاحات الآمنة عبر ‎/v1/apply",
     en: "Applies safe fixes via /v1/apply",
+  },
+  llmSuggest: { ar: "اقتراح النموذج", en: "LLM suggestion" },
+  llmSuggesting: { ar: "جارٍ اقتراح النموذج…", en: "Getting LLM suggestion…" },
+  llmSuggestHint: {
+    ar: "يطلب اقتراحًا يدوي التطبيق من النموذج المحلي",
+    en: "Requests a manually applied suggestion from the local model",
   },
   copy: { ar: "نسخ", en: "Copy" },
   copied: { ar: "تم النسخ ✓", en: "Copied ✓" },
@@ -60,6 +67,12 @@ export const STRINGS = {
     ar: "لا اقتراحات — النص نظيف وفق القواعد الحالية.",
     en: "No suggestions — the text is clean for the current rule set.",
   },
+  llmSuggestionTitle: { ar: "اقتراح النموذج المحلي", en: "Local LLM suggestion" },
+  llmSuggestionFailed: {
+    ar: "تعذّر إنشاء اقتراح من النموذج المحلي.",
+    en: "Could not create a local LLM suggestion.",
+  },
+  llmApplySuggestion: { ar: "تطبيق يدوي", en: "Apply manually" },
 
   badgeSafe: { ar: "إصلاح آمن", en: "Safe fix" },
   badgeSuggest: { ar: "اقتراح فقط", en: "Suggest only" },
@@ -95,6 +108,8 @@ export const STRINGS = {
   },
   llmConfigured: { ar: "متاح", en: "Available" },
   llmDefault: { ar: "النموذج الافتراضي", en: "Default model" },
+  llmRuntime: { ar: "الخادم المحلي", en: "Local runtime" },
+  llmRuntimeModel: { ar: "النموذج النشط", en: "Active model" },
   llmPolicy: { ar: "السياسة", en: "Policy" },
   llmBundled: { ar: "أوزان مرفقة", en: "Bundled weights" },
   yes: { ar: "نعم", en: "Yes" },

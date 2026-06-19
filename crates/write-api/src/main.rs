@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, path::PathBuf};
 
 use anyhow::Context;
 
@@ -11,7 +11,12 @@ async fn main() -> anyhow::Result<()> {
         .parse::<SocketAddr>()
         .context("WRITECHECK_ADDR must be a socket address such as 127.0.0.1:3000")?;
 
-    write_api::serve(addr).await
+    let frontend_dir = std::env::var("WRITECHECK_FRONTEND_DIR")
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+        .map(PathBuf::from);
+
+    write_api::serve(addr, frontend_dir).await
 }
 
 fn init_tracing() {

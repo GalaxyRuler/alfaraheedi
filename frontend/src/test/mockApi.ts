@@ -1,5 +1,11 @@
 import { vi } from "vitest";
-import type { Analysis, ApplyOutcome, LlmStatus, RuleInfo } from "../api/types";
+import type {
+  Analysis,
+  ApplyOutcome,
+  LlmStatus,
+  LlmSuggestion,
+  RuleInfo,
+} from "../api/types";
 
 type Handler = () => Response | Promise<Response>;
 type Handlers = Record<string, Handler>;
@@ -112,7 +118,8 @@ export const SAMPLE_RULES: RuleInfo[] = [
 
 export const SAMPLE_LLM: LlmStatus = {
   available: false,
-  reason: "local LLM runtime is not configured; no model weights are bundled",
+  reason: "local LLM runtime is not configured; set ALFARAHEEDI_LLM_BASE_URL",
+  runtime: null,
   catalog: {
     policy: {
       default_model_id: "qwen3-1.7b-q4_k_m",
@@ -142,4 +149,13 @@ export const SAMPLE_LLM: LlmStatus = {
       },
     ],
   },
+};
+
+export const SAMPLE_LLM_SUGGESTION: LlmSuggestion = {
+  source: "llm:local",
+  model_id: "qwen3-1.7b-q4_k_m",
+  replacement: "مرحبا بالعالم، كيف حالك؟ أنا بخير، شكرًا؛",
+  explanation: "اقتراح لغوي كامل للنص.",
+  confidence: 0.74,
+  safe_auto_apply: false,
 };

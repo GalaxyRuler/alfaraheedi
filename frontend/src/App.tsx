@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, createApi } from "./api/client";
-import type { LlmStatus, RuleInfo, Suggestion } from "./api/types";
+import type { LlmStatus, LlmSuggestion, RuleInfo, Suggestion } from "./api/types";
 import {
   clearDraft,
   loadDraft,
@@ -14,7 +14,11 @@ import type { Lang } from "./i18n/strings";
 import { Editor } from "./components/Editor";
 import { Header, type Health } from "./components/Header";
 import { Toolbar } from "./components/Toolbar";
-import { SuggestionsPanel, type AnalyzeStatus } from "./components/SuggestionsPanel";
+import {
+  SuggestionsPanel,
+  type AnalyzeStatus,
+  type LlmSuggestStatus,
+} from "./components/SuggestionsPanel";
 import { Drawer } from "./components/Drawer";
 import { RulesPanel, type LoadStatus } from "./components/RulesPanel";
 import { LlmPanel } from "./components/LlmPanel";
@@ -69,6 +73,10 @@ function Workbench({
   const [analyzeStatus, setAnalyzeStatus] = useState<AnalyzeStatus>("idle");
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [llmSuggestStatus, setLlmSuggestStatus] =
+    useState<LlmSuggestStatus>("idle");
+  const [llmSuggestion, setLlmSuggestion] = useState<LlmSuggestion | null>(null);
+  const [llmSuggestError, setLlmSuggestError] = useState<string | null>(null);
 
   const [applying, setApplying] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -98,6 +106,9 @@ function Workbench({
     setActiveId(null);
     setAnalyzeStatus("idle");
     setAnalyzeError(null);
+    setLlmSuggestStatus("idle");
+    setLlmSuggestion(null);
+    setLlmSuggestError(null);
     setNotice(null);
   }, []);
 
@@ -158,6 +169,9 @@ function Workbench({
       commitText(outcome.text);
       setSuggestions(outcome.remaining_suggestions);
       setActiveId(null);
+      setLlmSuggestStatus("idle");
+      setLlmSuggestion(null);
+      setLlmSuggestError(null);
       setAnalyzeStatus("done");
       setNotice(
         lang === "ar"
@@ -180,9 +194,46 @@ function Workbench({
       const next = spliceReplacement(textRef.current, suggestion, replacement);
       commitText(next);
       setActiveId(null);
+      setLlmSuggestStatus("idle");
+      setLlmSuggestion(null);
+      setLlmSuggestError(null);
       void runAnalyze(next);
     },
     [commitText, runAnalyze],
+  );
+
+  const handleLlmSuggest = useCallback(async () => {
+    if (!text.trim()) return;
+    setLlmSuggestStatus("loading");
+    setLlmSuggestError(null);
+    setLlmSuggestion(null);
+    setNotice(null);
+    try {
+      setLlmSuggestion(await api.llmSuggest(text));
+      setLlmSuggestStatus("done");
+    } catch (error) {
+      setLlmSuggestStatus("error");
+      setLlmSuggestError(errorMessage(error, lang));
+      if (isUnavailable(error)) setHealth("offline");
+    }
+  }, [api, lang, text]);
+
+  const handleApplyLlmSuggestion = useCallback(
+    (replacement: string) => {
+      commitText(replacement);
+      setLlmSuggestStatus("idle");
+      setLlmSuggestion(null);
+      setLlmSuggestError(null);
+      setSuggestions([]);
+      setActiveId(null);
+      setAnalyzeStatus("idle");
+      setNotice(
+        lang === "ar"
+          ? "طُبّق اقتراح النموذج المحلي يدويًا."
+          : "Applied the local LLM suggestion manually.",
+      );
+    },
+    [commitText, lang],
   );
 
   const handleCopy = useCallback(async () => {
@@ -201,6 +252,9 @@ function Workbench({
     commitText(EXAMPLE_TEXT);
     setSuggestions([]);
     setAnalyzeStatus("idle");
+    setLlmSuggestStatus("idle");
+    setLlmSuggestion(null);
+    setLlmSuggestError(null);
     setNotice(null);
   }, [commitText]);
 
@@ -209,6 +263,9 @@ function Workbench({
     setSuggestions([]);
     setActiveId(null);
     setAnalyzeStatus("idle");
+    setLlmSuggestStatus("idle");
+    setLlmSuggestion(null);
+    setLlmSuggestError(null);
     setNotice(null);
   }, [commitText]);
 
@@ -249,6 +306,9 @@ function Workbench({
 
   return (
     <div className="app" dir={dir}>
+      <a className="skip-link" href="#editor-workspace">
+        {t("skipEditor")}
+      </a>
       <Header
         health={health}
         apiBaseUrl={settings.apiBaseUrl}
@@ -273,16 +333,18 @@ function Workbench({
         </div>
       )}
 
-      <main className="workbench">
+      <main className="workbench" id="editor-workspace" tabIndex={-1}>
         <section className="editor-column">
           <Toolbar
             onAnalyze={handleAnalyze}
             onApplySafe={() => void handleApplySafe()}
+            onLlmSuggest={() => void handleLlmSuggest()}
             onCopy={() => void handleCopy()}
             onLoadExample={handleLoadExample}
             onClear={handleClear}
             analyzing={analyzeStatus === "loading"}
             applying={applying}
+            llmSuggesting={llmSuggestStatus === "loading"}
             hasText={text.length > 0}
             safeCount={safeCount}
             copied={copied}
@@ -319,10 +381,14 @@ function Workbench({
         <SuggestionsPanel
           status={analyzeStatus}
           suggestions={suggestions}
+          llmStatus={llmSuggestStatus}
+          llmSuggestion={llmSuggestion}
+          llmErrorMessage={llmSuggestError}
           activeId={activeId}
           errorMessage={analyzeError}
           onActivate={setActiveId}
           onApply={handleApplyOne}
+          onApplyLlmSuggestion={handleApplyLlmSuggestion}
         />
       </main>
 

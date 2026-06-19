@@ -6,15 +6,21 @@
 - [ ] `cargo test --workspace`
 - [ ] `cargo run -p write-eval`
 - [ ] `cargo deny check licenses bans sources`
+- [ ] `npm ci` in `frontend/`
+- [ ] `npm run lint` in `frontend/`
+- [ ] `npm run test` in `frontend/`
+- [ ] `npm run build` in `frontend/`
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
 - [ ] `.\scripts\smoke-docker.ps1`
+- [ ] `.\scripts\package-windows.ps1 -Version <version>`
 - [ ] Fresh clone test
 - [ ] README reviewed
 - [ ] Limitations reviewed
 - [ ] Changelog updated
 - [ ] GitHub release notes written
 - [ ] Tag created
+- [ ] Windows release zip uploaded
 
 ## Release Candidate Notes
 

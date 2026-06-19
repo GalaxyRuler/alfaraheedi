@@ -2,6 +2,7 @@ import type {
   Analysis,
   ApplyOutcome,
   HealthResponse,
+  LlmSuggestion,
   LlmStatus,
   RuleInfo,
 } from "./types";
@@ -74,6 +75,7 @@ export interface AlfaraheediApi {
   health(): Promise<HealthResponse>;
   rules(): Promise<RuleInfo[]>;
   llmStatus(): Promise<LlmStatus>;
+  llmSuggest(text: string): Promise<LlmSuggestion>;
   analyze(text: string): Promise<Analysis>;
   applySafe(text: string): Promise<ApplyOutcome>;
 }
@@ -84,6 +86,12 @@ export function createApi(baseUrl: string): AlfaraheediApi {
     rules: () =>
       request<{ rules: RuleInfo[] }>(baseUrl, "/v1/rules").then((r) => r.rules),
     llmStatus: () => request<LlmStatus>(baseUrl, "/v1/llm/status"),
+    llmSuggest: (text) =>
+      request<LlmSuggestion>(baseUrl, "/v1/llm/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      }),
     analyze: (text) =>
       request<Analysis>(baseUrl, "/v1/analyze", {
         method: "POST",

@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without leading v"
+        required: true
+        default: "0.2.0"
+
+permissions:
+  contents: write
+
+jobs:
+  windows-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "value=${{ inputs.version }}" >> $env:GITHUB_OUTPUT
+          } else {
+            $refName = "${{ github.ref_name }}"
+            $version = $refName.TrimStart("v")
+            "value=$version" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Build Windows package
+        shell: pwsh
+        run: .\scripts\package-windows.ps1 -Version "${{ steps.version.outputs.value }}"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          tag_name: v${{ steps.version.outputs.value }}

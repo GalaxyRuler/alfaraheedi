@@ -2,10 +2,31 @@
 
 ## Unreleased
 
+## v0.2.0 - 2026-06-19
+
 ### Added
 
 - Optional local LLM catalog and policy status surfaces.
 - Local React/Vite writing workbench with editor, suggestions, rule catalog, settings, and local LLM status panels.
+- Opt-in local OpenAI-compatible LLM suggestions through `POST /v1/llm/suggest` and `writecheck llm suggest`.
+- Static frontend serving through `writecheck serve --frontend-dir`.
+- One-command local development script: `scripts/dev.ps1`.
+- Local llama.cpp helper script: `scripts/llm-serve.ps1`.
+- Windows x64 release package script: `scripts/package-windows.ps1`.
+- GitHub Actions frontend CI and tag-driven Windows release asset workflow.
+- Manual-apply local LLM suggestion card in the web workbench.
+
+### Changed
+
+- Bumped workspace and frontend package versions to `0.2.0`.
+- Refined the web workbench palette, focus states, touch targets, and keyboard skip link.
+- Expanded the release checklist with frontend, package, and release-asset gates.
+
+### Safety
+
+- LLM output remains suggestion-only and is never eligible for `fix --safe`.
+- No model weights are bundled, downloaded, or redistributed by default.
+- Hosted fallback remains disabled by default.
 
 ## v0.1.0 - 2026-06-18
 
