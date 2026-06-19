@@ -46,6 +46,20 @@ pub fn rule_catalog() -> Vec<RuleInfo> {
             safe_auto_apply: false,
             description: "Use Arabic punctuation in Arabic text.".to_owned(),
         },
+        RuleInfo {
+            source: "arabic:latin-semicolon".to_owned(),
+            language: Language::Arabic,
+            category: Category::Punctuation,
+            safe_auto_apply: false,
+            description: "Use Arabic punctuation in Arabic text.".to_owned(),
+        },
+        RuleInfo {
+            source: "arabic:space-after-punctuation".to_owned(),
+            language: Language::Arabic,
+            category: Category::Spacing,
+            safe_auto_apply: false,
+            description: "Suggest adding spaces after Arabic punctuation.".to_owned(),
+        },
     ]
 }
 
@@ -59,6 +73,7 @@ impl Rule for ArabicRuleSet {
         suggestions.extend(tatweel_suggestions(document));
         suggestions.extend(punctuation_suggestions(document));
         suggestions.extend(space_before_punctuation_suggestions(document));
+        suggestions.extend(space_after_punctuation_suggestions(document));
         suggestions.extend(spacing_suggestions(document));
         suggestions
     }
@@ -114,6 +129,11 @@ fn punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
             }
             '?' if has_arabic_before(document.text(), byte_index) => {
                 Some(("arabic:latin-question-mark", "؟"))
+            }
+            ';' if has_arabic_before(document.text(), byte_index)
+                && has_arabic_after(document.text(), end) =>
+            {
+                Some(("arabic:latin-semicolon", "؛"))
             }
             _ => None,
         };
@@ -199,6 +219,52 @@ fn space_before_punctuation_suggestions(document: &Document) -> Vec<Suggestion> 
                 original,
                 vec![String::new()],
                 "Remove the space before Arabic punctuation.",
+                false,
+            ));
+        }
+    }
+
+    suggestions
+}
+
+fn space_after_punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
+    let mut suggestions = Vec::new();
+    let text = document.text();
+
+    for (punctuation_start, character) in text.char_indices() {
+        if !matches!(character, '،' | '؛' | '؟') {
+            continue;
+        }
+
+        let punctuation_end = punctuation_start + character.len_utf8();
+        if document.range_is_protected(punctuation_start..punctuation_end) {
+            continue;
+        }
+        if !has_arabic_before(text, punctuation_start) {
+            continue;
+        }
+
+        let Some(next_character) = text
+            .get(punctuation_end..)
+            .and_then(|suffix| suffix.chars().next())
+        else {
+            continue;
+        };
+        if next_character.is_whitespace() || !is_arabic_script(next_character) {
+            continue;
+        }
+
+        if let Ok(span) = document.span_for_byte_range(punctuation_end..punctuation_end) {
+            suggestions.push(Suggestion::replacement(
+                "arabic:space-after-punctuation",
+                span,
+                Language::Arabic,
+                Category::Spacing,
+                Severity::Warning,
+                0.93,
+                "",
+                vec![" ".to_string()],
+                "Add a space after Arabic punctuation.",
                 false,
             ));
         }

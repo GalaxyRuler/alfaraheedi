@@ -45,6 +45,7 @@ Start the API separately: `cargo run -p write-cli -- serve --addr 127.0.0.1:3000
 | `npm run preview` | Serve the production build locally.              |
 | `npm run lint`  | ESLint over `src`.                                 |
 | `npm run test`  | Vitest component/integration tests.                |
+| `npm run test:e2e` | Build the frontend, start the Rust packaged app server, and run Playwright desktop/mobile checks. |
 
 ## Configuration
 

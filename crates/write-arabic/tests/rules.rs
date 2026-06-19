@@ -20,7 +20,7 @@ fn arabic_rules_suggest_removing_tatweel() {
 fn arabic_rules_replace_latin_punctuation_in_arabic_context() {
     let analysis = Engine::new()
         .with_rule(ArabicRuleSet::default())
-        .analyze("مرحبا, كيف حالك?");
+        .analyze("مرحبا, كيف حالك? نعم; هذا صحيح");
 
     let replacements = analysis
         .suggestions
@@ -39,7 +39,14 @@ fn arabic_rules_replace_latin_punctuation_in_arabic_context() {
         vec![
             (",", Some("،"), &Category::Punctuation),
             ("?", Some("؟"), &Category::Punctuation),
+            (";", Some("؛"), &Category::Punctuation),
         ]
+    );
+    assert!(
+        analysis
+            .suggestions
+            .iter()
+            .all(|suggestion| !suggestion.safe_auto_apply)
     );
 }
 
@@ -62,6 +69,26 @@ fn arabic_rules_suggest_removing_space_before_arabic_punctuation() {
             .iter()
             .filter(|suggestion| suggestion.source == "arabic:space-before-punctuation")
             .all(|suggestion| !suggestion.safe_auto_apply)
+    );
+}
+
+#[test]
+fn arabic_rules_suggest_adding_space_after_arabic_punctuation() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("مرحبا،كيف الحال؟أنا بخير");
+
+    let suggestions = analysis
+        .suggestions
+        .iter()
+        .filter(|suggestion| suggestion.source == "arabic:space-after-punctuation")
+        .collect::<Vec<_>>();
+
+    assert_eq!(suggestions.len(), 2);
+    assert!(
+        suggestions
+            .iter()
+            .all(|suggestion| suggestion.replacements == vec![" "] && !suggestion.safe_auto_apply)
     );
 }
 

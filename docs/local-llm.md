@@ -71,3 +71,21 @@ Response:
 ```
 
 LLM suggestions are full-text rewrites. They are never merged into `writecheck fix --safe`.
+
+## Smoke Tests
+
+The smoke script verifies the API contract without logging raw input text:
+
+```powershell
+.\scripts\smoke-llm.ps1
+```
+
+If `ALFARAHEEDI_LLM_BASE_URL` is not set, the script exits successfully with a clear skip message.
+
+Use the mock runtime for CI-style contract verification without downloading model weights:
+
+```powershell
+.\scripts\smoke-llm.ps1 -MockRuntime
+```
+
+Use a real local runtime by starting `llama-server` or another OpenAI-compatible server first, then set `ALFARAHEEDI_LLM_BASE_URL` and run the same smoke script. The script verifies that the runtime is reachable, `POST /v1/llm/suggest` returns a non-empty replacement, and `safe_auto_apply` remains `false`.

@@ -30,6 +30,8 @@ export const RULE_TEXT_AR: Record<string, string> = {
   "arabic:latin-comma": "استخدام الفاصلة العربية «،» بدل الفاصلة اللاتينية.",
   "arabic:latin-question-mark":
     "استخدام علامة الاستفهام العربية «؟» بدل اللاتينية.",
+  "arabic:latin-semicolon": "استخدام الفاصلة المنقوطة العربية «؛» بدل اللاتينية.",
+  "arabic:space-after-punctuation": "إضافة مسافة بعد علامة الترقيم العربية.",
 };
 
 export interface SuggestionGroup {

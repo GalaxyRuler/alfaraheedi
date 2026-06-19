@@ -13,5 +13,23 @@
       "arabic:space-before-punctuation"
     ],
     "max_false_positives": 0
+  },
+  {
+    "id": "punctuation-003",
+    "text": "نعم; هذا صحيح",
+    "expected_sources": ["arabic:latin-semicolon"],
+    "max_false_positives": 0
+  },
+  {
+    "id": "punctuation-004",
+    "text": "مرحبا،كيف الحال؟",
+    "expected_sources": ["arabic:space-after-punctuation"],
+    "max_false_positives": 0
+  },
+  {
+    "id": "punctuation-005",
+    "text": "كيف الحال؟أنا بخير",
+    "expected_sources": ["arabic:space-after-punctuation"],
+    "max_false_positives": 0
   }
 ]

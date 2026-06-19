@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Playwright E2E tests for the packaged web workbench in desktop and mobile Chromium.
+- Optional LLM smoke script with skip, mock-runtime, and configured-runtime modes.
+- Eval recall tracking with false-negative failures for missing expected rules.
+- Arabic semicolon and missing-space-after-punctuation suggestion rules.
+- Public README badges and workbench screenshot.
+
+### Changed
+
+- CI now runs the packaged-app Playwright E2E lane.
+- Evaluation docs now describe precision and recall gates.
+
 ## v0.2.0 - 2026-06-19
 
 ### Added

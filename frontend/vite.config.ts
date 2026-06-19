@@ -11,6 +11,7 @@ export default defineConfig({
     strictPort: false,
   },
   test: {
+    exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**"],
     globals: true,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],

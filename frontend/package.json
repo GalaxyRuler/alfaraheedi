@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
+    "test:e2e": "node ./scripts/build-e2e.mjs && playwright test",
+    "test:e2e:install": "playwright install chromium",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -21,7 +23,9 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.61.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

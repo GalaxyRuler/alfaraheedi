@@ -16,5 +16,17 @@
     "text": "راسل test@example.com الآن",
     "expected_sources": [],
     "max_false_positives": 0
+  },
+  {
+    "id": "protected-code-punctuation-001",
+    "text": "نفّذ `foo; bar?` ثم أعد المحاولة",
+    "expected_sources": [],
+    "max_false_positives": 0
+  },
+  {
+    "id": "protected-url-semicolon-001",
+    "text": "افتح https://example.com/a;b ثم تابع",
+    "expected_sources": [],
+    "max_false_positives": 0
   }
 ]

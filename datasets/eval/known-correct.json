@@ -16,5 +16,17 @@
     "text": "اللغة العربية جميلة وواضحة.",
     "expected_sources": [],
     "max_false_positives": 0
+  },
+  {
+    "id": "known-correct-mixed-latin-list",
+    "text": "راجع API, CLI قبل النشر.",
+    "expected_sources": [],
+    "max_false_positives": 0
+  },
+  {
+    "id": "known-correct-decimal-number",
+    "text": "وصلت النسبة إلى 3.5% في التقرير.",
+    "expected_sources": [],
+    "max_false_positives": 0
   }
 ]
