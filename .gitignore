@@ -1,5 +1,7 @@
 /target/
 /dist/
+/frontend/test-results/
+/frontend/playwright-report/
 /.idea/
 /.vscode/
 /.agents/

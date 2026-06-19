@@ -1,10 +1,16 @@
 # Alfaraheedi
 
+[![CI](https://github.com/GalaxyRuler/alfaraheedi/actions/workflows/ci.yml/badge.svg)](https://github.com/GalaxyRuler/alfaraheedi/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/GalaxyRuler/alfaraheedi?include_prereleases)](https://github.com/GalaxyRuler/alfaraheedi/releases)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#data-and-licensing)
+
 ## What It Is
 
 Alfaraheedi is an early Rust-native, local-first Arabic writing checker focused on high-precision safe corrections and correct Unicode offsets. It is not yet a full Arabic grammar checker.
 
 The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. It is designed to keep Arabic text on the user's machine by default.
+
+![Alfaraheedi local web workbench](docs/assets/workbench.png)
 
 ## What It Is Not
 
@@ -20,7 +26,9 @@ The current Arabic rule set is intentionally small:
 | `arabic:repeated-space` | Safe auto-apply | Collapses repeated spaces in Arabic text. |
 | `arabic:latin-comma` | Suggest-only | Suggests Arabic comma punctuation in Arabic context. |
 | `arabic:latin-question-mark` | Suggest-only | Suggests Arabic question mark punctuation in Arabic context. |
+| `arabic:latin-semicolon` | Suggest-only | Suggests Arabic semicolon punctuation in Arabic context. |
 | `arabic:space-before-punctuation` | Suggest-only | Suggests removing a space before Arabic punctuation. |
+| `arabic:space-after-punctuation` | Suggest-only | Suggests adding a missing space after Arabic punctuation. |
 
 Safe auto-apply rules are eligible for `writecheck fix --safe`. Suggest-only rules are reported but not applied automatically.
 
@@ -147,7 +155,10 @@ cd frontend
 npm run lint
 npm run test
 npm run build
+npm run test:e2e
 ```
+
+`npm run test:e2e` builds the frontend, starts `writecheck serve --frontend-dir frontend/dist`, and runs Playwright against the packaged local app in desktop and mobile Chromium.
 
 ## Docker
 
@@ -175,6 +186,8 @@ cargo run -p write-eval
 
 The command prints JSON, including rule-level metrics and explicit failure details, and exits non-zero on release-gating failures.
 
+The eval gate reports both precision and recall. Missing expected rules count as false negatives and fail the release gate.
+
 ## Privacy
 
 Alfaraheedi is local-first by default. The CLI, API, Docker image, and eval tooling do not require sending text to a hosted service.
@@ -200,6 +213,19 @@ cargo run -p write-cli -- serve --addr 127.0.0.1:3000
 ```
 
 See `docs/local-llm.md`.
+
+Smoke-test the optional LLM path:
+
+```powershell
+.\scripts\smoke-llm.ps1              # skips cleanly if no runtime is configured
+.\scripts\smoke-llm.ps1 -MockRuntime # verifies the API contract with a local mock runtime
+```
+
+With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LLM_BASE_URL` and run `.\scripts\smoke-llm.ps1`.
+
+## Download
+
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current Windows package is `alfaraheedi-v0.2.0-windows-x64.zip`.
 
 ## Packaging
 

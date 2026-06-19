@@ -19,6 +19,11 @@ fn main() -> anyhow::Result<()> {
         "seed eval precision {} is below 0.98",
         report.precision
     );
+    ensure!(
+        report.recall >= 0.98,
+        "seed eval recall {} is below 0.98",
+        report.recall
+    );
 
     Ok(())
 }

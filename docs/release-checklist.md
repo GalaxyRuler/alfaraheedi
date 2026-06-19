@@ -10,8 +10,11 @@
 - [ ] `npm run lint` in `frontend/`
 - [ ] `npm run test` in `frontend/`
 - [ ] `npm run build` in `frontend/`
+- [ ] `npm run test:e2e` in `frontend/`
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
+- [ ] `.\scripts\smoke-llm.ps1 -MockRuntime`
+- [ ] Real local LLM smoke with a user-provided GGUF, when releasing LLM-facing changes
 - [ ] `.\scripts\smoke-docker.ps1`
 - [ ] `.\scripts\package-windows.ps1 -Version <version>`
 - [ ] Fresh clone test
