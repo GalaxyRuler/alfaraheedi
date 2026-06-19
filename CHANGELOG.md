@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.3.0 - 2026-06-19
+
 ### Added
 
 - Playwright E2E tests for the packaged web workbench in desktop and mobile Chromium.
