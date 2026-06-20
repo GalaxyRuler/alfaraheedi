@@ -81,6 +81,8 @@ Inspect the optional local LLM policy and CPU model candidates:
 ```powershell
 cargo run -p write-cli -- llm status
 cargo run -p write-cli -- llm status --format json
+cargo run -p write-cli -- llm doctor
+cargo run -p write-cli -- llm doctor --format json
 cargo run -p write-cli -- llm suggest path\to\file.txt
 ```
 
@@ -228,7 +230,7 @@ Smoke-test the optional LLM path:
 
 ```powershell
 .\scripts\smoke-llm.ps1              # skips cleanly if no runtime is configured
-.\scripts\smoke-llm.ps1 -MockRuntime # verifies the API contract with a local mock runtime
+.\scripts\smoke-llm.ps1 -MockRuntime # verifies the doctor and API contract with a local mock runtime
 ```
 
 With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LLM_BASE_URL` and run `.\scripts\smoke-llm.ps1`.

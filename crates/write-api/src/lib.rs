@@ -204,8 +204,10 @@ fn llm_error_response(error: write_llm::LlmError) -> (StatusCode, String) {
         write_llm::LlmError::Http { .. }
         | write_llm::LlmError::Request(_)
         | write_llm::LlmError::Client(_)
+        | write_llm::LlmError::InvalidStatusResponse
         | write_llm::LlmError::EmptyResponse
-        | write_llm::LlmError::InvalidResponse => StatusCode::BAD_GATEWAY,
+        | write_llm::LlmError::InvalidResponse
+        | write_llm::LlmError::EmptyReplacement => StatusCode::BAD_GATEWAY,
     };
 
     (status, error.to_string())

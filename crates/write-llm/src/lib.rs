@@ -8,6 +8,7 @@ pub const ENV_LLM_MODEL: &str = "ALFARAHEEDI_LLM_MODEL";
 pub const ENV_LLM_TIMEOUT_MS: &str = "ALFARAHEEDI_LLM_TIMEOUT_MS";
 pub const DEFAULT_TIMEOUT_MS: u64 = 30_000;
 pub const MAX_LLM_INPUT_CHARS: usize = 6_000;
+pub const DOCTOR_SAMPLE_TEXT: &str = "مرحبــا بالعالم";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LlmCatalog {
@@ -142,35 +143,16 @@ pub fn default_status() -> LlmStatus {
 }
 
 pub async fn runtime_status(config: &LlmRuntimeConfig) -> LlmStatus {
-    let client = match client(config) {
-        Ok(client) => client,
-        Err(error) => {
-            return configured_status(
-                config,
-                false,
-                format!("local LLM HTTP client could not be created: {error}"),
-            );
-        }
-    };
-
-    match client.get(config.endpoint("/v1/models")).send().await {
-        Ok(response) if response.status().is_success() => configured_status(
+    match fetch_model_ids(config).await {
+        Ok(_) => configured_status(
             config,
             true,
             "local LLM runtime is configured and reachable".to_owned(),
         ),
-        Ok(response) => configured_status(
-            config,
-            false,
-            format!(
-                "local LLM runtime responded with HTTP {}",
-                response.status()
-            ),
-        ),
         Err(error) => configured_status(
             config,
             false,
-            format!("local LLM runtime is configured but unreachable: {error}"),
+            format!("local LLM runtime is configured but not healthy: {error}"),
         ),
     }
 }
@@ -194,6 +176,32 @@ pub struct LlmSuggestion {
     pub safe_auto_apply: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LlmDoctorOutcome {
+    Pass,
+    Warn,
+    Fail,
+    Skip,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LlmDoctorCheck {
+    pub name: String,
+    pub outcome: LlmDoctorOutcome,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LlmDoctorReport {
+    pub ok: bool,
+    pub available: bool,
+    pub summary: String,
+    pub runtime: Option<LlmRuntimeConfig>,
+    pub catalog: LlmCatalog,
+    pub checks: Vec<LlmDoctorCheck>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum LlmError {
     #[error("local LLM runtime is not configured; set {ENV_LLM_BASE_URL}")]
@@ -206,10 +214,14 @@ pub enum LlmError {
     Request(reqwest::Error),
     #[error("local LLM returned HTTP {status}")]
     Http { status: reqwest::StatusCode },
+    #[error("local LLM /v1/models response was not OpenAI-compatible")]
+    InvalidStatusResponse,
     #[error("local LLM response did not include a message")]
     EmptyResponse,
-    #[error("local LLM response was not valid suggestion JSON")]
+    #[error("local LLM response was not OpenAI-compatible suggestion JSON")]
     InvalidResponse,
+    #[error("local LLM suggestion replacement was empty")]
+    EmptyReplacement,
 }
 
 #[derive(Debug, Serialize)]
@@ -248,6 +260,318 @@ struct SuggestionPayload {
     confidence: Option<f32>,
 }
 
+#[derive(Debug, Deserialize)]
+struct ModelsResponse {
+    data: Vec<ModelRecord>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ModelRecord {
+    id: String,
+}
+
+pub async fn doctor_from_env() -> LlmDoctorReport {
+    doctor_from_env_with_sample(DOCTOR_SAMPLE_TEXT).await
+}
+
+pub async fn doctor_from_env_with_sample(sample_text: &str) -> LlmDoctorReport {
+    run_doctor(LlmDoctorEnv::from_current(), sample_text).await
+}
+
+#[derive(Debug, Clone, Default)]
+struct LlmDoctorEnv {
+    base_url: Option<String>,
+    model_id: Option<String>,
+    timeout_ms: Option<String>,
+}
+
+impl LlmDoctorEnv {
+    fn from_current() -> Self {
+        Self {
+            base_url: env::var(ENV_LLM_BASE_URL).ok(),
+            model_id: env::var(ENV_LLM_MODEL).ok(),
+            timeout_ms: env::var(ENV_LLM_TIMEOUT_MS).ok(),
+        }
+    }
+}
+
+async fn run_doctor(env: LlmDoctorEnv, sample_text: &str) -> LlmDoctorReport {
+    let catalog = builtin_catalog();
+    let mut checks = Vec::new();
+    checks.push(policy_check(&catalog));
+
+    let Some(raw_base_url) = env
+        .base_url
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        checks.push(check(
+            "runtime_config",
+            LlmDoctorOutcome::Skip,
+            format!("optional local LLM runtime is not configured; set {ENV_LLM_BASE_URL} to run live checks"),
+        ));
+        return doctor_report(
+            true,
+            false,
+            "local LLM runtime is not configured; doctor skipped live runtime checks",
+            None,
+            catalog,
+            checks,
+        );
+    };
+
+    let base_url = normalize_base_url(raw_base_url.to_owned());
+    let mut blocking_config_error = false;
+    match validate_local_base_url(&base_url) {
+        Ok(()) => checks.push(check(
+            "base_url",
+            LlmDoctorOutcome::Pass,
+            format!("{ENV_LLM_BASE_URL} points at a local loopback HTTP runtime"),
+        )),
+        Err(message) => {
+            blocking_config_error = true;
+            checks.push(check("base_url", LlmDoctorOutcome::Fail, message));
+        }
+    }
+
+    let model_id = env
+        .model_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .unwrap_or(DEFAULT_MODEL_ID)
+        .to_owned();
+    if catalog.model(&model_id).is_some() {
+        checks.push(check(
+            "model",
+            LlmDoctorOutcome::Pass,
+            format!("model `{model_id}` is in the built-in CPU-only catalog"),
+        ));
+    } else {
+        checks.push(check(
+            "model",
+            LlmDoctorOutcome::Warn,
+            format!("model `{model_id}` is custom or not in the built-in catalog; keep weights user-managed"),
+        ));
+    }
+
+    let timeout_ms = match parse_timeout_ms(env.timeout_ms.as_deref()) {
+        Ok((timeout_ms, message)) => {
+            checks.push(check("timeout", LlmDoctorOutcome::Pass, message));
+            timeout_ms
+        }
+        Err(message) => {
+            blocking_config_error = true;
+            checks.push(check("timeout", LlmDoctorOutcome::Fail, message));
+            DEFAULT_TIMEOUT_MS
+        }
+    };
+
+    let config = LlmRuntimeConfig::new(base_url, model_id, timeout_ms);
+    if blocking_config_error {
+        return doctor_report(
+            false,
+            false,
+            "local LLM doctor found blocking configuration issues",
+            Some(config),
+            catalog,
+            checks,
+        );
+    }
+
+    let model_ids = match fetch_model_ids(&config).await {
+        Ok(model_ids) => {
+            checks.push(check(
+                "status_response",
+                LlmDoctorOutcome::Pass,
+                "/v1/models returned an OpenAI-compatible model list",
+            ));
+            model_ids
+        }
+        Err(error) => {
+            checks.push(check(
+                "status_response",
+                LlmDoctorOutcome::Fail,
+                doctor_error_message(&error),
+            ));
+            return doctor_report(
+                false,
+                false,
+                "local LLM doctor could not validate the runtime status response",
+                Some(config),
+                catalog,
+                checks,
+            );
+        }
+    };
+
+    if model_ids.iter().any(|id| id == &config.model_id) {
+        checks.push(check(
+            "runtime_model",
+            LlmDoctorOutcome::Pass,
+            format!(
+                "/v1/models advertises configured model `{}`",
+                config.model_id
+            ),
+        ));
+    } else {
+        checks.push(check(
+            "runtime_model",
+            LlmDoctorOutcome::Warn,
+            format!(
+                "/v1/models did not advertise configured model `{}`; suggestion probing will still verify the active runtime",
+                config.model_id
+            ),
+        ));
+    }
+
+    match suggest(&config, sample_text).await {
+        Ok(suggestion) if suggestion.safe_auto_apply => checks.push(check(
+            "suggestion_policy",
+            LlmDoctorOutcome::Fail,
+            "local LLM suggestion unexpectedly reported safe_auto_apply=true",
+        )),
+        Ok(_) => checks.push(check(
+            "suggestion_policy",
+            LlmDoctorOutcome::Pass,
+            "local LLM returned a non-empty suggestion and kept safe_auto_apply=false",
+        )),
+        Err(error) => checks.push(check(
+            "suggestion_policy",
+            LlmDoctorOutcome::Fail,
+            doctor_error_message(&error),
+        )),
+    }
+
+    let ok = !checks
+        .iter()
+        .any(|check| check.outcome == LlmDoctorOutcome::Fail);
+    let summary = if ok {
+        "local LLM runtime passed doctor checks"
+    } else {
+        "local LLM doctor found blocking runtime issues"
+    };
+    doctor_report(ok, ok, summary, Some(config), catalog, checks)
+}
+
+fn doctor_report(
+    ok: bool,
+    available: bool,
+    summary: impl Into<String>,
+    runtime: Option<LlmRuntimeConfig>,
+    catalog: LlmCatalog,
+    checks: Vec<LlmDoctorCheck>,
+) -> LlmDoctorReport {
+    LlmDoctorReport {
+        ok,
+        available,
+        summary: summary.into(),
+        runtime,
+        catalog,
+        checks,
+    }
+}
+
+fn check(
+    name: impl Into<String>,
+    outcome: LlmDoctorOutcome,
+    message: impl Into<String>,
+) -> LlmDoctorCheck {
+    LlmDoctorCheck {
+        name: name.into(),
+        outcome,
+        message: message.into(),
+    }
+}
+
+fn policy_check(catalog: &LlmCatalog) -> LlmDoctorCheck {
+    let policy = &catalog.policy;
+    if !policy.bundled_weights
+        && !policy.network_downloads_by_default
+        && !policy.hosted_fallback_by_default
+        && !policy.raw_text_logging
+        && !policy.llm_safe_auto_apply
+        && policy.decision_role == DecisionRole::SuggestionOnly
+    {
+        check(
+            "policy",
+            LlmDoctorOutcome::Pass,
+            "policy is suggestion-only with no bundled weights, downloads, hosted fallback, or raw text logging",
+        )
+    } else {
+        check(
+            "policy",
+            LlmDoctorOutcome::Fail,
+            "local LLM policy no longer satisfies the suggestion-only local-first contract",
+        )
+    }
+}
+
+fn parse_timeout_ms(value: Option<&str>) -> Result<(u64, String), String> {
+    let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) else {
+        return Ok((
+            DEFAULT_TIMEOUT_MS,
+            format!("{ENV_LLM_TIMEOUT_MS} is not set; using default {DEFAULT_TIMEOUT_MS} ms"),
+        ));
+    };
+
+    let timeout_ms = value.parse::<u64>().map_err(|_| {
+        format!("{ENV_LLM_TIMEOUT_MS} must be an integer between 1000 and 120000 milliseconds")
+    })?;
+    if !(1_000..=120_000).contains(&timeout_ms) {
+        return Err(format!(
+            "{ENV_LLM_TIMEOUT_MS} must be between 1000 and 120000 milliseconds"
+        ));
+    }
+
+    Ok((
+        timeout_ms,
+        format!("{ENV_LLM_TIMEOUT_MS} is set to {timeout_ms} ms"),
+    ))
+}
+
+fn validate_local_base_url(base_url: &str) -> Result<(), String> {
+    let url = reqwest::Url::parse(base_url)
+        .map_err(|error| format!("{ENV_LLM_BASE_URL} is not a valid URL: {error}"))?;
+    if !matches!(url.scheme(), "http" | "https") {
+        return Err(format!("{ENV_LLM_BASE_URL} must use http or https"));
+    }
+
+    let host = url.host_str().unwrap_or_default();
+    if matches!(host, "127.0.0.1" | "localhost" | "::1" | "[::1]") {
+        Ok(())
+    } else {
+        Err(format!(
+            "{ENV_LLM_BASE_URL} must point at a local loopback runtime, for example http://127.0.0.1:8000"
+        ))
+    }
+}
+
+fn doctor_error_message(error: &LlmError) -> String {
+    match error {
+        LlmError::Http { status } => format!("local LLM runtime returned HTTP {status}"),
+        LlmError::Request(error) => {
+            format!("local LLM runtime was unreachable or timed out: {error}")
+        }
+        LlmError::Client(error) => format!("local LLM HTTP client could not be created: {error}"),
+        LlmError::InvalidStatusResponse => {
+            "local LLM /v1/models response was not OpenAI-compatible".to_owned()
+        }
+        LlmError::EmptyResponse => {
+            "local LLM chat completion response did not include assistant message content".to_owned()
+        }
+        LlmError::InvalidResponse => {
+            "local LLM chat completion response was not OpenAI-compatible suggestion JSON"
+                .to_owned()
+        }
+        LlmError::EmptyReplacement => {
+            "local LLM suggestion replacement was empty; choose a model/prompt that returns a non-empty replacement".to_owned()
+        }
+        LlmError::NotConfigured | LlmError::InputTooLong { .. } => error.to_string(),
+    }
+}
+
 pub async fn suggest(config: &LlmRuntimeConfig, text: &str) -> Result<LlmSuggestion, LlmError> {
     ensure_input_bounds(text)?;
 
@@ -281,10 +605,9 @@ pub async fn suggest(config: &LlmRuntimeConfig, text: &str) -> Result<LlmSuggest
         });
     }
 
-    let completion = response
-        .json::<ChatCompletionResponse>()
-        .await
-        .map_err(LlmError::Request)?;
+    let body = response.text().await.map_err(LlmError::Request)?;
+    let completion = serde_json::from_str::<ChatCompletionResponse>(&body)
+        .map_err(|_| LlmError::InvalidResponse)?;
     let content = completion
         .choices
         .first()
@@ -293,6 +616,39 @@ pub async fn suggest(config: &LlmRuntimeConfig, text: &str) -> Result<LlmSuggest
         .ok_or(LlmError::EmptyResponse)?;
 
     parse_suggestion_content(content, &config.model_id)
+}
+
+async fn fetch_model_ids(config: &LlmRuntimeConfig) -> Result<Vec<String>, LlmError> {
+    let client = client(config).map_err(LlmError::Client)?;
+    let response = client
+        .get(config.endpoint("/v1/models"))
+        .send()
+        .await
+        .map_err(LlmError::Request)?;
+
+    if !response.status().is_success() {
+        return Err(LlmError::Http {
+            status: response.status(),
+        });
+    }
+
+    let body = response.text().await.map_err(LlmError::Request)?;
+    parse_model_ids(&body)
+}
+
+fn parse_model_ids(body: &str) -> Result<Vec<String>, LlmError> {
+    let response = serde_json::from_str::<ModelsResponse>(body)
+        .map_err(|_| LlmError::InvalidStatusResponse)?;
+    let ids = response
+        .data
+        .into_iter()
+        .map(|model| model.id.trim().to_owned())
+        .filter(|id| !id.is_empty())
+        .collect::<Vec<_>>();
+    if ids.is_empty() {
+        return Err(LlmError::InvalidStatusResponse);
+    }
+    Ok(ids)
 }
 
 fn client(config: &LlmRuntimeConfig) -> Result<reqwest::Client, reqwest::Error> {
@@ -325,7 +681,7 @@ fn parse_suggestion_content(content: &str, model_id: &str) -> Result<LlmSuggesti
 
     let replacement = payload.replacement.trim().to_owned();
     if replacement.is_empty() {
-        return Err(LlmError::InvalidResponse);
+        return Err(LlmError::EmptyReplacement);
     }
 
     Ok(LlmSuggestion {
@@ -485,6 +841,43 @@ mod tests {
         let error = parse_suggestion_content(r#"{"replacement":"   "}"#, DEFAULT_MODEL_ID)
             .expect_err("empty replacement");
 
-        assert!(matches!(error, LlmError::InvalidResponse));
+        assert!(matches!(error, LlmError::EmptyReplacement));
+    }
+
+    #[test]
+    fn parses_openai_model_list() {
+        let ids = parse_model_ids(
+            r#"{"object":"list","data":[{"id":"qwen3-1.7b-q4_k_m","object":"model"}]}"#,
+        )
+        .expect("model ids");
+
+        assert_eq!(ids, vec!["qwen3-1.7b-q4_k_m"]);
+    }
+
+    #[test]
+    fn rejects_invalid_model_list() {
+        let error = parse_model_ids(r#"{"models":[]}"#).expect_err("invalid model list");
+
+        assert!(matches!(error, LlmError::InvalidStatusResponse));
+    }
+
+    #[test]
+    fn validates_loopback_base_url() {
+        validate_local_base_url("http://127.0.0.1:8000").expect("loopback");
+        validate_local_base_url("http://localhost:8000").expect("localhost");
+        validate_local_base_url("http://[::1]:8000").expect("ipv6 loopback");
+
+        assert!(validate_local_base_url("https://example.com").is_err());
+    }
+
+    #[test]
+    fn validates_timeout_env_value() {
+        assert_eq!(
+            parse_timeout_ms(None).expect("default").0,
+            DEFAULT_TIMEOUT_MS
+        );
+        assert_eq!(parse_timeout_ms(Some("2000")).expect("custom").0, 2000);
+        assert!(parse_timeout_ms(Some("999")).is_err());
+        assert!(parse_timeout_ms(Some("abc")).is_err());
     }
 }
