@@ -1,4 +1,6 @@
 import { useI18n } from "../i18n/i18n";
+import type { Lang } from "../i18n/strings";
+import { LANGS } from "../i18n/strings";
 import { ChipIcon, GearIcon, ListIcon } from "./Icons";
 
 export type Health = "checking" | "online" | "offline";
@@ -6,6 +8,8 @@ export type Health = "checking" | "online" | "offline";
 interface HeaderProps {
   health: Health;
   apiBaseUrl: string;
+  language: Lang;
+  onLanguageChange: (language: Lang) => void;
   onOpenRules: () => void;
   onOpenLlm: () => void;
   onOpenSettings: () => void;
@@ -14,6 +18,8 @@ interface HeaderProps {
 export function Header({
   health,
   apiBaseUrl,
+  language,
+  onLanguageChange,
   onOpenRules,
   onOpenLlm,
   onOpenSettings,
@@ -46,6 +52,22 @@ export function Header({
           <span className="dot" />
           {healthText}
         </span>
+
+        <div className="language-switch" role="group" aria-label={t("languageSwitch")}>
+          {LANGS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`language-switch__option${
+                language === option.value ? " is-selected" : ""
+              }`}
+              aria-pressed={language === option.value}
+              onClick={() => onLanguageChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
 
         <nav className="app-header__nav" aria-label={t("navPanels")}>
           <button type="button" className="icon-btn" onClick={onOpenRules} title={t("navRules")} aria-label={t("navRules")}>

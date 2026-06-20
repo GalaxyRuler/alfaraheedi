@@ -6,7 +6,7 @@ export type Direction = "rtl" | "ltr" | "auto";
 export interface Settings {
   // UI chrome language. Independent of the text the user writes in the editor.
   language: Lang;
-  // Where the local engine is reachable. Defaults to the documented address.
+  // Where the local engine is reachable. Packaged builds default to same-origin.
   apiBaseUrl: string;
   // Editor base direction. Arabic-first default is RTL; Auto follows content.
   direction: Direction;
@@ -15,8 +15,31 @@ export interface Settings {
   rememberDraft: boolean;
 }
 
-const DEFAULT_API_BASE_URL =
-  import.meta.env.VITE_ALFARAHEEDI_API_BASE_URL ?? "http://127.0.0.1:3000";
+export const LEGACY_DEFAULT_API_BASE_URL = "http://127.0.0.1:3000";
+
+export function resolveDefaultApiBaseUrl({
+  configured,
+  dev,
+  origin,
+}: {
+  configured?: string;
+  dev: boolean;
+  origin?: string;
+}): string {
+  if (configured) return configured;
+  if (!dev && origin) return origin;
+  return LEGACY_DEFAULT_API_BASE_URL;
+}
+
+function browserOrigin(): string | undefined {
+  return typeof window === "undefined" ? undefined : window.location.origin;
+}
+
+const DEFAULT_API_BASE_URL = resolveDefaultApiBaseUrl({
+  configured: import.meta.env.VITE_ALFARAHEEDI_API_BASE_URL,
+  dev: import.meta.env.DEV,
+  origin: browserOrigin(),
+});
 
 export const DEFAULT_SETTINGS: Settings = {
   language: "ar",
@@ -45,8 +68,32 @@ function writeStorage(key: string, value: unknown): void {
   }
 }
 
+export function mergeSettingsWithDefaults({
+  defaults,
+  migrateLegacyDefault,
+  stored,
+}: {
+  defaults: Settings;
+  migrateLegacyDefault: boolean;
+  stored?: Partial<Settings>;
+}): Settings {
+  const settings = { ...defaults, ...(stored ?? {}) };
+
+  if (migrateLegacyDefault && stored?.apiBaseUrl === LEGACY_DEFAULT_API_BASE_URL) {
+    settings.apiBaseUrl = defaults.apiBaseUrl;
+  }
+
+  return settings;
+}
+
 function loadSettings(): Settings {
-  return { ...DEFAULT_SETTINGS, ...(readStorage<Partial<Settings>>(SETTINGS_KEY) ?? {}) };
+  const stored = readStorage<Partial<Settings>>(SETTINGS_KEY) ?? {};
+  return mergeSettingsWithDefaults({
+    defaults: DEFAULT_SETTINGS,
+    migrateLegacyDefault:
+      !import.meta.env.DEV && !import.meta.env.VITE_ALFARAHEEDI_API_BASE_URL,
+    stored,
+  });
 }
 
 export function useSettings() {

@@ -6,9 +6,9 @@
 
 ## What It Is
 
-Alfaraheedi is an early Rust-native, local-first Arabic writing checker focused on high-precision safe corrections and correct Unicode offsets. It is not yet a full Arabic grammar checker.
+Alfaraheedi is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
 
-The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. It is designed to keep Arabic text on the user's machine by default.
+The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. It is designed to keep user text on the user's machine by default.
 
 ![Alfaraheedi local web workbench](docs/assets/workbench.png)
 
@@ -148,7 +148,7 @@ npm install
 npm run dev
 ```
 
-The app defaults to `http://127.0.0.1:3000` for the API. You can change that in Settings. Draft persistence is off by default; enabling "Remember draft" stores text only in browser `localStorage`.
+During Vite development, the app defaults to `http://127.0.0.1:3000` for the API. Packaged builds default to the current app address, so alternate ports such as `3402` work without changing Settings. Draft persistence is off by default; enabling "Remember draft" stores text only in browser `localStorage`.
 
 Frontend checks:
 
@@ -237,14 +237,14 @@ With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LL
 
 ## Download
 
-Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current Windows package is `alfaraheedi-v0.4.0-windows-x64.zip`.
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current Windows package is `alfaraheedi-v0.4.1-windows-x64.zip`.
 
 ## Packaging
 
 Build the Windows x64 package:
 
 ```powershell
-.\scripts\package-windows.ps1 -Version 0.4.0
+.\scripts\package-windows.ps1 -Version 0.4.1
 ```
 
 The package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Alfaraheedi.ps1`.

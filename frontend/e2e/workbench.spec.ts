@@ -25,7 +25,7 @@ test("loads the packaged RTL workbench without automated accessibility violation
   await expect(page.locator(".app")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("main")).toBeVisible();
   await expect(page.getByRole("button", { name: "تحليل" })).toBeDisabled();
-  await expect(page.getByLabel("محرر النص العربي")).toBeVisible();
+  await expect(page.getByLabel("محرر النص")).toBeVisible();
 
   const results = await new AxeBuilder({ page })
     .disableRules(["color-contrast"])
@@ -117,8 +117,9 @@ test("opens rules, model policy, and settings drawers", async ({ page }) => {
   ).toBeHidden();
 
   await page.getByRole("button", { name: "الإعدادات" }).click();
-  await expect(page.getByRole("dialog", { name: "الإعدادات" })).toBeVisible();
-  await page.getByText("English", { exact: true }).click();
+  const settingsDialog = page.getByRole("dialog", { name: "الإعدادات" });
+  await expect(settingsDialog).toBeVisible();
+  await settingsDialog.getByText("English", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "Alfaraheedi" })).toBeVisible();
   await expect(page.locator(".app")).toHaveAttribute("dir", "ltr");
 });
