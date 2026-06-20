@@ -1,0 +1,34 @@
+[
+  {
+    "id": "reported-v0-4-false-positive-latin-list",
+    "text": "راجع API, CLI قبل النشر.",
+    "expected_sources": [],
+    "max_false_positives": 0,
+    "metadata": {
+      "source": {
+        "kind": "maintainer_reduced_report",
+        "reference": "github-issue-4-public-safe-seed"
+      },
+      "rule_source": "arabic:latin-comma",
+      "expected_behavior": "no_suggestion",
+      "raw_text_user_provided": false,
+      "notes": "Public-safe reduced fixture for a reported false-positive class: Latin punctuation inside an English acronym list in Arabic text must stay clean."
+    }
+  },
+  {
+    "id": "reported-v0-4-false-negative-question-mark",
+    "text": "هل وصلت? نعم",
+    "expected_sources": ["arabic:latin-question-mark"],
+    "max_false_positives": 0,
+    "metadata": {
+      "source": {
+        "kind": "maintainer_reduced_report",
+        "reference": "github-issue-4-public-safe-seed"
+      },
+      "rule_source": "arabic:latin-question-mark",
+      "expected_behavior": "expected_suggestion",
+      "raw_text_user_provided": false,
+      "notes": "Public-safe reduced fixture for a reported false-negative class: Latin question marks in Arabic sentence context must remain detected."
+    }
+  }
+]

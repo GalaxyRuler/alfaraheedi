@@ -188,6 +188,8 @@ The command prints JSON, including rule-level metrics and explicit failure detai
 
 The eval gate reports both precision and recall. Missing expected rules count as false negatives and fail the release gate.
 
+Reported false positives and false negatives can become public eval fixtures only after privacy review, reduction, or redaction. See `docs/evaluation.md` for the report-to-fixture checklist and metadata format.
+
 ## Privacy
 
 Alfaraheedi is local-first by default. The CLI, API, Docker image, and eval tooling do not require sending text to a hosted service.
