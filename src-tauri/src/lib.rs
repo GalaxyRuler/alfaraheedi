@@ -1,4 +1,9 @@
-use std::{fs, sync::Mutex, thread, time::Duration};
+use std::{
+    fs,
+    sync::Mutex,
+    thread,
+    time::{Duration, Instant},
+};
 
 use serde::{Deserialize, Serialize};
 use tauri::{
@@ -15,6 +20,9 @@ const DEFAULT_HOTKEY: &str = "Ctrl+Alt+A";
 const MAX_CAPTURE_CHARS: usize = 20_000;
 const CAPTURE_POLL_ATTEMPTS: usize = 12;
 const CAPTURE_POLL_INTERVAL: Duration = Duration::from_millis(45);
+const FOCUS_RETURN_DELAY: Duration = Duration::from_millis(180);
+const HOTKEY_RELEASE_TIMEOUT: Duration = Duration::from_millis(700);
+const HOTKEY_RELEASE_POLL_INTERVAL: Duration = Duration::from_millis(20);
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CommandError {
@@ -114,12 +122,18 @@ struct CompanionState {
     settings: Mutex<CompanionSettings>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CaptureInvocation {
+    Shortcut,
+    FocusedUi,
+}
+
 #[tauri::command]
 fn capture_selected_text(
     app: AppHandle,
     state: State<'_, CompanionState>,
 ) -> Result<CaptureResult, CommandError> {
-    capture_selected_text_impl(&app, &state)
+    capture_selected_text_from_invocation(&app, &state, CaptureInvocation::FocusedUi)
 }
 
 #[tauri::command]
@@ -307,6 +321,28 @@ fn capture_selected_text_impl(
     Ok(result)
 }
 
+fn capture_selected_text_from_invocation(
+    app: &AppHandle,
+    state: &CompanionState,
+    invocation: CaptureInvocation,
+) -> Result<CaptureResult, CommandError> {
+    match invocation {
+        CaptureInvocation::Shortcut => wait_for_hotkey_keys_released(),
+        CaptureInvocation::FocusedUi => {
+            hide_review_window(app);
+            thread::sleep(FOCUS_RETURN_DELAY);
+        }
+    }
+
+    let result = capture_selected_text_impl(app, state);
+
+    if invocation == CaptureInvocation::FocusedUi {
+        show_review_window(app);
+    }
+
+    result
+}
+
 fn wait_for_captured_text(
     app: &AppHandle,
     previous_text: Option<&str>,
@@ -379,6 +415,10 @@ fn count_safe(suggestions: &[Suggestion]) -> usize {
         .count()
 }
 
+fn should_capture_on_shortcut_state(state: ShortcutState) -> bool {
+    state == ShortcutState::Released
+}
+
 fn settings_path(app: &AppHandle) -> Result<std::path::PathBuf, CommandError> {
     let dir = app
         .path()
@@ -421,8 +461,8 @@ fn hide_review_window(app: &AppHandle) {
     }
 }
 
-fn emit_capture_result(app: &AppHandle, state: &CompanionState) {
-    match capture_selected_text_impl(app, state) {
+fn emit_capture_result(app: &AppHandle, state: &CompanionState, invocation: CaptureInvocation) {
+    match capture_selected_text_from_invocation(app, state, invocation) {
         Ok(result) => {
             show_review_window(app);
             let _ = app.emit("companion-captured", result);
@@ -448,7 +488,7 @@ fn setup_tray(app: &mut tauri::App) -> tauri::Result<()> {
             "show" | "settings" => show_review_window(app),
             "check" => {
                 let state = app.state::<CompanionState>();
-                emit_capture_result(app, state.inner());
+                emit_capture_result(app, state.inner(), CaptureInvocation::FocusedUi);
             }
             "quit" => app.exit(0),
             _ => {}
@@ -462,9 +502,9 @@ pub fn run() {
         .with_shortcut(DEFAULT_HOTKEY)
         .expect("default hotkey literal must parse")
         .with_handler(|app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
+            if should_capture_on_shortcut_state(event.state) {
                 let state = app.state::<CompanionState>();
-                emit_capture_result(app, state.inner());
+                emit_capture_result(app, state.inner(), CaptureInvocation::Shortcut);
             }
         })
         .build();
@@ -564,6 +604,27 @@ fn send_ctrl_shortcut(key: u16) -> Result<(), CommandError> {
 }
 
 #[cfg(windows)]
+fn wait_for_hotkey_keys_released() {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_MENU};
+
+    const VK_A: i32 = b'A' as i32;
+    let keys = [VK_CONTROL as i32, VK_MENU as i32, VK_A];
+    let start = Instant::now();
+    while start.elapsed() < HOTKEY_RELEASE_TIMEOUT {
+        let any_pressed = keys
+            .iter()
+            .any(|key| unsafe { GetAsyncKeyState(*key) as u16 & 0x8000 != 0 });
+        if !any_pressed {
+            return;
+        }
+        thread::sleep(HOTKEY_RELEASE_POLL_INTERVAL);
+    }
+}
+
+#[cfg(not(windows))]
+fn wait_for_hotkey_keys_released() {}
+
+#[cfg(windows)]
 fn foreground_window_handle() -> Option<isize> {
     use windows_sys::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
     let hwnd = unsafe { GetForegroundWindow() };
@@ -660,5 +721,11 @@ mod tests {
         assert_eq!(analysis.safe_count, 2);
         assert_eq!(analysis.source_app.as_deref(), Some("Notepad"));
         assert_eq!(analysis.current_text, "مرحبــا  بالعالم");
+    }
+
+    #[test]
+    fn shortcut_capture_runs_after_hotkey_release() {
+        assert!(!should_capture_on_shortcut_state(ShortcutState::Pressed));
+        assert!(should_capture_on_shortcut_state(ShortcutState::Released));
     }
 }
