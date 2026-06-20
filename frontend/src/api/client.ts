@@ -9,6 +9,9 @@ import type {
 
 export type ApiErrorKind = "network" | "http" | "parse" | "timeout";
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 12_000;
+const LLM_SUGGEST_TIMEOUT_MS = 130_000;
+
 // A single error type the UI can branch on. `network`/`timeout` map to the
 // "API unavailable" state; `http` carries a status for actionable messages.
 export class ApiError extends Error {
@@ -31,7 +34,7 @@ async function request<T>(
   baseUrl: string,
   path: string,
   init: RequestInit = {},
-  timeoutMs = 12_000,
+  timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -87,11 +90,16 @@ export function createApi(baseUrl: string): AlfaraheediApi {
       request<{ rules: RuleInfo[] }>(baseUrl, "/v1/rules").then((r) => r.rules),
     llmStatus: () => request<LlmStatus>(baseUrl, "/v1/llm/status"),
     llmSuggest: (text) =>
-      request<LlmSuggestion>(baseUrl, "/v1/llm/suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      }),
+      request<LlmSuggestion>(
+        baseUrl,
+        "/v1/llm/suggest",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        },
+        LLM_SUGGEST_TIMEOUT_MS,
+      ),
     analyze: (text) =>
       request<Analysis>(baseUrl, "/v1/analyze", {
         method: "POST",
