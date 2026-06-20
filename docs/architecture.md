@@ -58,7 +58,10 @@ Current suggest-only rules:
 
 - Latin comma in Arabic context.
 - Latin question mark in Arabic context.
+- Latin semicolon in Arabic context.
 - Space before Arabic punctuation.
+- Space after Arabic punctuation.
+- Narrow conversational greeting rewrite for `كيف حال ما اخبار`-style text.
 
 Potential additions after the current spine:
 

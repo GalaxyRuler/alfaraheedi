@@ -1,0 +1,21 @@
+[
+  {
+    "id": "reported-v0-5-arabic-conversational-greeting",
+    "text": "كيف حال  ما اخبار",
+    "expected_sources": [
+      "arabic:conversational-greeting",
+      "arabic:repeated-space"
+    ],
+    "max_false_positives": 0,
+    "metadata": {
+      "source": {
+        "kind": "user_report",
+        "reference": "codex-chat-2026-06-21-public-safe-arabic-sample"
+      },
+      "rule_source": "arabic:conversational-greeting",
+      "expected_behavior": "expected_suggestion",
+      "raw_text_user_provided": true,
+      "notes": "Short public-safe Arabic sample where the shipped deterministic layer should suggest a complete greeting instead of only spacing."
+    }
+  }
+]

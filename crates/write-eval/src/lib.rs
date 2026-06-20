@@ -104,6 +104,9 @@ pub fn seed_cases() -> anyhow::Result<Vec<EvalCase>> {
     cases.extend(read_cases(include_str!(
         "../../../datasets/eval/reported/v0.4-public-safe.json"
     ))?);
+    cases.extend(read_cases(include_str!(
+        "../../../datasets/eval/reported/v0.5-public-safe.json"
+    ))?);
     Ok(cases)
 }
 
