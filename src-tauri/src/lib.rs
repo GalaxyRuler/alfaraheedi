@@ -1,9 +1,4 @@
-use std::{
-    fs,
-    sync::Mutex,
-    thread,
-    time::{Duration, Instant},
-};
+use std::{fs, sync::Mutex, thread, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use tauri::{
@@ -21,7 +16,9 @@ const MAX_CAPTURE_CHARS: usize = 20_000;
 const CAPTURE_POLL_ATTEMPTS: usize = 12;
 const CAPTURE_POLL_INTERVAL: Duration = Duration::from_millis(45);
 const FOCUS_RETURN_DELAY: Duration = Duration::from_millis(180);
+#[cfg(windows)]
 const HOTKEY_RELEASE_TIMEOUT: Duration = Duration::from_millis(700);
+#[cfg(windows)]
 const HOTKEY_RELEASE_POLL_INTERVAL: Duration = Duration::from_millis(20);
 
 #[derive(Debug, Clone, Serialize)]
@@ -609,7 +606,7 @@ fn wait_for_hotkey_keys_released() {
 
     const VK_A: i32 = b'A' as i32;
     let keys = [VK_CONTROL as i32, VK_MENU as i32, VK_A];
-    let start = Instant::now();
+    let start = std::time::Instant::now();
     while start.elapsed() < HOTKEY_RELEASE_TIMEOUT {
         let any_pressed = keys
             .iter()
