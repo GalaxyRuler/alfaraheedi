@@ -1221,6 +1221,7 @@ dependencies = [
  "write-arabic",
  "write-core",
  "write-llm",
+ "write-service",
 ]
 
 [[package]]
@@ -1286,6 +1287,16 @@ version = "0.4.1"
 dependencies = [
  "serde",
  "write-core",
+]
+
+[[package]]
+name = "write-service"
+version = "0.4.1"
+dependencies = [
+ "serde",
+ "write-arabic",
+ "write-core",
+ "write-llm",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{net::SocketAddr, path::PathBuf};
 
 use anyhow::Context;
 use axum::{
@@ -12,8 +12,11 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 pub use write_arabic::default_rule_set;
-use write_core::{Analysis, ApplyOutcome, Engine, RuleInfo};
+use write_core::{Analysis, ApplyOutcome};
 use write_llm::{LlmRuntimeConfig, LlmStatus, LlmSuggestion};
+use write_service::{
+    AnalyzeInput, ApplySafeInput, LlmSuggestInput, RulesResponse, TextSelection, WritingMode,
+};
 
 pub fn router() -> Router {
     router_with_options(LlmRuntimeConfig::from_env(), None)
@@ -31,8 +34,7 @@ pub fn router_with_options(
     llm_config: Option<LlmRuntimeConfig>,
     frontend_dir: Option<PathBuf>,
 ) -> Router {
-    let engine = Arc::new(default_rule_set());
-    let state = AppState { engine, llm_config };
+    let state = AppState { llm_config };
 
     let router = Router::new()
         .route("/healthz", get(health))
@@ -57,7 +59,6 @@ pub fn router_with_options(
 
 #[derive(Clone)]
 struct AppState {
-    engine: Arc<Engine>,
     llm_config: Option<LlmRuntimeConfig>,
 }
 
@@ -115,22 +116,24 @@ pub struct HealthResponse {
 #[derive(Debug, Clone, Deserialize)]
 pub struct AnalyzeRequest {
     pub text: String,
+    #[serde(default)]
+    pub writing_mode: WritingMode,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ApplyRequest {
     pub text: String,
     pub mode: ApplyMode,
+    #[serde(default)]
+    pub writing_mode: WritingMode,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct LlmSuggestRequest {
     pub text: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct RulesResponse {
-    pub rules: Vec<RuleInfo>,
+    #[serde(default)]
+    pub writing_mode: WritingMode,
+    pub selection: Option<TextSelection>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -147,24 +150,21 @@ async fn health() -> Json<HealthResponse> {
 }
 
 async fn analyze(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(request): Json<AnalyzeRequest>,
 ) -> Json<Analysis> {
-    Json(state.engine.analyze(request.text))
+    Json(write_service::analyze_text(AnalyzeInput {
+        text: request.text,
+        writing_mode: request.writing_mode,
+    }))
 }
 
 async fn rules() -> Json<RulesResponse> {
-    Json(RulesResponse {
-        rules: write_arabic::rule_catalog(),
-    })
+    Json(write_service::list_rules())
 }
 
 async fn llm_status(State(state): State<AppState>) -> Json<LlmStatus> {
-    if let Some(config) = &state.llm_config {
-        Json(write_llm::runtime_status(config).await)
-    } else {
-        Json(write_llm::default_status())
-    }
+    Json(write_service::llm_status(state.llm_config.as_ref()).await)
 }
 
 async fn llm_suggest(
@@ -178,22 +178,30 @@ async fn llm_suggest(
         ));
     };
 
-    write_llm::suggest(config, &request.text)
-        .await
-        .map(Json)
-        .map_err(llm_error_response)
+    write_service::llm_suggest(
+        config,
+        LlmSuggestInput {
+            text: request.text,
+            writing_mode: request.writing_mode,
+            selection: request.selection,
+        },
+    )
+    .await
+    .map(Json)
+    .map_err(llm_error_response)
 }
 
 async fn apply(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(request): Json<ApplyRequest>,
 ) -> Result<Json<ApplyOutcome>, (StatusCode, String)> {
     match request.mode {
-        ApplyMode::Safe => state
-            .engine
-            .apply_safe(request.text)
-            .map(Json)
-            .map_err(|error| (StatusCode::BAD_REQUEST, error.to_string())),
+        ApplyMode::Safe => write_service::apply_safe_text(ApplySafeInput {
+            text: request.text,
+            writing_mode: request.writing_mode,
+        })
+        .map(Json)
+        .map_err(|error| (StatusCode::BAD_REQUEST, error.to_string())),
     }
 }
 

@@ -1,0 +1,12 @@
+[package]
+name = "write-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+write-arabic = { path = "../write-arabic" }
+write-core = { path = "../write-core" }
+write-llm = { path = "../write-llm" }

@@ -11,6 +11,7 @@ members = [
     "crates/write-api",
     "crates/write-wasm",
     "crates/write-eval",
+    "crates/write-service",
 ]
 
 [workspace.package]
