@@ -13,7 +13,7 @@ type Entry = { ar: string; en: string };
 
 export const STRINGS = {
   brandName: { ar: "الفراهيدي", en: "Alfaraheedi" },
-  brandTag: { ar: "مدقّق عربي محلي", en: "local-first Arabic checker" },
+  brandTag: { ar: "مدقّق كتابة محلي", en: "local-first writing checker" },
 
   engineOnline: { ar: "المحرك متصل", en: "Engine online" },
   engineOffline: { ar: "المحرك غير متصل", en: "Engine offline" },
@@ -23,6 +23,7 @@ export const STRINGS = {
   navRules: { ar: "القواعد", en: "Rules" },
   navLlm: { ar: "النموذج المحلي", en: "Local LLM" },
   navSettings: { ar: "الإعدادات", en: "Settings" },
+  languageSwitch: { ar: "لغة الواجهة", en: "Interface language" },
   reportTitle: { ar: "تقرير ملاحظات", en: "Feedback report" },
   skipEditor: { ar: "انتقال إلى المحرر", en: "Skip to editor" },
 
@@ -45,10 +46,10 @@ export const STRINGS = {
   clear: { ar: "مسح", en: "Clear" },
 
   editorPlaceholder: {
-    ar: "اكتب أو ألصق نصًا عربيًا هنا، ثم اضغط «تحليل».",
-    en: "Write or paste Arabic text here, then click Analyze.",
+    ar: "اكتب أو ألصق نصًا هنا، ثم اضغط «تحليل».",
+    en: "Write or paste text here, then click Analyze.",
   },
-  editorAria: { ar: "محرر النص العربي", en: "Arabic text editor" },
+  editorAria: { ar: "محرر النص", en: "Text editor" },
   privacyLocal: {
     ar: "محلي · النص يبقى على جهازك",
     en: "Local · text stays on your machine",
@@ -144,6 +145,14 @@ export const STRINGS = {
   settingsLanguage: { ar: "لغة الواجهة", en: "Interface language" },
   settingsApiUrl: { ar: "عنوان الواجهة البرمجية", en: "API base URL" },
   settingsDefault: { ar: "الافتراضي", en: "Default" },
+  engineUnavailablePrefix: {
+    ar: "تعذّر الوصول إلى المحرك على ",
+    en: "Can't reach the engine at ",
+  },
+  engineUnavailableHint: {
+    ar: "أعد تشغيل تطبيق الفراهيدي أو الخادم المحلي.",
+    en: "Restart the Alfaraheedi app or local server.",
+  },
   settingsDirection: { ar: "اتجاه المحرر", en: "Editor direction" },
   dirRtl: { ar: "من اليمين", en: "Right-to-left" },
   dirLtr: { ar: "من اليسار", en: "Left-to-right" },

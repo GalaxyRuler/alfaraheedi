@@ -5,6 +5,20 @@ import App from "../App";
 import { installFetch, okHealth } from "../test/mockApi";
 
 describe("UI language switch", () => {
+  it("switches chrome language directly from the header", async () => {
+    installFetch({ "GET /v1/health": okHealth });
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getByText("مدقّق كتابة محلي")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "English" }));
+
+    expect(screen.getByRole("button", { name: /Analyze/ })).toBeInTheDocument();
+    expect(screen.getByText("local-first writing checker")).toBeInTheDocument();
+    expect(screen.queryByText("مدقّق عربي محلي")).not.toBeInTheDocument();
+  });
+
   it("switches all chrome to English when chosen, independent of editor text", async () => {
     installFetch({ "GET /v1/health": okHealth });
     const user = userEvent.setup();

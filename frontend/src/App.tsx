@@ -383,6 +383,8 @@ function Workbench({
       <Header
         health={health}
         apiBaseUrl={settings.apiBaseUrl}
+        language={settings.language}
+        onLanguageChange={(language) => update({ language })}
         onOpenRules={openRules}
         onOpenLlm={openLlm}
         onOpenSettings={() => setDrawer("settings")}
@@ -391,12 +393,9 @@ function Workbench({
       {health === "offline" && (
         <div className="banner banner--warn" role="alert">
           <span>
-            {lang === "ar"
-              ? "تعذّر الوصول إلى المحرك على "
-              : "Can't reach the engine at "}
+            {t("engineUnavailablePrefix")}
             <code dir="ltr">{settings.apiBaseUrl}</code>.{" "}
-            {lang === "ar" ? "شغّل الخادم: " : "Start the server: "}
-            <code dir="ltr">cargo run -p write-cli -- serve</code>
+            {t("engineUnavailableHint")}
           </span>
           <button type="button" className="btn btn--ghost" onClick={handleAnalyze}>
             {t("retry")}
