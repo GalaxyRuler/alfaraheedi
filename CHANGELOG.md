@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Public feedback triage and patch-release policy for privacy-safe post-release reports.
+
 ## v0.3.0 - 2026-06-19
 
 ### Added
