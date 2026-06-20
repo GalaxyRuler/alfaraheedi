@@ -17,6 +17,8 @@ interface SuggestionsPanelProps {
   onActivate: (id: string) => void;
   onApply: (suggestion: Suggestion, replacement: string) => void;
   onApplyLlmSuggestion: (replacement: string) => void;
+  onReportAnalysis: () => void;
+  onReportSuggestion: (suggestion: Suggestion) => void;
 }
 
 export function SuggestionsPanel({
@@ -30,6 +32,8 @@ export function SuggestionsPanel({
   onActivate,
   onApply,
   onApplyLlmSuggestion,
+  onReportAnalysis,
+  onReportSuggestion,
 }: SuggestionsPanelProps) {
   const { t, categoryLabel } = useI18n();
   const groups = groupByCategory(suggestions);
@@ -39,10 +43,21 @@ export function SuggestionsPanel({
     <section className="panel suggestions" aria-label={t("suggestionsTitle")}>
       <header className="panel__header">
         <h2>{t("suggestionsTitle")}</h2>
-        {status === "done" && suggestions.length > 0 && (
-          <span className="panel__count" data-testid="suggestion-count">
-            {suggestions.length} · {t("safeShort")} {safeCount}
-          </span>
+        {status === "done" && (
+          <div className="panel__actions">
+            {suggestions.length > 0 && (
+              <span className="panel__count" data-testid="suggestion-count">
+                {suggestions.length} · {t("safeShort")} {safeCount}
+              </span>
+            )}
+            <button
+              type="button"
+              className="btn btn--ghost btn--small"
+              onClick={onReportAnalysis}
+            >
+              {t("reportAnalysis")}
+            </button>
+          </div>
         )}
       </header>
 
@@ -135,6 +150,7 @@ export function SuggestionsPanel({
                   isActive={suggestion.id === activeId}
                   onActivate={onActivate}
                   onApply={onApply}
+                  onReport={onReportSuggestion}
                 />
               ))}
             </div>

@@ -67,6 +67,37 @@ test("keeps local LLM unavailable state suggestion-only and manual", async ({
   await expect(alert).toContainText("اقتراحية فقط");
 });
 
+test("exports a privacy-first feedback report from analyzed text", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-write"]);
+  await page.getByRole("button", { name: "مثال" }).click();
+  await page.getByRole("button", { name: "تحليل" }).click();
+  await expect(page.getByTestId("suggestion-count")).toContainText("5");
+
+  await page.getByRole("button", { name: "تقرير التحليل" }).click();
+
+  await expect(
+    page.getByRole("dialog", { name: "تقرير ملاحظات" }),
+  ).toBeVisible();
+
+  const output = page.getByLabel("نص التقرير");
+  await expect(output).toHaveValue(/Raw text was not included\./);
+  await expect(output).not.toHaveValue(/مرحبــا {2}بالعالم/);
+
+  await page.getByRole("radio", { name: "النص الكامل" }).click();
+  await expect(output).toHaveValue(/مرحبــا {2}بالعالم/);
+
+  const issueHref = await page
+    .getByRole("link", { name: "فتح مسألة GitHub" })
+    .getAttribute("href");
+  expect(issueHref).toContain("github.com/GalaxyRuler/alfaraheedi");
+
+  await page.getByRole("button", { name: "نسخ التقرير" }).click();
+  await expect(page.getByRole("button", { name: "نُسخ التقرير" })).toBeVisible();
+});
+
 test("opens rules, model policy, and settings drawers", async ({ page }) => {
   await page.getByRole("button", { name: "القواعد" }).click();
   await expect(page.getByRole("dialog", { name: "القواعد" })).toBeVisible();

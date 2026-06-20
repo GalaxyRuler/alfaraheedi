@@ -23,11 +23,18 @@ import { Drawer } from "./components/Drawer";
 import { RulesPanel, type LoadStatus } from "./components/RulesPanel";
 import { LlmPanel } from "./components/LlmPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { ReportPanel } from "./components/ReportPanel";
 import { ShieldIcon } from "./components/Icons";
+import {
+  safeApiOrigin,
+  type EditorSelection,
+  type FeedbackReportEnvironment,
+  type FeedbackReportTarget,
+} from "./lib/feedbackReport";
 
 const EXAMPLE_TEXT = "مرحبــا  بالعالم، كيف حالك? أنا بخير, شكرًا ؛";
 
-type DrawerName = "rules" | "llm" | "settings" | null;
+type DrawerName = "rules" | "llm" | "settings" | "report" | null;
 
 function errorMessage(error: unknown, lang: Lang): string {
   if (error instanceof ApiError) return error.message;
@@ -43,6 +50,16 @@ function isUnavailable(error: unknown): boolean {
 function spliceReplacement(text: string, suggestion: Suggestion, replacement: string): string {
   const { start_utf16, end_utf16 } = suggestion.span;
   return text.slice(0, start_utf16) + replacement + text.slice(end_utf16);
+}
+
+function selectionFromSuggestion(text: string, suggestion: Suggestion): EditorSelection {
+  const start = Math.max(0, Math.min(suggestion.span.start_utf16, text.length));
+  const end = Math.max(start, Math.min(suggestion.span.end_utf16, text.length));
+  return {
+    start_utf16: start,
+    end_utf16: end,
+    text: text.slice(start, end),
+  };
 }
 
 export default function App() {
@@ -84,6 +101,13 @@ function Workbench({
 
   const [health, setHealth] = useState<Health>("checking");
   const [drawer, setDrawer] = useState<DrawerName>(null);
+  const [editorSelection, setEditorSelection] = useState<EditorSelection | null>(
+    null,
+  );
+  const [reportTarget, setReportTarget] =
+    useState<FeedbackReportTarget | null>(null);
+  const [reportEnvironment, setReportEnvironment] =
+    useState<FeedbackReportEnvironment | null>(null);
 
   const [rules, setRules] = useState<RuleInfo[]>([]);
   const [rulesStatus, setRulesStatus] = useState<LoadStatus>("idle");
@@ -98,6 +122,19 @@ function Workbench({
     setText(next);
   }, []);
 
+  const createReportEnvironment = useCallback(
+    (): FeedbackReportEnvironment => ({
+      ui_language: lang,
+      editor_direction: settings.direction,
+      api_origin: safeApiOrigin(settings.apiBaseUrl),
+      browser_language: navigator.language || "unknown",
+      viewport_width: window.innerWidth,
+      viewport_height: window.innerHeight,
+      online: navigator.onLine,
+    }),
+    [lang, settings.apiBaseUrl, settings.direction],
+  );
+
   const handleEditorChange = useCallback((next: string) => {
     if (next === textRef.current) return;
     textRef.current = next;
@@ -110,6 +147,7 @@ function Workbench({
     setLlmSuggestion(null);
     setLlmSuggestError(null);
     setNotice(null);
+    setEditorSelection(null);
   }, []);
 
   useEffect(() => {
@@ -267,6 +305,7 @@ function Workbench({
     setLlmSuggestion(null);
     setLlmSuggestError(null);
     setNotice(null);
+    setEditorSelection(null);
   }, [commitText]);
 
   const loadRules = useCallback(async () => {
@@ -301,6 +340,38 @@ function Workbench({
     setDrawer("llm");
     void loadLlm();
   }, [loadLlm]);
+
+  const openReport = useCallback(
+    (target: FeedbackReportTarget) => {
+      setReportTarget(target);
+      setReportEnvironment(createReportEnvironment());
+      setDrawer("report");
+    },
+    [createReportEnvironment],
+  );
+
+  const handleReportAnalysis = useCallback(() => {
+    openReport({
+      kind: "analysis",
+      text: textRef.current,
+      suggestions,
+      selectedText: editorSelection,
+    });
+  }, [editorSelection, openReport, suggestions]);
+
+  const handleReportSuggestion = useCallback(
+    (suggestion: Suggestion) => {
+      const currentText = textRef.current;
+      openReport({
+        kind: "suggestion",
+        text: currentText,
+        suggestions,
+        selectedText: selectionFromSuggestion(currentText, suggestion),
+        suggestion,
+      });
+    },
+    [openReport, suggestions],
+  );
 
   const safeCount = countSafe(suggestions);
 
@@ -360,6 +431,7 @@ function Workbench({
             suggestions={suggestions}
             activeId={activeId}
             onActivate={setActiveId}
+            onSelectionChange={setEditorSelection}
           />
 
           <footer className="editor-foot">
@@ -389,6 +461,8 @@ function Workbench({
           onActivate={setActiveId}
           onApply={handleApplyOne}
           onApplyLlmSuggestion={handleApplyLlmSuggestion}
+          onReportAnalysis={handleReportAnalysis}
+          onReportSuggestion={handleReportSuggestion}
         />
       </main>
 
@@ -412,6 +486,16 @@ function Workbench({
 
       <Drawer open={drawer === "settings"} title={t("navSettings")} onClose={() => setDrawer(null)}>
         <SettingsPanel settings={settings} onUpdate={update} />
+      </Drawer>
+
+      <Drawer open={drawer === "report"} title={t("reportTitle")} onClose={() => setDrawer(null)}>
+        {reportTarget && reportEnvironment && (
+          <ReportPanel
+            target={reportTarget}
+            environment={reportEnvironment}
+            appVersion={__ALFARAHEEDI_APP_VERSION__}
+          />
+        )}
       </Drawer>
     </div>
   );

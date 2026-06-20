@@ -23,6 +23,7 @@ export const STRINGS = {
   navRules: { ar: "القواعد", en: "Rules" },
   navLlm: { ar: "النموذج المحلي", en: "Local LLM" },
   navSettings: { ar: "الإعدادات", en: "Settings" },
+  reportTitle: { ar: "تقرير ملاحظات", en: "Feedback report" },
   skipEditor: { ar: "انتقال إلى المحرر", en: "Skip to editor" },
 
   analyze: { ar: "تحليل", en: "Analyze" },
@@ -73,6 +74,8 @@ export const STRINGS = {
     en: "Could not create a local LLM suggestion.",
   },
   llmApplySuggestion: { ar: "تطبيق يدوي", en: "Apply manually" },
+  reportAnalysis: { ar: "تقرير التحليل", en: "Report analysis" },
+  reportSuggestion: { ar: "تقرير الاقتراح", en: "Report suggestion" },
 
   badgeSafe: { ar: "إصلاح آمن", en: "Safe fix" },
   badgeSuggest: { ar: "اقتراح فقط", en: "Suggest only" },
@@ -87,6 +90,29 @@ export const STRINGS = {
   close: { ar: "إغلاق", en: "Close" },
   retry: { ar: "إعادة المحاولة", en: "Retry" },
   loading: { ar: "جارٍ التحميل…", en: "Loading…" },
+
+  reportIntro: {
+    ar: "يُنشأ التقرير محليًا. لا يُرسل شيء إلا إذا نسخته أو فتحت مسألة GitHub بنفسك.",
+    en: "The report is generated locally. Nothing is sent unless you copy it or open the GitHub issue yourself.",
+  },
+  reportSummary: { ar: "ملخص التقرير", en: "Report summary" },
+  reportKind: { ar: "نوع التقرير", en: "Report kind" },
+  reportKindSuggestion: { ar: "اقتراح محدد", en: "Specific suggestion" },
+  reportKindAnalysis: { ar: "تحليل كامل", en: "Full analysis" },
+  reportSuggestionCount: { ar: "عدد الاقتراحات", en: "Suggestion count" },
+  reportSource: { ar: "المصدر", en: "Source" },
+  reportRawMode: { ar: "النص المرفق", en: "Included text" },
+  reportRawNone: { ar: "بدون نص خام", en: "No raw text" },
+  reportRawSelected: { ar: "المقطع المحدد فقط", en: "Selected span only" },
+  reportRawFull: { ar: "النص الكامل", en: "Full text" },
+  reportRawHint: {
+    ar: "الافتراضي لا يرفق النص. أرفق مقطعًا أو النص الكامل فقط عند الحاجة.",
+    en: "Default excludes the draft. Include a span or full text only when needed.",
+  },
+  reportOutput: { ar: "نص التقرير", en: "Report text" },
+  reportCopied: { ar: "نُسخ التقرير", en: "Report copied" },
+  reportCopy: { ar: "نسخ التقرير", en: "Copy report" },
+  reportOpenIssue: { ar: "فتح مسألة GitHub", en: "Open GitHub issue" },
 
   rulesIntro: {
     ar: "القواعد المفعّلة حاليًا من المحرك (‎GET /v1/rules‎). الإصلاحات الآمنة فقط تُطبَّق تلقائيًا.",

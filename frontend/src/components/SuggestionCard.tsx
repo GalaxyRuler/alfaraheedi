@@ -7,6 +7,7 @@ interface SuggestionCardProps {
   isActive: boolean;
   onActivate: (id: string) => void;
   onApply: (suggestion: Suggestion, replacement: string) => void;
+  onReport: (suggestion: Suggestion) => void;
 }
 
 export function SuggestionCard({
@@ -14,6 +15,7 @@ export function SuggestionCard({
   isActive,
   onActivate,
   onApply,
+  onReport,
 }: SuggestionCardProps) {
   const { t, severityLabel, ruleText } = useI18n();
   const deleteLabel = t("deleteToken");
@@ -78,6 +80,13 @@ export function SuggestionCard({
         <span>
           {t("confidence")} {(suggestion.confidence * 100).toFixed(0)}%
         </span>
+        <button
+          type="button"
+          className="btn btn--ghost btn--small"
+          onClick={() => onReport(suggestion)}
+        >
+          {t("reportSuggestion")}
+        </button>
       </footer>
     </article>
   );
