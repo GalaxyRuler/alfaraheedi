@@ -385,6 +385,11 @@ button {
 .btn--ghost:hover:not(:disabled) {
   background: var(--surface-2);
 }
+.btn--small {
+  min-height: 28px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
 .btn__count {
   display: inline-grid;
   place-items: center;
@@ -434,6 +439,14 @@ button {
 .panel__count {
   font-size: 12.5px;
   color: var(--muted);
+}
+.panel__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-inline-start: auto;
 }
 
 .panel__body {
@@ -548,6 +561,11 @@ button {
   flex-wrap: wrap;
 }
 .suggestion__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 11.5px;
   color: var(--muted);
 }
@@ -767,6 +785,69 @@ button {
   padding: 10px 12px;
 }
 
+/* ---------- Feedback report ---------- */
+.report-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.report-summary .kv {
+  margin-bottom: 0;
+}
+
+.report-summary code {
+  direction: ltr;
+}
+
+.report-raw {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.field--radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.field--radio input {
+  accent-color: var(--accent);
+}
+
+.field--radio:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.report-output {
+  width: 100%;
+  min-height: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.report-output:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.report-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* ---------- Settings ---------- */
 .field {
   display: flex;
@@ -836,11 +917,17 @@ button {
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
   .workbench {
-    grid-template-columns: 1fr;
-    grid-auto-rows: minmax(0, auto);
+    display: flex;
+    flex-direction: column;
     overflow: auto;
   }
+  .editor-column,
+  .panel {
+    flex: 0 0 auto;
+  }
   .editor-host {
+    flex: none;
+    height: 46vh;
     min-height: 46vh;
   }
   .panel {

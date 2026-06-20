@@ -4,6 +4,7 @@ import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type { Suggestion } from "../api/types";
 import type { Direction } from "../state/settings";
+import type { EditorSelection } from "../lib/feedbackReport";
 import {
   buildSuggestionDecorations,
   setSuggestionDecorations,
@@ -19,6 +20,7 @@ interface EditorProps {
   suggestions: Suggestion[];
   activeId: string | null;
   onActivate: (id: string | null) => void;
+  onSelectionChange: (selection: EditorSelection | null) => void;
 }
 
 export function Editor({
@@ -30,14 +32,17 @@ export function Editor({
   suggestions,
   activeId,
   onActivate,
+  onSelectionChange,
 }: EditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   // Keep the latest onChange/onActivate without re-creating the editor.
   const onChangeRef = useRef(onChange);
   const onActivateRef = useRef(onActivate);
+  const onSelectionChangeRef = useRef(onSelectionChange);
   onChangeRef.current = onChange;
   onActivateRef.current = onActivate;
+  onSelectionChangeRef.current = onSelectionChange;
 
   // Create the editor exactly once.
   useEffect(() => {
@@ -57,6 +62,20 @@ export function Editor({
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               onChangeRef.current(update.state.doc.toString());
+            }
+            if (update.selectionSet || update.docChanged) {
+              const selection = update.state.selection.main;
+              if (selection.empty) {
+                onSelectionChangeRef.current(null);
+              } else {
+                const from = Math.min(selection.from, selection.to);
+                const to = Math.max(selection.from, selection.to);
+                onSelectionChangeRef.current({
+                  start_utf16: from,
+                  end_utf16: to,
+                  text: update.state.doc.sliceString(from, to),
+                });
+              }
             }
           }),
           EditorView.domEventHandlers({
