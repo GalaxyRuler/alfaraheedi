@@ -80,7 +80,9 @@ $scriptRoot = Split-Path -Parent $PSCommandPath
 $repoRoot = Split-Path -Parent $scriptRoot
 $runningOnWindows = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
 $apiExeName = if ($runningOnWindows) { "write-api.exe" } else { "write-api" }
+$cliExeName = if ($runningOnWindows) { "writecheck.exe" } else { "writecheck" }
 $apiExe = Join-Path (Join-Path $repoRoot "target") (Join-Path "debug" $apiExeName)
+$cliExe = Join-Path (Join-Path $repoRoot "target") (Join-Path "debug" $cliExeName)
 $apiBaseUrl = "http://$ApiAddr"
 $mockBaseUrl = "http://127.0.0.1:$MockRuntimePort"
 $mockOutput = Join-Path ([System.IO.Path]::GetTempPath()) "alfaraheedi-mock-openai.out.log"
@@ -122,7 +124,22 @@ try {
         exit 0
     }
 
-    cargo build -p write-api
+    cargo build -p write-api -p write-cli
+
+    $doctorJson = & $cliExe llm doctor --format json
+    if ($LASTEXITCODE -ne 0) {
+        throw "LLM doctor failed: $doctorJson"
+    }
+    $doctor = $doctorJson | ConvertFrom-Json
+    if ($doctor.ok -ne $true) {
+        throw "LLM doctor reported failure: $($doctor.summary)"
+    }
+    if ($doctor.catalog.policy.llm_safe_auto_apply -ne $false) {
+        throw "LLM doctor policy unexpectedly allows safe auto-apply"
+    }
+    if ($doctor.catalog.policy.bundled_weights -ne $false) {
+        throw "LLM doctor policy unexpectedly reports bundled weights"
+    }
 
     Set-ProcessEnv -Name "WRITECHECK_ADDR" -Value $ApiAddr
     $apiProcess = Start-HiddenProcess `

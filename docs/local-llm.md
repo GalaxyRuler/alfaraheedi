@@ -24,6 +24,26 @@ $env:ALFARAHEEDI_LLM_TIMEOUT_MS = "30000"
 
 `ALFARAHEEDI_LLM_BASE_URL` is the only required variable. If no model is set, Alfaraheedi uses the catalog default model id.
 
+## Doctor
+
+Run the built-in doctor before debugging model quality:
+
+```powershell
+cargo run -p write-cli -- llm doctor
+cargo run -p write-cli -- llm doctor --format json
+```
+
+Without `ALFARAHEEDI_LLM_BASE_URL`, the doctor exits successfully with a skipped/unavailable state. Local LLM is optional, so no-runtime is not a failure.
+
+When a runtime is configured, the doctor checks:
+
+- `ALFARAHEEDI_LLM_BASE_URL` is a loopback `http` or `https` URL such as `http://127.0.0.1:8000`.
+- `ALFARAHEEDI_LLM_MODEL` is non-empty. Catalog models are reported as known CPU-only candidates; custom model ids are allowed but warned.
+- `ALFARAHEEDI_LLM_TIMEOUT_MS` is an integer from `1000` to `120000`.
+- `GET /v1/models` returns an OpenAI-compatible model list.
+- A small built-in sample produces a non-empty `POST /v1/chat/completions` suggestion.
+- The policy remains suggestion-only with `safe_auto_apply = false`, no bundled weights, no automatic downloads, and no hosted fallback.
+
 ## llama.cpp Example
 
 If `llama-server` is installed and you already have a GGUF model file, start the local runtime with:
@@ -31,6 +51,13 @@ If `llama-server` is installed and you already have a GGUF model file, start the
 ```powershell
 .\scripts\llm-serve.ps1 -ModelPath C:\Models\Qwen3-1.7B-Q4_K_M.gguf
 ```
+
+CPU-only guidance:
+
+- Start with `Qwen3-1.7B-Q4_K_M.gguf` on machines with at least 4 GB available RAM.
+- Use `Qwen3-0.6B-Q4_0.gguf` for lower-memory tests.
+- Keep downloaded GGUF files outside the repository and release package, for example under `C:\Models`.
+- Do not commit model weights or download them automatically from Alfaraheedi scripts.
 
 Then start Alfaraheedi:
 
@@ -88,4 +115,6 @@ Use the mock runtime for CI-style contract verification without downloading mode
 .\scripts\smoke-llm.ps1 -MockRuntime
 ```
 
-Use a real local runtime by starting `llama-server` or another OpenAI-compatible server first, then set `ALFARAHEEDI_LLM_BASE_URL` and run the same smoke script. The script verifies that the runtime is reachable, `POST /v1/llm/suggest` returns a non-empty replacement, and `safe_auto_apply` remains `false`.
+The mock path starts a local OpenAI-compatible server, runs `writecheck llm doctor --format json`, starts the local API, and verifies `POST /v1/llm/suggest`.
+
+Use a real local runtime by starting `llama-server` or another OpenAI-compatible server first, then set `ALFARAHEEDI_LLM_BASE_URL` and run the same smoke script. The script verifies that the runtime is reachable, the doctor passes, `POST /v1/llm/suggest` returns a non-empty replacement, and `safe_auto_apply` remains `false`.

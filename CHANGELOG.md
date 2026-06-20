@@ -4,6 +4,7 @@
 
 ### Added
 
+- CLI local LLM doctor for CPU-only runtime configuration and suggestion-only contract checks.
 - Public feedback triage and patch-release policy for privacy-safe post-release reports.
 
 ## v0.3.0 - 2026-06-19

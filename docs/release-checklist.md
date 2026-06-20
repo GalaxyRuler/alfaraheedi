@@ -13,6 +13,7 @@
 - [ ] `npm run test:e2e` in `frontend/`
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
+- [ ] `cargo run -p write-cli -- llm doctor`
 - [ ] `.\scripts\smoke-llm.ps1 -MockRuntime`
 - [ ] Real local LLM smoke with a user-provided GGUF, when releasing LLM-facing changes
 - [ ] `.\scripts\smoke-docker.ps1`

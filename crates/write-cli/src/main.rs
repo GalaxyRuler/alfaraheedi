@@ -49,6 +49,10 @@ enum LlmCommand {
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         format: OutputFormat,
     },
+    Doctor {
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        format: OutputFormat,
+    },
     Suggest {
         path: Option<PathBuf>,
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
@@ -80,6 +84,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Llm { command } => match command {
             LlmCommand::Status { format } => llm_status(format).await,
+            LlmCommand::Doctor { format } => llm_doctor(format).await,
             LlmCommand::Suggest { path, format } => llm_suggest(path, format).await,
         },
     }
@@ -192,6 +197,53 @@ async fn llm_status(format: OutputFormat) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+async fn llm_doctor(format: OutputFormat) -> anyhow::Result<()> {
+    let report = write_llm::doctor_from_env().await;
+
+    match format {
+        OutputFormat::Json => {
+            println!("{}", serde_json::to_string_pretty(&report)?);
+        }
+        OutputFormat::Text => {
+            let state = if report.ok && report.available {
+                "passed"
+            } else if report.ok {
+                "skipped"
+            } else {
+                "failed"
+            };
+            println!("Local LLM doctor: {state}");
+            println!("Summary: {}", report.summary);
+            if let Some(runtime) = &report.runtime {
+                println!("Runtime: {}", runtime.base_url);
+                println!("Model: {}", runtime.model_id);
+                println!("Timeout: {} ms", runtime.timeout_ms);
+            }
+            println!("Checks:");
+            for check in &report.checks {
+                println!(
+                    "- {}: {}: {}",
+                    check.name,
+                    doctor_outcome_label(check.outcome),
+                    check.message
+                );
+            }
+        }
+    }
+
+    anyhow::ensure!(report.ok, "local LLM doctor found blocking issues");
+    Ok(())
+}
+
+fn doctor_outcome_label(outcome: write_llm::LlmDoctorOutcome) -> &'static str {
+    match outcome {
+        write_llm::LlmDoctorOutcome::Pass => "pass",
+        write_llm::LlmDoctorOutcome::Warn => "warn",
+        write_llm::LlmDoctorOutcome::Fail => "fail",
+        write_llm::LlmDoctorOutcome::Skip => "skip",
+    }
 }
 
 async fn llm_suggest(path: Option<PathBuf>, format: OutputFormat) -> anyhow::Result<()> {
