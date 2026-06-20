@@ -11,13 +11,16 @@
 - [ ] `npm run test` in `frontend/`
 - [ ] `npm run build` in `frontend/`
 - [ ] `npm run test:e2e` in `frontend/`
+- [ ] `npm run desktop:build` in `frontend/`
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
 - [ ] `cargo run -p write-cli -- llm doctor`
 - [ ] `.\scripts\smoke-llm.ps1 -MockRuntime`
 - [ ] Real local LLM smoke with a user-provided GGUF, when releasing LLM-facing changes
 - [ ] `.\scripts\smoke-docker.ps1`
-- [ ] `.\scripts\package-windows.ps1 -Version <version>`
+- [ ] `.\scripts\package-windows.ps1 -Version <version>` for the optional CLI/developer zip
+- [ ] Windows desktop installer produced as `Alfaraheedi-<version>-windows-x64-setup.exe`
+- [ ] Manual desktop companion QA: Notepad, browser textarea, Word, PowerPoint, WhatsApp, no selection, clipboard restore, large selection, Arabic UI, English UI, offline
 - [ ] Fresh clone test
 - [ ] README reviewed
 - [ ] Limitations reviewed
@@ -27,7 +30,8 @@
 - [ ] Changelog updated
 - [ ] GitHub release notes written
 - [ ] Tag created
-- [ ] Windows release zip uploaded
+- [ ] Recommended desktop installer uploaded
+- [ ] Optional developer CLI zip uploaded, if included
 
 ## Patch Release Preflight
 

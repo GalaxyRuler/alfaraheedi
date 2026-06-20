@@ -7,10 +7,12 @@ The MVP spine is:
 1. `write-core`: shared schema, bidirectional offset maps, protected spans, patch application.
 2. `write-arabic`: Arabic-only default rule set with high-precision safe rules and suggest-only punctuation rules.
 3. `write-eval`: small seed gate for false positives, protected-span behavior, and explicit failure reporting.
-4. `write-api`: Axum JSON API over the same default rule set.
-5. `write-cli`: local CLI and server launcher.
-6. `write-llm`: optional local LLM model catalog and policy contract.
-7. `frontend`: TypeScript/React/Vite local web workbench over the API.
+4. `write-service`: shared Rust service boundary used by the API, CLI-facing flows, and desktop companion.
+5. `write-api`: Axum JSON API over the same service boundary.
+6. `write-cli`: local CLI and server launcher.
+7. `write-llm`: optional local LLM model catalog and policy contract.
+8. `frontend`: TypeScript/React/Vite UI used by both the local web workbench and the Tauri review window.
+9. `src-tauri`: packaged Windows desktop companion host for tray, global hotkey, clipboard capture/apply, settings, and privacy-preserving app state.
 
 ## Decisions
 
@@ -26,6 +28,22 @@ The MVP spine is:
 - Use a local OpenAI-compatible llama.cpp-style runtime boundary for GGUF models rather than linking native inference into the core engine.
 - Use CodeMirror 6 in the web app for the writing surface because RTL editing, selection, and decorations are editor concerns, not string-textarea concerns.
 - Allow CORS for loopback origins only so local Vite development can call the API without enabling hosted or arbitrary website access.
+- Use Tauri for the packaged desktop companion. The OS WebView is only the app window; the normal user path must not require a browser tab or a localhost URL.
+- Use a hotkey-plus-clipboard workflow for v0.5 universal app support. Windows does not expose one reliable universal text read/decorate/replace API across Word, PowerPoint, browsers, chat apps, and native controls.
+- Treat raw selected text as session-only state in the desktop companion. It must not be logged, retained by default, or included in feedback reports unless the user explicitly supplies a reduced public example.
+
+## v0.5 Companion Scope
+
+The v0.5 desktop companion is the primary product surface for cross-app writing help:
+
+- User selects text in another app.
+- User presses `Ctrl+Alt+A` or uses the tray action.
+- Rust saves clipboard text when possible, sends `Ctrl+C`, captures selected text, restores the clipboard, and opens the review window.
+- The review window analyzes text locally through `write-service`.
+- The user can apply deterministic safe fixes, accept individual suggestions, copy corrected text, or replace the original selection.
+- Replacement writes the corrected text to the clipboard, refocuses the source app when possible, sends `Ctrl+V`, and restores the previous clipboard text when possible.
+
+Live underlines in browsers, Office-native document ranges, and UI Automation overlays are intentionally later integration milestones.
 
 ## Arabic MVP Scope
 

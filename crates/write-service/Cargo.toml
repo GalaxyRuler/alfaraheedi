@@ -7,6 +7,6 @@ repository.workspace = true
 
 [dependencies]
 serde.workspace = true
-write-arabic = { path = "../write-arabic" }
-write-core = { path = "../write-core" }
-write-llm = { path = "../write-llm" }
+write-arabic = { path = "../write-arabic", version = "0.5.0" }
+write-core = { path = "../write-core", version = "0.5.0" }
+write-llm = { path = "../write-llm", version = "0.5.0" }

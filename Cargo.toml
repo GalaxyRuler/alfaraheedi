@@ -12,10 +12,11 @@ members = [
     "crates/write-wasm",
     "crates/write-eval",
     "crates/write-service",
+    "src-tauri",
 ]
 
 [workspace.package]
-version = "0.4.1"
+version = "0.5.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/GalaxyRuler/alfaraheedi"

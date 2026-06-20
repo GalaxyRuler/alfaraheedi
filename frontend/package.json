@@ -1,12 +1,14 @@
 {
   "name": "alfaraheedi-frontend",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "description": "Local-first writing workbench for the Alfaraheedi engine.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "desktop:build": "cd .. && frontend\\node_modules\\.bin\\tauri build --config src-tauri/tauri.conf.json && powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\Copy-DesktopInstaller.ps1",
+    "desktop:dev": "cd .. && frontend\\node_modules\\.bin\\tauri dev --config src-tauri/tauri.conf.json",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
@@ -19,6 +21,7 @@
     "@codemirror/commands": "^6.7.1",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.36.1",
+    "@tauri-apps/api": "^2.11.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -26,6 +29,7 @@
     "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^9.17.0",
     "@playwright/test": "^1.61.0",
+    "@tauri-apps/cli": "^2.11.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

@@ -25,6 +25,8 @@ import { LlmPanel } from "./components/LlmPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ReportPanel } from "./components/ReportPanel";
 import { ShieldIcon } from "./components/Icons";
+import { CompanionRoot } from "./components/CompanionApp";
+import { isTauriRuntime } from "./api/companion";
 import {
   safeApiOrigin,
   type EditorSelection,
@@ -63,6 +65,14 @@ function selectionFromSuggestion(text: string, suggestion: Suggestion): EditorSe
 }
 
 export default function App() {
+  if (isTauriRuntime()) {
+    return <CompanionRoot />;
+  }
+
+  return <BrowserWorkbench />;
+}
+
+function BrowserWorkbench() {
   const { settings, update } = useSettings();
   return (
     <I18nProvider lang={settings.language}>
