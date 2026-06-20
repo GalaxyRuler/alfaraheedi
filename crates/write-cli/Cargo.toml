@@ -11,8 +11,8 @@ clap.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 tracing-subscriber.workspace = true
-write-api = { path = "../write-api", version = "0.4.0" }
-write-llm = { path = "../write-llm", version = "0.4.0" }
+write-api = { path = "../write-api", version = "0.4.1" }
+write-llm = { path = "../write-llm", version = "0.4.1" }
 
 [[bin]]
 name = "writecheck"

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.4.1 - 2026-06-20
+
+### Fixed
+
+- Packaged web builds now use the current app origin for the local API instead of hardcoding `http://127.0.0.1:3000`.
+- Existing browser settings saved from `v0.4.0` migrate the old default API URL to the packaged app origin.
+- Added a visible header language switch and changed product copy from Arabic-only wording to local writing checker wording.
+
 ## v0.4.0 - 2026-06-20
 
 ### Added

@@ -237,14 +237,14 @@ With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LL
 
 ## Download
 
-Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current Windows package is `alfaraheedi-v0.4.0-windows-x64.zip`.
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current Windows package is `alfaraheedi-v0.4.1-windows-x64.zip`.
 
 ## Packaging
 
 Build the Windows x64 package:
 
 ```powershell
-.\scripts\package-windows.ps1 -Version 0.4.0
+.\scripts\package-windows.ps1 -Version 0.4.1
 ```
 
 The package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Alfaraheedi.ps1`.
