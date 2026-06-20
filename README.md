@@ -190,6 +190,14 @@ The eval gate reports both precision and recall. Missing expected rules count as
 
 Reported false positives and false negatives can become public eval fixtures only after privacy review, reduction, or redaction. See `docs/evaluation.md` for the report-to-fixture checklist and metadata format.
 
+## Feedback And Reporting
+
+Please report false positives, false negatives, workbench UI bugs, packaging bugs, optional local LLM runtime issues, and docs issues through GitHub issues or the web workbench feedback report.
+
+Do not paste private Arabic text, full documents, personal details, proprietary text, tokens, or URLs with private data into public issues. The workbench feedback report defaults to no raw text; include only a reduced public-safe example or selected span when it is necessary and safe.
+
+Maintainer triage, patch-release criteria, and the report-to-eval-fixture process are documented in `docs/feedback-triage.md`.
+
 ## Privacy
 
 Alfaraheedi is local-first by default. The CLI, API, Docker image, and eval tooling do not require sending text to a hosted service.

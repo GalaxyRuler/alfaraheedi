@@ -29,6 +29,8 @@ The command prints JSON and exits non-zero on release-gating failures. The repor
 
 User feedback reports can become eval fixtures only after maintainer review. The goal is to preserve the smallest public-safe regression case, not to archive user text.
 
+Use [feedback-triage.md](feedback-triage.md) first to classify the report and decide whether it belongs in a patch release or the next minor release.
+
 Review checklist:
 
 1. Classify the report as a false positive, false negative, UI bug, packaging bug, LLM runtime issue, or docs issue.
