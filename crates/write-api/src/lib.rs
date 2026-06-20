@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
-pub use write_arabic::default_rule_set;
 use write_core::{Analysis, ApplyOutcome};
 use write_llm::{LlmRuntimeConfig, LlmStatus, LlmSuggestion};
+pub use write_service::default_rule_set;
 use write_service::{
     AnalyzeInput, ApplySafeInput, LlmSuggestInput, RulesResponse, TextSelection, WritingMode,
 };

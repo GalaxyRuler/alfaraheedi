@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use write_core::{Analysis, ApplyOutcome, RuleInfo};
+use write_core::{Analysis, ApplyOutcome, Engine, RuleInfo};
 use write_llm::{LlmRuntimeConfig, LlmStatus, LlmSuggestion};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -61,18 +61,32 @@ pub struct AppStatus {
 }
 
 pub fn analyze_text(input: AnalyzeInput) -> Analysis {
-    let engine = write_arabic::default_rule_set();
+    let engine = engine_for_mode(input.writing_mode);
     engine.analyze(input.text)
 }
 
 pub fn apply_safe_text(input: ApplySafeInput) -> Result<ApplyOutcome, write_core::PatchError> {
-    let engine = write_arabic::default_rule_set();
+    let engine = engine_for_mode(input.writing_mode);
     engine.apply_safe(input.text)
 }
 
 pub fn list_rules() -> RulesResponse {
-    RulesResponse {
-        rules: write_arabic::rule_catalog(),
+    let mut rules = write_arabic::rule_catalog();
+    rules.extend(write_english::rule_catalog());
+    RulesResponse { rules }
+}
+
+pub fn default_rule_set() -> Engine {
+    Engine::new()
+        .with_rule(write_arabic::ArabicRuleSet)
+        .with_rule(write_english::EnglishRuleSet)
+}
+
+fn engine_for_mode(mode: WritingMode) -> Engine {
+    match mode {
+        WritingMode::Arabic => write_arabic::default_rule_set(),
+        WritingMode::English => write_english::default_rule_set(),
+        WritingMode::Auto | WritingMode::Mixed => default_rule_set(),
     }
 }
 
@@ -113,7 +127,7 @@ mod tests {
             text: text.clone(),
             writing_mode: WritingMode::Auto,
         });
-        let direct = write_arabic::default_rule_set().analyze(text);
+        let direct = default_rule_set().analyze(text);
 
         assert_eq!(service, direct);
     }
@@ -143,5 +157,35 @@ mod tests {
                 .iter()
                 .any(|rule| rule.source == "arabic:repeated-space")
         );
+        assert!(
+            rules
+                .iter()
+                .any(|rule| rule.source == "english:common-typo")
+        );
+    }
+
+    #[test]
+    fn service_auto_mode_flags_basic_english_spelling_and_grammar() {
+        let text = "helo wat you are do?".to_owned();
+        let analysis = analyze_text(AnalyzeInput {
+            text: text.clone(),
+            writing_mode: WritingMode::Auto,
+        });
+        let sources = analysis
+            .suggestions
+            .iter()
+            .map(|suggestion| suggestion.source.as_str())
+            .collect::<Vec<_>>();
+
+        assert!(sources.contains(&"english:common-typo"));
+        assert!(sources.contains(&"english:you-are-do"));
+
+        let outcome = apply_safe_text(ApplySafeInput {
+            text,
+            writing_mode: WritingMode::Auto,
+        })
+        .expect("safe English fixes apply");
+
+        assert_eq!(outcome.text, "hello what are you doing?");
     }
 }
