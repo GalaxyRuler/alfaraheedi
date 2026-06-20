@@ -1207,7 +1207,7 @@ dependencies = [
 
 [[package]]
 name = "write-api"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1225,14 +1225,14 @@ dependencies = [
 
 [[package]]
 name = "write-arabic"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "write-core",
 ]
 
 [[package]]
 name = "write-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1245,7 +1245,7 @@ dependencies = [
 
 [[package]]
 name = "write-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "thiserror",
@@ -1254,14 +1254,14 @@ dependencies = [
 
 [[package]]
 name = "write-english"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "write-core",
 ]
 
 [[package]]
 name = "write-eval"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -1272,7 +1272,7 @@ dependencies = [
 
 [[package]]
 name = "write-llm"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "reqwest",
  "serde",
@@ -1282,7 +1282,7 @@ dependencies = [
 
 [[package]]
 name = "write-mixed"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "write-core",
@@ -1290,7 +1290,7 @@ dependencies = [
 
 [[package]]
 name = "write-spell"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "thiserror",
@@ -1299,7 +1299,7 @@ dependencies = [
 
 [[package]]
 name = "write-wasm"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "write-core",
 ]
