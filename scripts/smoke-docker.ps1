@@ -1,3 +1,7 @@
+param(
+    [int]$HostPort = 3000
+)
+
 $ErrorActionPreference = "Stop"
 
 function Invoke-Docker {
@@ -15,7 +19,7 @@ function Invoke-Docker {
 try {
     Invoke-Docker -Arguments @("build", "-t", "alfaraheedi:local", ".")
 
-    $container = docker run -d -p 3000:3000 --name alfaraheedi-smoke alfaraheedi:local
+    $container = docker run -d -p "${HostPort}:3000" --name alfaraheedi-smoke alfaraheedi:local
     if ($LASTEXITCODE -ne 0) {
         throw "docker run failed with exit code $LASTEXITCODE"
     }
@@ -23,7 +27,7 @@ try {
     $health = $null
     for ($attempt = 1; $attempt -le 20; $attempt++) {
         try {
-            $health = Invoke-RestMethod -Uri "http://127.0.0.1:3000/healthz"
+            $health = Invoke-RestMethod -Uri "http://127.0.0.1:$HostPort/healthz"
             break
         }
         catch {
@@ -41,7 +45,7 @@ try {
 
     $body = @{ text = "مرحبــا  بالعالم" } | ConvertTo-Json
     $analysis = Invoke-RestMethod `
-        -Uri "http://127.0.0.1:3000/v1/analyze" `
+        -Uri "http://127.0.0.1:$HostPort/v1/analyze" `
         -Method Post `
         -ContentType "application/json" `
         -Body $body

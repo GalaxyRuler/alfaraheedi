@@ -31,7 +31,7 @@ describe("feedback report builder", () => {
       target,
       rawTextMode: "none",
       environment,
-      appVersion: "0.3.0",
+      appVersion: "0.4.0",
       createdAt: "2026-06-20T00:00:00.000Z",
     });
 
@@ -50,7 +50,7 @@ describe("feedback report builder", () => {
       target,
       rawTextMode: "selected",
       environment,
-      appVersion: "0.3.0",
+      appVersion: "0.4.0",
       createdAt: "2026-06-20T00:00:00.000Z",
     });
 
@@ -72,7 +72,7 @@ describe("feedback report builder", () => {
       target,
       rawTextMode: "full",
       environment,
-      appVersion: "0.3.0",
+      appVersion: "0.4.0",
       createdAt: "2026-06-20T00:00:00.000Z",
     });
 
