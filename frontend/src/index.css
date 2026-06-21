@@ -956,6 +956,139 @@ button {
   pointer-events: none;
 }
 
+/* ---------- Companion ---------- */
+.companion-app {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(37, 99, 235, 0.06), transparent 34%),
+    var(--bg);
+}
+
+.companion-shell {
+  width: min(1060px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0 32px;
+}
+
+.companion-hero,
+.companion-controls,
+.companion-review {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.companion-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px;
+}
+
+.companion-hero h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.companion-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.companion-privacy {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.companion-privacy p {
+  margin: 0;
+}
+
+.companion-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 14px;
+  padding: 16px;
+}
+
+.companion-empty {
+  margin-top: 14px;
+}
+
+.companion-notice {
+  display: block;
+  margin-top: 14px;
+}
+
+.companion-review {
+  margin-top: 14px;
+  padding: 18px;
+}
+
+.companion-review__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.companion-review__header h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.companion-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.companion-preview {
+  width: 100%;
+  min-height: 128px;
+  margin-top: 16px;
+  padding: 14px;
+  resize: vertical;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.7;
+}
+
+.companion-preview:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.companion-suggestions {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.companion-card__head {
+  cursor: default;
+}
+
+.companion-card__actions {
+  justify-content: flex-end;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
   .app-header,
@@ -985,5 +1118,26 @@ button {
   }
   .brand__tag {
     display: none;
+  }
+  .companion-shell {
+    width: min(100vw - 20px, 680px);
+    padding-top: 12px;
+  }
+  .companion-hero,
+  .companion-review__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .companion-controls {
+    grid-template-columns: 1fr;
+  }
+  .companion-privacy {
+    grid-template-columns: 1fr;
+  }
+  .companion-review__actions {
+    justify-content: stretch;
+  }
+  .companion-review__actions .btn {
+    justify-content: center;
   }
 }

@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use write_core::{Category, Document, Engine, Language, Rule, RuleInfo, Severity, Suggestion};
 
 const TATWEEL: char = '\u{0640}';
@@ -60,6 +62,13 @@ pub fn rule_catalog() -> Vec<RuleInfo> {
             safe_auto_apply: false,
             description: "Suggest adding spaces after Arabic punctuation.".to_owned(),
         },
+        RuleInfo {
+            source: "arabic:conversational-greeting".to_owned(),
+            language: Language::Arabic,
+            category: Category::Grammar,
+            safe_auto_apply: false,
+            description: "Suggest a complete form for a common Arabic greeting.".to_owned(),
+        },
     ]
 }
 
@@ -75,8 +84,15 @@ impl Rule for ArabicRuleSet {
         suggestions.extend(space_before_punctuation_suggestions(document));
         suggestions.extend(space_after_punctuation_suggestions(document));
         suggestions.extend(spacing_suggestions(document));
+        suggestions.extend(conversational_greeting_suggestions(document));
         suggestions
     }
+}
+
+#[derive(Debug, Clone)]
+struct ArabicWordToken {
+    range: Range<usize>,
+    text: String,
 }
 
 pub fn is_arabic_script(character: char) -> bool {
@@ -271,6 +287,80 @@ fn space_after_punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
     }
 
     suggestions
+}
+
+fn conversational_greeting_suggestions(document: &Document) -> Vec<Suggestion> {
+    let tokens = arabic_word_tokens(document);
+    if tokens.len() != 4 {
+        return Vec::new();
+    }
+
+    if tokens[0].text != "كيف"
+        || tokens[1].text != "حال"
+        || tokens[2].text != "ما"
+        || tokens[3].text != "اخبار"
+    {
+        return Vec::new();
+    }
+
+    let range = tokens[0].range.start..tokens[3].range.end;
+    if document.range_is_protected(range.clone()) {
+        return Vec::new();
+    }
+
+    let mut suggestions = Vec::new();
+    if let (Ok(span), Some(original)) = (
+        document.span_for_byte_range(range.clone()),
+        document.text().get(range),
+    ) {
+        suggestions.push(Suggestion::replacement(
+            "arabic:conversational-greeting",
+            span,
+            Language::Arabic,
+            Category::Grammar,
+            Severity::Warning,
+            0.9,
+            original,
+            vec!["كيف حالك؟ ما أخبارك؟".to_owned()],
+            "Use a complete conversational greeting with the right pronoun and hamza.",
+            false,
+        ));
+    }
+
+    suggestions
+}
+
+fn arabic_word_tokens(document: &Document) -> Vec<ArabicWordToken> {
+    let text = document.text();
+    let mut tokens = Vec::new();
+    let mut start = None;
+
+    for (byte_index, character) in text.char_indices() {
+        if is_arabic_script(character) {
+            start.get_or_insert(byte_index);
+            continue;
+        }
+
+        if let Some(open) = start.take() {
+            push_arabic_word_token(text, open..byte_index, &mut tokens);
+        }
+    }
+
+    if let Some(open) = start {
+        push_arabic_word_token(text, open..text.len(), &mut tokens);
+    }
+
+    tokens
+}
+
+fn push_arabic_word_token(text: &str, range: Range<usize>, tokens: &mut Vec<ArabicWordToken>) {
+    let Some(slice) = text.get(range.clone()) else {
+        return;
+    };
+    tokens.push(ArabicWordToken {
+        range,
+        text: slice.to_owned(),
+    });
 }
 
 fn push_spacing_suggestion(

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added a narrow Arabic conversational greeting suggestion for `كيف حال ما اخبار`-style text.
+
 ## v0.4.1 - 2026-06-20
 
 ### Fixed

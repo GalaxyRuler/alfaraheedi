@@ -107,6 +107,24 @@ fn arabic_rules_collapse_repeated_spaces_in_arabic_context() {
 }
 
 #[test]
+fn arabic_rules_suggest_common_conversational_greeting_rewrite() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("كيف حال  ما اخبار");
+
+    let suggestion = analysis
+        .suggestions
+        .iter()
+        .find(|suggestion| suggestion.source == "arabic:conversational-greeting")
+        .expect("conversational greeting suggestion");
+
+    assert_eq!(suggestion.category, Category::Grammar);
+    assert_eq!(suggestion.original, "كيف حال  ما اخبار");
+    assert_eq!(suggestion.replacements, vec!["كيف حالك؟ ما أخبارك؟"]);
+    assert!(!suggestion.safe_auto_apply);
+}
+
+#[test]
 fn arabic_rules_skip_protected_url_and_code_spans() {
     let analysis = Engine::new()
         .with_rule(ArabicRuleSet::default())

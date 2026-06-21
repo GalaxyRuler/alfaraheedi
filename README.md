@@ -8,13 +8,13 @@
 
 Alfaraheedi is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
 
-The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. It is designed to keep user text on the user's machine by default.
+The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 development track adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. It is designed to keep user text on the user's machine by default.
 
 ![Alfaraheedi local web workbench](docs/assets/workbench.png)
 
 ## What It Is Not
 
-Alfaraheedi is not a hosted writing service, a browser extension, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
+Alfaraheedi is not a hosted writing service, a browser extension, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. The desktop companion does not provide live underlines in every app yet. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
 
 ## Current Rules
 
@@ -162,6 +162,20 @@ npm run test:e2e
 
 `npm run test:e2e` builds the frontend, starts `writecheck serve --frontend-dir frontend/dist`, and runs Playwright against the packaged local app in desktop and mobile Chromium.
 
+## Desktop Companion
+
+The v0.5 desktop companion is a Tauri Windows tray app. It is for text that already exists in another app: select text, press `Ctrl+Alt+A`, review local suggestions, then copy corrected text or replace the original selection.
+
+The companion uses the clipboard only after the user invokes the hotkey or tray action. It attempts to restore the previous clipboard content after capture and replacement. It does not monitor raw text in the background, does not require `writecheck serve`, and does not send selected text to a hosted service.
+
+Build the desktop app from `frontend/`:
+
+```powershell
+npm run desktop:build
+```
+
+For v0.5 releases, the recommended user artifact is a Windows installer named like `Alfaraheedi-0.5.0-windows-x64-setup.exe`. The CLI zip is a developer artifact, not the main install path.
+
 ## Docker
 
 Build and run the local image:
@@ -237,17 +251,17 @@ With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LL
 
 ## Download
 
-Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current Windows package is `alfaraheedi-v0.4.1-windows-x64.zip`.
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current v0.4 Windows package is `alfaraheedi-v0.4.1-windows-x64.zip`. The v0.5 release track changes the recommended package to a Windows desktop installer.
 
 ## Packaging
 
 Build the Windows x64 package:
 
 ```powershell
-.\scripts\package-windows.ps1 -Version 0.4.1
+.\scripts\package-windows.ps1 -Version 0.5.0
 ```
 
-The package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Alfaraheedi.ps1`.
+This legacy package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Alfaraheedi.ps1`. For v0.5 user releases, prefer the desktop installer produced by `npm run desktop:build`.
 
 ## Roadmap
 
@@ -256,7 +270,11 @@ Near-term work after the public MVP:
 - Broaden the release eval suite before promoting any new safe auto-apply rule.
 - Add normalization checks only when reversible offset maps are proven.
 - Keep dictionary and morphology work behind clear licensing and accuracy gates.
-- Add editor, LSP, or hosted integrations only after the local engine contract is stable.
+- v0.6: in-app local LLM setup and selected-text LLM suggestions.
+- v0.7: browser extension for live web editor underlines.
+- v0.8: Word and PowerPoint Office add-ins.
+- v0.9: UI Automation pilot for supported Windows native text controls.
+- Add LSP or hosted integrations only after the local engine contract is stable.
 
 ## Known Limitations
 
@@ -264,6 +282,7 @@ Near-term work after the public MVP:
 - No Arabic morphology or context-heavy grammar correction.
 - No spell checking.
 - No English grammar layer.
-- No browser extension, editor integration, or LSP server.
+- No browser extension, Office add-in, editor integration, UI Automation overlay, or LSP server.
+- No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.

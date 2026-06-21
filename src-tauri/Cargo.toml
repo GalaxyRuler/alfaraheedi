@@ -1,0 +1,34 @@
+[package]
+name = "alfaraheedi-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "alfaraheedi_desktop"
+path = "src/lib.rs"
+
+[[bin]]
+name = "alfaraheedi"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.5.2", features = [] }
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+tauri = { version = "2.11.2", features = ["tray-icon"] }
+tauri-plugin-clipboard-manager = "2.3.2"
+tauri-plugin-global-shortcut = "2.3.1"
+write-core = { path = "../crates/write-core", version = "0.5.0" }
+write-service = { path = "../crates/write-service", version = "0.5.0" }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+  "Win32_Foundation",
+  "Win32_System_DataExchange",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+] }

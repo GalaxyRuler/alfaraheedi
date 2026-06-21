@@ -1,5 +1,5 @@
 [package]
-name = "write-spell"
+name = "write-service"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,5 +7,7 @@ repository.workspace = true
 
 [dependencies]
 serde.workspace = true
-thiserror.workspace = true
+write-arabic = { path = "../write-arabic", version = "0.5.0" }
 write-core = { path = "../write-core", version = "0.5.0" }
+write-english = { path = "../write-english", version = "0.5.0" }
+write-llm = { path = "../write-llm", version = "0.5.0" }

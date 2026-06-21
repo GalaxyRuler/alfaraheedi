@@ -1,0 +1,11 @@
+{
+  "identifier": "default",
+  "description": "Default capability for the Alfaraheedi companion review window.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
+    "global-shortcut:allow-is-registered"
+  ]
+}
