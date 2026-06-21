@@ -58,6 +58,29 @@ describe("companion local LLM setup", () => {
       if (command === "get_companion_llm_status") {
         return Promise.resolve(SAMPLE_LLM);
       }
+      if (command === "run_companion_llm_doctor") {
+        return Promise.resolve({
+          ok: true,
+          available: false,
+          summary:
+            "local LLM runtime is not configured; doctor skipped live runtime checks",
+          runtime: null,
+          catalog: SAMPLE_LLM.catalog,
+          checks: [
+            {
+              name: "policy",
+              outcome: "pass",
+              message: "suggestion-only local-first policy is intact",
+            },
+            {
+              name: "runtime_config",
+              outcome: "skip",
+              message:
+                "optional local LLM runtime is not configured; set ALFARAHEEDI_LLM_BASE_URL to run live checks",
+            },
+          ],
+        });
+      }
       return Promise.resolve(null);
     });
   });
@@ -95,6 +118,22 @@ describe("companion local LLM setup", () => {
       expect(invokeMock).toHaveBeenCalledWith("get_companion_llm_status");
     });
     expect(screen.getByText(/local LLM runtime is not configured/)).toBeInTheDocument();
+  });
+
+  it("runs the local LLM doctor from the companion surface", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Run doctor/ }));
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith("run_companion_llm_doctor");
+    });
+    expect(
+      screen.getByText(/doctor skipped live runtime checks/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("runtime_config")).toBeInTheDocument();
+    expect(screen.getByText(/ALFARAHEEDI_LLM_BASE_URL/)).toBeInTheDocument();
   });
 
   it("requests a selected-text local LLM suggestion and applies it manually", async () => {

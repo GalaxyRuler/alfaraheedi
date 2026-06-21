@@ -9,7 +9,7 @@ use tauri::{
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_global_shortcut::ShortcutState;
 use write_core::{Analysis, ApplyOutcome, Suggestion};
-use write_llm::{LlmStatus, LlmSuggestion};
+use write_llm::{LlmDoctorReport, LlmStatus, LlmSuggestion};
 use write_service::{AnalyzeInput, ApplySafeInput, LlmSuggestInput, RulesResponse, WritingMode};
 
 const DEFAULT_HOTKEY: &str = "Ctrl+Alt+A";
@@ -283,6 +283,18 @@ async fn get_companion_llm_status(
 }
 
 #[tauri::command]
+async fn run_companion_llm_doctor(
+    state: State<'_, CompanionState>,
+) -> Result<LlmDoctorReport, CommandError> {
+    let settings = state
+        .settings
+        .lock()
+        .map_err(|_| CommandError::new("Could not lock companion settings."))?
+        .clone();
+    Ok(llm_doctor_from_settings(&settings).await)
+}
+
+#[tauri::command]
 async fn suggest_with_local_llm_for_session(
     state: State<'_, CompanionState>,
 ) -> Result<LlmSuggestion, CommandError> {
@@ -526,6 +538,25 @@ async fn llm_status_from_settings(settings: &CompanionSettings) -> LlmStatus {
     }
 }
 
+async fn llm_doctor_from_settings(settings: &CompanionSettings) -> LlmDoctorReport {
+    match llm_config_from_settings(settings) {
+        Ok(Some(config)) => write_service::llm_doctor(Some(&config)).await,
+        Ok(None) => write_service::llm_doctor(None).await,
+        Err(error) => write_llm::LlmDoctorReport {
+            ok: false,
+            available: false,
+            summary: "local LLM doctor found blocking configuration issues".to_owned(),
+            runtime: None,
+            catalog: write_llm::builtin_catalog(),
+            checks: vec![write_llm::LlmDoctorCheck {
+                name: "runtime_config".to_owned(),
+                outcome: write_llm::LlmDoctorOutcome::Fail,
+                message: error.to_string(),
+            }],
+        },
+    }
+}
+
 async fn llm_suggestion_from_settings(
     settings: &CompanionSettings,
     session: &SessionState,
@@ -620,6 +651,7 @@ pub fn run() {
             save_companion_settings,
             get_companion_status,
             get_companion_llm_status,
+            run_companion_llm_doctor,
             suggest_with_local_llm_for_session,
             list_rules,
         ])
@@ -890,6 +922,23 @@ mod tests {
         assert_eq!(
             status.catalog.policy.default_model_id,
             write_llm::DEFAULT_MODEL_ID
+        );
+    }
+
+    #[test]
+    fn llm_doctor_from_unconfigured_settings_skips_live_checks() {
+        let report =
+            tauri::async_runtime::block_on(llm_doctor_from_settings(&CompanionSettings::default()));
+
+        assert!(report.ok);
+        assert!(!report.available);
+        assert!(report.summary.contains("skipped live runtime checks"));
+        assert!(
+            report
+                .checks
+                .iter()
+                .any(|check| check.name == "runtime_config"
+                    && check.outcome == write_llm::LlmDoctorOutcome::Skip)
         );
     }
 

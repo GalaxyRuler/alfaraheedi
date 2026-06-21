@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import type { LlmSuggestion, Suggestion } from "../api/types";
+import type {
+  LlmDoctorOutcome,
+  LlmDoctorReport,
+  LlmSuggestion,
+  Suggestion,
+} from "../api/types";
 import {
   applySuggestionReplacement,
   buildPrivacySafeSuggestionReport,
@@ -83,6 +88,13 @@ function CompanionApp({
     "idle" | "loading" | "done" | "error"
   >("idle");
   const [llmRuntimeReason, setLlmRuntimeReason] = useState<string | null>(null);
+  const [llmDoctorStatus, setLlmDoctorStatus] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
+  const [llmDoctorReport, setLlmDoctorReport] = useState<LlmDoctorReport | null>(
+    null,
+  );
+  const [llmDoctorError, setLlmDoctorError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -237,6 +249,29 @@ function CompanionApp({
             : "Could not check the local runtime.";
       setLlmRuntimeReason(message);
       setLlmRuntimeStatus("error");
+    }
+  }, [lang]);
+
+  const runLlmDoctor = useCallback(async () => {
+    setLlmDoctorStatus("loading");
+    setLlmDoctorReport(null);
+    setLlmDoctorError(null);
+    try {
+      const report = await companionClient.runLlmDoctor();
+      setLlmDoctorReport(report);
+      setLlmDoctorStatus("done");
+    } catch (caught) {
+      const message =
+        typeof caught === "object" &&
+        caught !== null &&
+        "message" in caught &&
+        typeof caught.message === "string"
+          ? caught.message
+          : lang === "ar"
+            ? "تعذّر تشغيل فحص النموذج المحلي."
+            : "Could not run the local LLM doctor.";
+      setLlmDoctorError(message);
+      setLlmDoctorStatus("error");
     }
   }, [lang]);
 
@@ -497,6 +532,20 @@ function CompanionApp({
                     ? "فحص الخادم"
                     : "Check runtime"}
               </button>
+              <button
+                type="button"
+                className="btn btn--ghost btn--small"
+                onClick={() => void runLlmDoctor()}
+                disabled={llmDoctorStatus === "loading"}
+              >
+                {llmDoctorStatus === "loading"
+                  ? lang === "ar"
+                    ? "جارٍ التشخيص..."
+                    : "Running doctor..."
+                  : lang === "ar"
+                    ? "تشخيص النموذج"
+                    : "Run doctor"}
+              </button>
               {llmRuntimeReason && (
                 <p
                   className={`policy-note companion-llm-status${
@@ -508,6 +557,53 @@ function CompanionApp({
                 </p>
               )}
             </div>
+            {llmDoctorStatus === "error" && (
+              <div className="state state--error companion-llm-doctor" role="alert">
+                {llmDoctorError ??
+                  (lang === "ar"
+                    ? "تعذّر تشغيل فحص النموذج المحلي."
+                    : "Could not run the local LLM doctor.")}
+              </div>
+            )}
+            {llmDoctorReport && (
+              <article
+                className="companion-llm-doctor"
+                data-testid="companion-llm-doctor"
+              >
+                <header className="companion-llm-doctor__header">
+                  <div>
+                    <h3>{lang === "ar" ? "تشخيص النموذج المحلي" : "Runtime doctor"}</h3>
+                    <p className="policy-note">{llmDoctorReport.summary}</p>
+                  </div>
+                  <span
+                    className={`badge ${
+                      llmDoctorReport.ok ? "badge--safe" : "badge--suggest"
+                    }`}
+                  >
+                    {llmDoctorReport.ok
+                      ? lang === "ar"
+                        ? "سليم"
+                        : "OK"
+                      : lang === "ar"
+                        ? "مشكلة"
+                        : "Needs attention"}
+                  </span>
+                </header>
+                <ul className="companion-llm-doctor__checks">
+                  {llmDoctorReport.checks.map((check) => (
+                    <li key={`${check.name}:${check.outcome}`}>
+                      <span
+                        className={`doctor-outcome doctor-outcome--${check.outcome}`}
+                      >
+                        {doctorOutcomeLabel(check.outcome, lang)}
+                      </span>
+                      <code dir="ltr">{check.name}</code>
+                      <span>{check.message}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            )}
           </fieldset>
         </section>
 
@@ -685,6 +781,22 @@ function CompanionApp({
       </main>
     </div>
   );
+}
+
+function doctorOutcomeLabel(outcome: LlmDoctorOutcome, lang: "ar" | "en"): string {
+  if (lang === "ar") {
+    switch (outcome) {
+      case "pass":
+        return "نجح";
+      case "warn":
+        return "تنبيه";
+      case "fail":
+        return "فشل";
+      case "skip":
+        return "تخطّي";
+    }
+  }
+  return outcome;
 }
 
 function CompanionSuggestionCard({

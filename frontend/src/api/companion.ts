@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   Analysis,
   ApplyOutcome,
+  LlmDoctorReport,
   LlmStatus,
   LlmSuggestion,
   Suggestion,
@@ -82,6 +83,7 @@ export interface CompanionClient {
   saveSettings(settings: CompanionSettings): Promise<CompanionSettings>;
   getStatus(): Promise<CompanionStatus>;
   getLlmStatus(): Promise<LlmStatus>;
+  runLlmDoctor(): Promise<LlmDoctorReport>;
   suggestWithLocalLlmForSession(): Promise<LlmSuggestion>;
 }
 
@@ -101,6 +103,7 @@ export const companionClient: CompanionClient = {
     invoke<CompanionSettings>("save_companion_settings", { settings }),
   getStatus: () => invoke<CompanionStatus>("get_companion_status"),
   getLlmStatus: () => invoke<LlmStatus>("get_companion_llm_status"),
+  runLlmDoctor: () => invoke<LlmDoctorReport>("run_companion_llm_doctor"),
   suggestWithLocalLlmForSession: () =>
     invoke<LlmSuggestion>("suggest_with_local_llm_for_session"),
 };

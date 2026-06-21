@@ -1053,6 +1053,65 @@ button {
   color: var(--danger);
 }
 
+.companion-llm-doctor {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.companion-llm-doctor__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.companion-llm-doctor__header h3 {
+  font-size: 0.98rem;
+  margin: 0 0 4px;
+}
+
+.companion-llm-doctor__checks {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.companion-llm-doctor__checks li {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(120px, 0.35fr) 1fr;
+}
+
+.doctor-outcome {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.doctor-outcome--pass {
+  background: var(--safe-tint);
+  color: var(--safe);
+}
+
+.doctor-outcome--warn,
+.doctor-outcome--skip {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.doctor-outcome--fail {
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--danger);
+}
+
 .companion-empty {
   margin-top: 14px;
 }
@@ -1167,6 +1226,13 @@ button {
   .companion-llm-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+  .companion-llm-doctor__header {
+    flex-direction: column;
+  }
+  .companion-llm-doctor__checks li {
+    align-items: start;
+    grid-template-columns: 1fr;
   }
   .companion-privacy {
     grid-template-columns: 1fr;

@@ -278,6 +278,18 @@ pub async fn doctor_from_env_with_sample(sample_text: &str) -> LlmDoctorReport {
     run_doctor(LlmDoctorEnv::from_current(), sample_text).await
 }
 
+pub async fn doctor_from_config(
+    config: Option<&LlmRuntimeConfig>,
+    sample_text: &str,
+) -> LlmDoctorReport {
+    let env = config.map_or_else(LlmDoctorEnv::default, |config| LlmDoctorEnv {
+        base_url: Some(config.base_url.clone()),
+        model_id: Some(config.model_id.clone()),
+        timeout_ms: Some(config.timeout_ms.to_string()),
+    });
+    run_doctor(env, sample_text).await
+}
+
 #[derive(Debug, Clone, Default)]
 struct LlmDoctorEnv {
     base_url: Option<String>,
@@ -884,5 +896,21 @@ mod tests {
         assert_eq!(parse_timeout_ms(Some("2000")).expect("custom").0, 2000);
         assert!(parse_timeout_ms(Some("999")).is_err());
         assert!(parse_timeout_ms(Some("abc")).is_err());
+    }
+
+    #[tokio::test]
+    async fn doctor_from_empty_config_skips_live_checks() {
+        let report = doctor_from_config(None, DOCTOR_SAMPLE_TEXT).await;
+
+        assert!(report.ok);
+        assert!(!report.available);
+        assert!(report.summary.contains("skipped live runtime checks"));
+        assert!(
+            report
+                .checks
+                .iter()
+                .any(|check| check.name == "runtime_config"
+                    && check.outcome == LlmDoctorOutcome::Skip)
+        );
     }
 }
