@@ -160,4 +160,69 @@ describe("companion local LLM setup", () => {
       "hello what are you doing?",
     );
   });
+
+  it("cancels an in-flight selected-text local LLM suggestion", async () => {
+    const user = userEvent.setup();
+    let resolveSuggestion: (value: unknown) => void = () => undefined;
+    invokeMock.mockImplementation((command: string, args?: unknown) => {
+      if (command === "get_companion_settings") {
+        return Promise.resolve({
+          ...DEFAULT_COMPANION_SETTINGS,
+          ui_language: "en",
+        });
+      }
+      if (command === "save_companion_settings") {
+        return Promise.resolve((args as { settings: unknown }).settings);
+      }
+      if (command === "capture_selected_text") {
+        return Promise.resolve({
+          captured_text: "helo wat you are do?",
+          current_text: "helo wat you are do?",
+          source_app: "Notepad",
+          writing_mode: "english",
+          analysis: {
+            text_len_bytes: 20,
+            text_len_utf16: 20,
+            text_len_graphemes: 20,
+            suggestions: [],
+          },
+          safe_count: 0,
+          restore_warning: null,
+        });
+      }
+      if (command === "suggest_with_local_llm_for_session") {
+        return new Promise((resolve) => {
+          resolveSuggestion = resolve;
+        });
+      }
+      if (command === "cancel_companion_llm_suggestion") {
+        return Promise.resolve(true);
+      }
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
+    await screen.findByText(/Review selection/);
+    await user.click(screen.getByRole("button", { name: /LLM suggestion/ }));
+
+    expect(await screen.findByRole("button", { name: /Cancel LLM suggestion/ }))
+      .toBeVisible();
+    await user.click(screen.getByRole("button", { name: /Cancel LLM suggestion/ }));
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith("cancel_companion_llm_suggestion");
+    });
+    expect(screen.getByText(/Cancelled the local LLM suggestion/)).toBeInTheDocument();
+
+    resolveSuggestion({
+      ...SAMPLE_LLM_SUGGESTION,
+      replacement: "late stale suggestion",
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("late stale suggestion")).not.toBeInTheDocument();
+    });
+  });
 });

@@ -27,6 +27,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-global-shortcut",
+ "tokio",
  "windows-sys 0.61.2",
  "write-core",
  "write-llm",

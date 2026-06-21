@@ -85,6 +85,7 @@ export interface CompanionClient {
   getLlmStatus(): Promise<LlmStatus>;
   runLlmDoctor(): Promise<LlmDoctorReport>;
   suggestWithLocalLlmForSession(): Promise<LlmSuggestion>;
+  cancelLocalLlmSuggestion(): Promise<boolean>;
 }
 
 export const companionClient: CompanionClient = {
@@ -106,6 +107,8 @@ export const companionClient: CompanionClient = {
   runLlmDoctor: () => invoke<LlmDoctorReport>("run_companion_llm_doctor"),
   suggestWithLocalLlmForSession: () =>
     invoke<LlmSuggestion>("suggest_with_local_llm_for_session"),
+  cancelLocalLlmSuggestion: () =>
+    invoke<boolean>("cancel_companion_llm_suggestion"),
 };
 
 export function applySuggestionReplacement(

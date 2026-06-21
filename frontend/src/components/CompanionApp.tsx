@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import type {
@@ -95,6 +95,7 @@ function CompanionApp({
     null,
   );
   const [llmDoctorError, setLlmDoctorError] = useState<string | null>(null);
+  const llmRequestSeq = useRef(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -277,15 +278,19 @@ function CompanionApp({
 
   const requestLlmSuggestion = useCallback(async () => {
     if (!capture || !currentText.trim()) return;
+    const requestId = llmRequestSeq.current + 1;
+    llmRequestSeq.current = requestId;
     setLlmSuggestStatus("loading");
     setLlmSuggestion(null);
     setLlmError(null);
     setNotice(null);
     try {
       const suggestion = await companionClient.suggestWithLocalLlmForSession();
+      if (llmRequestSeq.current !== requestId) return;
       setLlmSuggestion(suggestion);
       setLlmSuggestStatus("done");
     } catch (caught) {
+      if (llmRequestSeq.current !== requestId) return;
       const message =
         typeof caught === "object" &&
         caught !== null &&
@@ -295,10 +300,29 @@ function CompanionApp({
           : lang === "ar"
             ? "تعذّر إنشاء اقتراح من النموذج المحلي."
             : "Could not create a local LLM suggestion.";
+      if (message.toLocaleLowerCase().includes("cancel")) {
+        setLlmSuggestStatus("idle");
+        setNotice(t("llmCancelled"));
+        return;
+      }
       setLlmError(message);
       setLlmSuggestStatus("error");
     }
-  }, [capture, currentText, lang]);
+  }, [capture, currentText, lang, t]);
+
+  const cancelLlmSuggestion = useCallback(async () => {
+    if (llmSuggestStatus !== "loading") return;
+    llmRequestSeq.current += 1;
+    setLlmSuggestStatus("idle");
+    setLlmSuggestion(null);
+    setLlmError(null);
+    setNotice(t("llmCancelled"));
+    try {
+      await companionClient.cancelLocalLlmSuggestion();
+    } catch {
+      // Cancellation is best-effort; stale request results are ignored by request id.
+    }
+  }, [llmSuggestStatus, t]);
 
   const applyLlmSuggestion = useCallback(
     (replacement: string) => {
@@ -676,6 +700,15 @@ function CompanionApp({
                     ? t("llmSuggesting")
                     : t("llmSuggest")}
                 </button>
+                {llmSuggestStatus === "loading" && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => void cancelLlmSuggestion()}
+                  >
+                    {t("llmCancelSuggestion")}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn--primary"
@@ -696,9 +729,10 @@ function CompanionApp({
             />
 
             {llmSuggestStatus === "loading" && (
-              <p className="state state--loading" role="status">
-                {t("llmSuggesting")}
-              </p>
+              <div className="state state--loading companion-llm-progress" role="status">
+                <p>{t("llmSuggesting")}</p>
+                <p className="state__detail">{t("llmSuggestProgress")}</p>
+              </div>
             )}
 
             {llmSuggestStatus === "error" && (

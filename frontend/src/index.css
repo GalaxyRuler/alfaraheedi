@@ -1053,6 +1053,15 @@ button {
   color: var(--danger);
 }
 
+.companion-llm-progress p {
+  margin: 0;
+}
+
+.companion-llm-progress {
+  display: grid;
+  gap: 6px;
+}
+
 .companion-llm-doctor {
   background: var(--surface);
   border: 1px solid var(--border);

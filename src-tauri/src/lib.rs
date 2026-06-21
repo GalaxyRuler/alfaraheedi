@@ -1,4 +1,12 @@
-use std::{fs, sync::Mutex, thread, time::Duration};
+use std::{
+    fs,
+    sync::{
+        Mutex,
+        atomic::{AtomicU64, Ordering},
+    },
+    thread,
+    time::Duration,
+};
 
 use serde::{Deserialize, Serialize};
 use tauri::{
@@ -131,10 +139,22 @@ struct SessionState {
     previous_clipboard_text: Option<String>,
 }
 
-#[derive(Debug, Default)]
+struct LlmCancelHandle {
+    request_id: u64,
+    sender: tokio::sync::watch::Sender<bool>,
+}
+
+struct LlmRequestRegistration {
+    request_id: u64,
+    cancelled: tokio::sync::watch::Receiver<bool>,
+}
+
+#[derive(Default)]
 struct CompanionState {
     session: Mutex<Option<SessionState>>,
     settings: Mutex<CompanionSettings>,
+    llm_request_counter: AtomicU64,
+    llm_cancel: Mutex<Option<LlmCancelHandle>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -305,7 +325,27 @@ async fn suggest_with_local_llm_for_session(
         .clone();
     let session = session_snapshot(&state)?;
 
-    llm_suggestion_from_settings(&settings, &session).await
+    let registration = register_llm_request(&state)?;
+    let request_id = registration.request_id;
+    let mut cancelled = registration.cancelled;
+    let result = tokio::select! {
+        result = llm_suggestion_from_settings(&settings, &session) => result,
+        changed = cancelled.changed() => {
+            match changed {
+                Ok(()) if *cancelled.borrow() => {
+                    Err(CommandError::new("Local LLM suggestion was cancelled."))
+                }
+                _ => Err(CommandError::new("Local LLM suggestion was cancelled.")),
+            }
+        }
+    };
+    clear_llm_request(&state, request_id);
+    result
+}
+
+#[tauri::command]
+fn cancel_companion_llm_suggestion(state: State<'_, CompanionState>) -> Result<bool, CommandError> {
+    cancel_active_llm_request(&state)
 }
 
 #[tauri::command]
@@ -525,6 +565,45 @@ fn llm_config_from_settings(
     )))
 }
 
+fn register_llm_request(state: &CompanionState) -> Result<LlmRequestRegistration, CommandError> {
+    let request_id = state.llm_request_counter.fetch_add(1, Ordering::Relaxed) + 1;
+    let (sender, cancelled) = tokio::sync::watch::channel(false);
+    let mut guard = state
+        .llm_cancel
+        .lock()
+        .map_err(|_| CommandError::new("Could not lock local LLM cancellation state."))?;
+    if let Some(active) = guard.take() {
+        let _ = active.sender.send(true);
+    }
+    *guard = Some(LlmCancelHandle { request_id, sender });
+    Ok(LlmRequestRegistration {
+        request_id,
+        cancelled,
+    })
+}
+
+fn cancel_active_llm_request(state: &CompanionState) -> Result<bool, CommandError> {
+    let mut guard = state
+        .llm_cancel
+        .lock()
+        .map_err(|_| CommandError::new("Could not lock local LLM cancellation state."))?;
+    let Some(active) = guard.take() else {
+        return Ok(false);
+    };
+    let _ = active.sender.send(true);
+    Ok(true)
+}
+
+fn clear_llm_request(state: &CompanionState, request_id: u64) {
+    if let Ok(mut guard) = state.llm_cancel.lock()
+        && guard
+            .as_ref()
+            .is_some_and(|active| active.request_id == request_id)
+    {
+        *guard = None;
+    }
+}
+
 async fn llm_status_from_settings(settings: &CompanionSettings) -> LlmStatus {
     match llm_config_from_settings(settings) {
         Ok(Some(config)) => write_service::llm_status(Some(&config)).await,
@@ -653,6 +732,7 @@ pub fn run() {
             get_companion_llm_status,
             run_companion_llm_doctor,
             suggest_with_local_llm_for_session,
+            cancel_companion_llm_suggestion,
             list_rules,
         ])
         .setup(|app| {
@@ -960,6 +1040,17 @@ mod tests {
         .expect_err("runtime required");
 
         assert!(error.to_string().contains("ALFARAHEEDI_LLM_BASE_URL"));
+    }
+
+    #[test]
+    fn cancelling_active_llm_request_signals_receiver_and_clears_state() {
+        let state = CompanionState::default();
+        let mut registration = register_llm_request(&state).expect("register request");
+
+        assert!(cancel_active_llm_request(&state).expect("cancel request"));
+        tauri::async_runtime::block_on(registration.cancelled.changed()).expect("cancel signal");
+        assert!(*registration.cancelled.borrow());
+        assert!(!cancel_active_llm_request(&state).expect("already cancelled"));
     }
 
     #[test]

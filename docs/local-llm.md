@@ -32,7 +32,7 @@ Desktop runtime settings are stored in the app config directory, not the reposit
 
 The companion doctor uses the same policy checks as the CLI doctor. With no runtime configured, it reports a successful skipped state. With a runtime configured, it validates the loopback URL, model id, timeout range, OpenAI-compatible `/v1/models` response, and a small suggestion-only probe.
 
-LLM suggestions in the companion are full-text suggestions for the currently captured selection. They are never safe auto-applied; accepting one only updates the review preview so the user can copy it or replace the original selection intentionally.
+LLM suggestions in the companion are full-text suggestions for the currently captured selection. The review window shows progress while the local runtime is working, and the request can be cancelled without applying a stale late result. Suggestions are never safe auto-applied; accepting one only updates the review preview so the user can copy it or replace the original selection intentionally.
 
 ## Doctor
 

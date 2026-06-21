@@ -8,6 +8,7 @@
 - Added desktop companion runtime status checking without requiring `writecheck serve`.
 - Added desktop companion runtime doctor checks for policy, configuration, `/v1/models`, and suggestion-only probing.
 - Added selected-text local LLM suggestions in the companion review window, with manual apply only.
+- Added progress and cancellation controls for in-flight desktop companion local LLM suggestions.
 
 ### Safety
 
