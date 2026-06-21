@@ -176,6 +176,8 @@ The v0.5 desktop companion is a Tauri Windows tray app. It is for text that alre
 
 The companion uses the clipboard only after the user invokes the hotkey or tray action. It attempts to restore the previous clipboard content after capture and replacement. It does not monitor raw text in the background, does not require `writecheck serve`, and does not send selected text to a hosted service.
 
+In the v0.6 track, the companion can also call an optional local OpenAI-compatible LLM runtime from Settings. Configure the loopback runtime URL, model id, and timeout, then use "Check runtime" before requesting an "LLM suggestion" for the captured selection. The app still does not bundle model weights, and LLM suggestions remain manual/suggestion-only.
+
 Build the desktop app from `frontend/`:
 
 ```powershell
@@ -237,6 +239,8 @@ The repository does not bundle corpora, dictionaries, model weights, GPL-linked 
 ## Optional Local LLM
 
 The local LLM track is suggestion-only. The built-in catalog currently points at CPU-capable GGUF candidates such as `qwen3-1.7b-q4_k_m`, but Alfaraheedi does not download or redistribute model weights by default. LLM output is not eligible for `fix --safe`.
+
+The desktop companion can store local runtime settings under the app config directory. The runtime URL must be a loopback `http` or `https` URL such as `http://127.0.0.1:8000`; remote hosts are rejected. After selecting text and opening the review window, use "LLM suggestion" to request a full-text suggestion and apply it manually if it is useful.
 
 Set `ALFARAHEEDI_LLM_BASE_URL` to an OpenAI-compatible local runtime before starting the API:
 

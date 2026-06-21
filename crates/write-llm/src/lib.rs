@@ -519,11 +519,7 @@ fn parse_timeout_ms(value: Option<&str>) -> Result<(u64, String), String> {
     let timeout_ms = value.parse::<u64>().map_err(|_| {
         format!("{ENV_LLM_TIMEOUT_MS} must be an integer between 1000 and 120000 milliseconds")
     })?;
-    if !(1_000..=120_000).contains(&timeout_ms) {
-        return Err(format!(
-            "{ENV_LLM_TIMEOUT_MS} must be between 1000 and 120000 milliseconds"
-        ));
-    }
+    validate_timeout_ms(timeout_ms)?;
 
     Ok((
         timeout_ms,
@@ -531,7 +527,16 @@ fn parse_timeout_ms(value: Option<&str>) -> Result<(u64, String), String> {
     ))
 }
 
-fn validate_local_base_url(base_url: &str) -> Result<(), String> {
+pub fn validate_timeout_ms(timeout_ms: u64) -> Result<(), String> {
+    if !(1_000..=120_000).contains(&timeout_ms) {
+        return Err(format!(
+            "{ENV_LLM_TIMEOUT_MS} must be between 1000 and 120000 milliseconds"
+        ));
+    }
+    Ok(())
+}
+
+pub fn validate_local_base_url(base_url: &str) -> Result<(), String> {
     let url = reqwest::Url::parse(base_url)
         .map_err(|error| format!("{ENV_LLM_BASE_URL} is not a valid URL: {error}"))?;
     if !matches!(url.scheme(), "http" | "https") {

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added desktop companion local LLM setup fields for loopback runtime URL, model id, and timeout.
+- Added desktop companion runtime status checking without requiring `writecheck serve`.
+- Added selected-text local LLM suggestions in the companion review window, with manual apply only.
+
+### Safety
+
+- Desktop local LLM runtime URLs are validated as loopback-only.
+- LLM output remains suggestion-only and is not eligible for deterministic safe auto-apply.
+
 ## v0.5.0 - 2026-06-21
 
 ### Added

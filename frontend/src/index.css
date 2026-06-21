@@ -1023,6 +1023,36 @@ button {
   padding: 16px;
 }
 
+.companion-llm-settings {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.companion-llm-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr minmax(140px, 0.55fr);
+  gap: 12px;
+}
+
+.companion-field {
+  margin-bottom: 0;
+}
+
+.companion-llm-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.companion-llm-status {
+  margin: 0;
+}
+
+.companion-llm-status.is-error {
+  color: var(--danger);
+}
+
 .companion-empty {
   margin-top: 14px;
 }
@@ -1130,6 +1160,13 @@ button {
   }
   .companion-controls {
     grid-template-columns: 1fr;
+  }
+  .companion-llm-grid {
+    grid-template-columns: 1fr;
+  }
+  .companion-llm-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
   .companion-privacy {
     grid-template-columns: 1fr;

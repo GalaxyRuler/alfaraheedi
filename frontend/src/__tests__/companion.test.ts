@@ -3,6 +3,7 @@ import type { Suggestion } from "../api/types";
 import {
   applySuggestionReplacement,
   buildPrivacySafeSuggestionReport,
+  DEFAULT_COMPANION_SETTINGS,
   isTauriRuntime,
 } from "../api/companion";
 
@@ -41,6 +42,12 @@ describe("companion utilities", () => {
     });
 
     expect(isTauriRuntime()).toBe(true);
+  });
+
+  it("keeps local LLM disabled by default in companion settings", () => {
+    expect(DEFAULT_COMPANION_SETTINGS.llm_base_url).toBe("");
+    expect(DEFAULT_COMPANION_SETTINGS.llm_model_id).toBe("qwen3-1.7b-q4_k_m");
+    expect(DEFAULT_COMPANION_SETTINGS.llm_timeout_ms).toBe(30_000);
   });
 
   it("applies a suggestion only when the current span still matches", () => {

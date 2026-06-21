@@ -9,7 +9,8 @@ use tauri::{
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_global_shortcut::ShortcutState;
 use write_core::{Analysis, ApplyOutcome, Suggestion};
-use write_service::{AnalyzeInput, ApplySafeInput, RulesResponse, WritingMode};
+use write_llm::{LlmStatus, LlmSuggestion};
+use write_service::{AnalyzeInput, ApplySafeInput, LlmSuggestInput, RulesResponse, WritingMode};
 
 const DEFAULT_HOTKEY: &str = "Ctrl+Alt+A";
 const MAX_CAPTURE_CHARS: usize = 20_000;
@@ -55,6 +56,12 @@ pub struct CompanionSettings {
     pub hotkey: String,
     pub restore_clipboard: bool,
     pub first_run_privacy_seen: bool,
+    #[serde(default)]
+    pub llm_base_url: String,
+    #[serde(default = "default_llm_model_id")]
+    pub llm_model_id: String,
+    #[serde(default = "default_llm_timeout_ms")]
+    pub llm_timeout_ms: u64,
 }
 
 impl Default for CompanionSettings {
@@ -65,8 +72,19 @@ impl Default for CompanionSettings {
             hotkey: DEFAULT_HOTKEY.to_owned(),
             restore_clipboard: true,
             first_run_privacy_seen: false,
+            llm_base_url: String::new(),
+            llm_model_id: default_llm_model_id(),
+            llm_timeout_ms: default_llm_timeout_ms(),
         }
     }
+}
+
+fn default_llm_model_id() -> String {
+    write_llm::DEFAULT_MODEL_ID.to_owned()
+}
+
+fn default_llm_timeout_ms() -> u64 {
+    write_llm::DEFAULT_TIMEOUT_MS
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -250,6 +268,32 @@ fn get_companion_status(state: State<'_, CompanionState>) -> Result<CompanionSta
         hotkey: settings.hotkey.clone(),
         mode: "hotkey_companion",
     })
+}
+
+#[tauri::command]
+async fn get_companion_llm_status(
+    state: State<'_, CompanionState>,
+) -> Result<LlmStatus, CommandError> {
+    let settings = state
+        .settings
+        .lock()
+        .map_err(|_| CommandError::new("Could not lock companion settings."))?
+        .clone();
+    Ok(llm_status_from_settings(&settings).await)
+}
+
+#[tauri::command]
+async fn suggest_with_local_llm_for_session(
+    state: State<'_, CompanionState>,
+) -> Result<LlmSuggestion, CommandError> {
+    let settings = state
+        .settings
+        .lock()
+        .map_err(|_| CommandError::new("Could not lock companion settings."))?
+        .clone();
+    let session = session_snapshot(&state)?;
+
+    llm_suggestion_from_settings(&settings, &session).await
 }
 
 #[tauri::command]
@@ -445,6 +489,62 @@ fn save_settings(app: &AppHandle, settings: &CompanionSettings) -> Result<(), Co
     fs::write(path, raw).map_err(|_| CommandError::new("Could not save companion settings."))
 }
 
+fn llm_config_from_settings(
+    settings: &CompanionSettings,
+) -> Result<Option<write_llm::LlmRuntimeConfig>, CommandError> {
+    let base_url = settings.llm_base_url.trim();
+    if base_url.is_empty() {
+        return Ok(None);
+    }
+    write_llm::validate_local_base_url(base_url).map_err(CommandError::new)?;
+    write_llm::validate_timeout_ms(settings.llm_timeout_ms).map_err(CommandError::new)?;
+
+    let model_id = settings.llm_model_id.trim();
+    let model_id = if model_id.is_empty() {
+        write_llm::DEFAULT_MODEL_ID
+    } else {
+        model_id
+    };
+
+    Ok(Some(write_llm::LlmRuntimeConfig::new(
+        base_url,
+        model_id,
+        settings.llm_timeout_ms,
+    )))
+}
+
+async fn llm_status_from_settings(settings: &CompanionSettings) -> LlmStatus {
+    match llm_config_from_settings(settings) {
+        Ok(Some(config)) => write_service::llm_status(Some(&config)).await,
+        Ok(None) => write_service::llm_status(None).await,
+        Err(error) => LlmStatus {
+            available: false,
+            reason: error.to_string(),
+            runtime: None,
+            catalog: write_llm::builtin_catalog(),
+        },
+    }
+}
+
+async fn llm_suggestion_from_settings(
+    settings: &CompanionSettings,
+    session: &SessionState,
+) -> Result<LlmSuggestion, CommandError> {
+    let config = llm_config_from_settings(settings)?
+        .ok_or_else(|| CommandError::new(write_llm::LlmError::NotConfigured.to_string()))?;
+
+    write_service::llm_suggest(
+        &config,
+        LlmSuggestInput {
+            text: session.current_text.clone(),
+            writing_mode: session.writing_mode,
+            selection: None,
+        },
+    )
+    .await
+    .map_err(|error| CommandError::new(error.to_string()))
+}
+
 fn show_review_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -519,6 +619,8 @@ pub fn run() {
             get_companion_settings,
             save_companion_settings,
             get_companion_status,
+            get_companion_llm_status,
+            suggest_with_local_llm_for_session,
             list_rules,
         ])
         .setup(|app| {
@@ -700,6 +802,115 @@ mod tests {
         assert_eq!(settings.hotkey, DEFAULT_HOTKEY);
         assert!(settings.restore_clipboard);
         assert!(!settings.first_run_privacy_seen);
+    }
+
+    #[test]
+    fn default_settings_keep_local_llm_disabled_but_configurable() {
+        let settings = CompanionSettings::default();
+
+        assert_eq!(settings.llm_base_url, "");
+        assert_eq!(settings.llm_model_id, write_llm::DEFAULT_MODEL_ID);
+        assert_eq!(settings.llm_timeout_ms, write_llm::DEFAULT_TIMEOUT_MS);
+        assert!(
+            llm_config_from_settings(&settings)
+                .expect("valid config")
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn old_settings_files_get_local_llm_defaults() {
+        let settings: CompanionSettings = serde_json::from_str(
+            r#"{
+              "ui_language": "en",
+              "writing_mode": "mixed",
+              "hotkey": "Ctrl+Alt+A",
+              "restore_clipboard": true,
+              "first_run_privacy_seen": true
+            }"#,
+        )
+        .expect("old settings remain readable");
+
+        assert_eq!(settings.llm_base_url, "");
+        assert_eq!(settings.llm_model_id, write_llm::DEFAULT_MODEL_ID);
+        assert_eq!(settings.llm_timeout_ms, write_llm::DEFAULT_TIMEOUT_MS);
+    }
+
+    #[test]
+    fn settings_build_local_llm_runtime_config() {
+        let settings = CompanionSettings {
+            llm_base_url: " http://127.0.0.1:8080/ ".to_owned(),
+            llm_model_id: "custom-local-model".to_owned(),
+            llm_timeout_ms: 45_000,
+            ..CompanionSettings::default()
+        };
+
+        let config = llm_config_from_settings(&settings)
+            .expect("valid config")
+            .expect("configured runtime");
+
+        assert_eq!(config.base_url, "http://127.0.0.1:8080");
+        assert_eq!(config.model_id, "custom-local-model");
+        assert_eq!(config.timeout_ms, 45_000);
+    }
+
+    #[test]
+    fn settings_reject_non_loopback_llm_runtime_url() {
+        let settings = CompanionSettings {
+            llm_base_url: "https://example.com".to_owned(),
+            ..CompanionSettings::default()
+        };
+
+        let error = llm_config_from_settings(&settings).expect_err("non-local runtime rejected");
+
+        assert!(error.to_string().contains("local loopback runtime"));
+    }
+
+    #[test]
+    fn settings_reject_out_of_range_llm_timeout() {
+        let settings = CompanionSettings {
+            llm_base_url: "http://127.0.0.1:8080".to_owned(),
+            llm_timeout_ms: 0,
+            ..CompanionSettings::default()
+        };
+
+        let error = llm_config_from_settings(&settings).expect_err("invalid timeout rejected");
+
+        assert!(error.to_string().to_ascii_lowercase().contains("timeout"));
+    }
+
+    #[test]
+    fn llm_status_from_unconfigured_settings_is_unavailable() {
+        let status =
+            tauri::async_runtime::block_on(llm_status_from_settings(&CompanionSettings::default()));
+
+        assert!(!status.available);
+        assert!(status.reason.contains("not configured"));
+        assert!(status.runtime.is_none());
+        assert_eq!(
+            status.catalog.policy.default_model_id,
+            write_llm::DEFAULT_MODEL_ID
+        );
+    }
+
+    #[test]
+    fn llm_suggestion_requires_configured_local_runtime() {
+        let session = SessionState {
+            captured_text: "helo wat you are do?".to_owned(),
+            current_text: "helo wat you are do?".to_owned(),
+            writing_mode: WritingMode::English,
+            source_app: Some("Notepad".to_owned()),
+            source_hwnd: None,
+            previous_clipboard_text: None,
+        };
+
+        let error = tauri::async_runtime::block_on(llm_suggestion_from_settings(
+            &CompanionSettings::default(),
+            &session,
+        ))
+        .expect_err("runtime required");
+
+        assert!(error.to_string().contains("ALFARAHEEDI_LLM_BASE_URL"));
     }
 
     #[test]

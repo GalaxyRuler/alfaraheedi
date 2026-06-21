@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import type { Suggestion } from "../api/types";
+import type { LlmSuggestion, Suggestion } from "../api/types";
 import {
   applySuggestionReplacement,
   buildPrivacySafeSuggestionReport,
@@ -74,6 +74,15 @@ function CompanionApp({
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
     "idle",
   );
+  const [llmSuggestStatus, setLlmSuggestStatus] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
+  const [llmSuggestion, setLlmSuggestion] = useState<LlmSuggestion | null>(null);
+  const [llmError, setLlmError] = useState<string | null>(null);
+  const [llmRuntimeStatus, setLlmRuntimeStatus] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
+  const [llmRuntimeReason, setLlmRuntimeReason] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,6 +102,9 @@ function CompanionApp({
     setSuggestions(result.analysis.suggestions);
     setDismissed(new Set());
     setStatus("ready");
+    setLlmSuggestStatus("idle");
+    setLlmSuggestion(null);
+    setLlmError(null);
     setError(null);
     setNotice(result.restore_warning);
   }, []);
@@ -146,6 +158,9 @@ function CompanionApp({
         setCurrentText(result.current_text);
         setSuggestions(result.analysis.suggestions);
         setDismissed(new Set());
+        setLlmSuggestion(null);
+        setLlmSuggestStatus("idle");
+        setLlmError(null);
         setNotice(lang === "ar" ? "حُدّث التحليل." : "Analysis refreshed.");
       } catch (caught) {
         showError(caught);
@@ -198,7 +213,71 @@ function CompanionApp({
     setCurrentText(text);
     setSuggestions([]);
     setDismissed(new Set());
+    setLlmSuggestion(null);
+    setLlmSuggestStatus("idle");
+    setLlmError(null);
   }, []);
+
+  const checkLlmRuntime = useCallback(async () => {
+    setLlmRuntimeStatus("loading");
+    setLlmRuntimeReason(null);
+    try {
+      const status = await companionClient.getLlmStatus();
+      setLlmRuntimeReason(status.reason);
+      setLlmRuntimeStatus("done");
+    } catch (caught) {
+      const message =
+        typeof caught === "object" &&
+        caught !== null &&
+        "message" in caught &&
+        typeof caught.message === "string"
+          ? caught.message
+          : lang === "ar"
+            ? "تعذّر فحص الخادم المحلي."
+            : "Could not check the local runtime.";
+      setLlmRuntimeReason(message);
+      setLlmRuntimeStatus("error");
+    }
+  }, [lang]);
+
+  const requestLlmSuggestion = useCallback(async () => {
+    if (!capture || !currentText.trim()) return;
+    setLlmSuggestStatus("loading");
+    setLlmSuggestion(null);
+    setLlmError(null);
+    setNotice(null);
+    try {
+      const suggestion = await companionClient.suggestWithLocalLlmForSession();
+      setLlmSuggestion(suggestion);
+      setLlmSuggestStatus("done");
+    } catch (caught) {
+      const message =
+        typeof caught === "object" &&
+        caught !== null &&
+        "message" in caught &&
+        typeof caught.message === "string"
+          ? caught.message
+          : lang === "ar"
+            ? "تعذّر إنشاء اقتراح من النموذج المحلي."
+            : "Could not create a local LLM suggestion.";
+      setLlmError(message);
+      setLlmSuggestStatus("error");
+    }
+  }, [capture, currentText, lang]);
+
+  const applyLlmSuggestion = useCallback(
+    (replacement: string) => {
+      setCurrentText(replacement);
+      setSuggestions([]);
+      setDismissed(new Set());
+      setNotice(
+        lang === "ar"
+          ? "طُبّق اقتراح النموذج المحلي يدويًا."
+          : "Applied the local LLM suggestion manually.",
+      );
+    },
+    [lang],
+  );
 
   const replaceSelection = useCallback(async () => {
     if (!capture || currentText === capture.captured_text) return;
@@ -345,6 +424,91 @@ function CompanionApp({
               ))}
             </div>
           </fieldset>
+
+          <fieldset className="field companion-llm-settings">
+            <legend className="field__label">
+              {lang === "ar" ? "النموذج المحلي" : "Local LLM"}
+            </legend>
+            <div className="companion-llm-grid">
+              <label className="field companion-field">
+                <span className="field__label">
+                  {lang === "ar" ? "عنوان الخادم المحلي" : "Local runtime URL"}
+                </span>
+                <input
+                  className="field__input"
+                  dir="ltr"
+                  type="url"
+                  inputMode="url"
+                  value={settings.llm_base_url}
+                  onChange={(event) =>
+                    onUpdateSettings({ llm_base_url: event.target.value })
+                  }
+                  placeholder="http://127.0.0.1:8000"
+                />
+              </label>
+              <label className="field companion-field">
+                <span className="field__label">
+                  {lang === "ar" ? "معرّف النموذج" : "Model id"}
+                </span>
+                <input
+                  className="field__input"
+                  dir="ltr"
+                  type="text"
+                  value={settings.llm_model_id}
+                  onChange={(event) =>
+                    onUpdateSettings({ llm_model_id: event.target.value })
+                  }
+                />
+              </label>
+              <label className="field companion-field">
+                <span className="field__label">
+                  {lang === "ar" ? "المهلة بالمللي ثانية" : "Timeout milliseconds"}
+                </span>
+                <input
+                  className="field__input"
+                  dir="ltr"
+                  type="number"
+                  min={1_000}
+                  max={120_000}
+                  step={1_000}
+                  value={settings.llm_timeout_ms}
+                  onChange={(event) =>
+                    onUpdateSettings({
+                      llm_timeout_ms:
+                        Number.parseInt(event.target.value, 10) ||
+                        DEFAULT_COMPANION_SETTINGS.llm_timeout_ms,
+                    })
+                  }
+                />
+              </label>
+            </div>
+            <div className="companion-llm-actions">
+              <button
+                type="button"
+                className="btn btn--ghost btn--small"
+                onClick={() => void checkLlmRuntime()}
+                disabled={llmRuntimeStatus === "loading"}
+              >
+                {llmRuntimeStatus === "loading"
+                  ? lang === "ar"
+                    ? "جارٍ الفحص..."
+                    : "Checking..."
+                  : lang === "ar"
+                    ? "فحص الخادم"
+                    : "Check runtime"}
+              </button>
+              {llmRuntimeReason && (
+                <p
+                  className={`policy-note companion-llm-status${
+                    llmRuntimeStatus === "error" ? " is-error" : ""
+                  }`}
+                  role={llmRuntimeStatus === "error" ? "alert" : "status"}
+                >
+                  {llmRuntimeReason}
+                </p>
+              )}
+            </div>
+          </fieldset>
         </section>
 
         {error && (
@@ -408,6 +572,16 @@ function CompanionApp({
                 </button>
                 <button
                   type="button"
+                  className="btn"
+                  onClick={() => void requestLlmSuggestion()}
+                  disabled={llmSuggestStatus === "loading" || !currentText.trim()}
+                >
+                  {llmSuggestStatus === "loading"
+                    ? t("llmSuggesting")
+                    : t("llmSuggest")}
+                </button>
+                <button
+                  type="button"
                   className="btn btn--primary"
                   onClick={() => void replaceSelection()}
                   disabled={currentText === capture.captured_text}
@@ -424,6 +598,55 @@ function CompanionApp({
               onChange={(event) => updatePreviewText(event.target.value)}
               aria-label={lang === "ar" ? "معاينة النص المصحح" : "Corrected text preview"}
             />
+
+            {llmSuggestStatus === "loading" && (
+              <p className="state state--loading" role="status">
+                {t("llmSuggesting")}
+              </p>
+            )}
+
+            {llmSuggestStatus === "error" && (
+              <div className="state state--error" role="alert">
+                <p>{t("llmSuggestionFailed")}</p>
+                {llmError && <p className="state__detail">{llmError}</p>}
+                <p className="state__detail">{t("llmPolicyNote")}</p>
+              </div>
+            )}
+
+            {llmSuggestStatus === "done" && llmSuggestion && (
+              <article
+                className="llm-suggestion companion-llm-suggestion"
+                data-testid="companion-llm-suggestion"
+              >
+                <header className="llm-suggestion__header">
+                  <div>
+                    <h3>{t("llmSuggestionTitle")}</h3>
+                    <p className="muted" dir="ltr">
+                      {llmSuggestion.source} · {llmSuggestion.model_id}
+                    </p>
+                  </div>
+                  <span className="badge badge--suggest">{t("badgeSuggest")}</span>
+                </header>
+                <p className="llm-suggestion__explanation">
+                  {llmSuggestion.explanation}
+                </p>
+                <div className="llm-suggestion__replacement" dir="auto">
+                  {llmSuggestion.replacement}
+                </div>
+                <footer className="llm-suggestion__footer">
+                  <span className="muted">
+                    {t("confidence")} {(llmSuggestion.confidence * 100).toFixed(0)}%
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => applyLlmSuggestion(llmSuggestion.replacement)}
+                  >
+                    {t("llmApplySuggestion")}
+                  </button>
+                </footer>
+              </article>
+            )}
 
             <div className="companion-suggestions">
               {activeSuggestions.length === 0 ? (

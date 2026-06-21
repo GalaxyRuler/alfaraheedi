@@ -24,6 +24,14 @@ $env:ALFARAHEEDI_LLM_TIMEOUT_MS = "30000"
 
 `ALFARAHEEDI_LLM_BASE_URL` is the only required variable. If no model is set, Alfaraheedi uses the catalog default model id.
 
+## Desktop Companion
+
+The desktop companion does not require `writecheck serve` for local LLM suggestions. Open Settings, set a local runtime URL such as `http://127.0.0.1:8000`, confirm the model id and timeout, then use "Check runtime" to verify the server before requesting an "LLM suggestion" from the review window.
+
+Desktop runtime settings are stored in the app config directory, not the repository. The URL must point at loopback (`127.0.0.1`, `localhost`, or `::1`); remote hosts are rejected. Existing settings files from older companion versions keep local LLM disabled by default until the user configures a runtime.
+
+LLM suggestions in the companion are full-text suggestions for the currently captured selection. They are never safe auto-applied; accepting one only updates the review preview so the user can copy it or replace the original selection intentionally.
+
 ## Doctor
 
 Run the built-in doctor before debugging model quality:
