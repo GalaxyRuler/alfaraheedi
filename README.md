@@ -8,7 +8,7 @@
 
 Alfaraheedi is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
 
-The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 development track adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. It is designed to keep user text on the user's machine by default.
+The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. It is designed to keep user text on the user's machine by default.
 
 ![Alfaraheedi local web workbench](docs/assets/workbench.png)
 
@@ -29,8 +29,16 @@ The current Arabic rule set is intentionally small:
 | `arabic:latin-semicolon` | Suggest-only | Suggests Arabic semicolon punctuation in Arabic context. |
 | `arabic:space-before-punctuation` | Suggest-only | Suggests removing a space before Arabic punctuation. |
 | `arabic:space-after-punctuation` | Suggest-only | Suggests adding a missing space after Arabic punctuation. |
+| `arabic:conversational-greeting` | Suggest-only | Suggests a complete rewrite for a narrow `كيف حال ما اخبار`-style greeting. |
 
 Safe auto-apply rules are eligible for `writecheck fix --safe`. Suggest-only rules are reported but not applied automatically.
+
+The current English support is also narrow and deterministic:
+
+| Rule source | Status | Behavior |
+| --- | --- | --- |
+| `english:common-typo` | Safe auto-apply | Corrects a small built-in set of common typos such as `helo` and `wat`. |
+| `english:you-are-do` | Safe auto-apply | Corrects `you are do` to `are you doing`. |
 
 ## Install And Build
 

@@ -1,10 +1,27 @@
 # Changelog
 
-## Unreleased
+## v0.5.0 - 2026-06-21
 
 ### Added
 
+- Added the Windows desktop companion as the primary v0.5 surface: select text in another app, press `Ctrl+Alt+A`, review suggestions locally, then copy corrected text or replace the original selection.
+- Added a shared `write-service` crate so the CLI, API, and desktop companion use the same analysis and safe-apply behavior.
+- Added narrow deterministic English suggestions for common typos and `you are do`-style question grammar.
 - Added a narrow Arabic conversational greeting suggestion for `كيف حال ما اخبار`-style text.
+
+### Changed
+
+- Made the recommended Windows user artifact a desktop installer: `Alfaraheedi-0.5.0-windows-x64-setup.exe`.
+- Kept the CLI/web zip as an optional developer artifact instead of the main user install path.
+
+### Fixed
+
+- The desktop app now launches as a visible GUI app instead of an empty console window.
+- Hotkey capture waits for `Ctrl+Alt+A` release before copying selected text, improving selection capture in external apps.
+
+### Safety
+
+- The desktop companion remains local-first, opt-in through an explicit hotkey, and does not bundle model weights or require a hosted service.
 
 ## v0.4.1 - 2026-06-20
 
