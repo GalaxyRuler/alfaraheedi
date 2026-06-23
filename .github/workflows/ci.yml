@@ -76,6 +76,29 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  office-addins:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Validate Office add-ins foundation package
+        shell: pwsh
+        run: .\scripts\validate-office-addins-release.ps1
+      - name: Upload Office add-ins foundation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: alfaraheedi-office-addins-0.8.0-foundation
+          path: dist/office-addins/alfaraheedi-office-addins-0.8.0.zip
+          if-no-files-found: error
+          retention-days: 14
+
   windows-smoke:
     runs-on: windows-latest
     steps:

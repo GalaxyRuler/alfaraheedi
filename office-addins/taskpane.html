@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alfaraheedi Office Companion</title>
+    <link rel="stylesheet" href="./styles/taskpane.css">
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script type="module" src="./src/taskpane.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Local writing companion</p>
+          <h1>Alfaraheedi</h1>
+        </div>
+        <span id="host-label" class="host-badge">Office</span>
+      </header>
+
+      <section class="settings-row" aria-label="Settings">
+        <label>
+          API URL
+          <input id="api-url" type="url" value="http://127.0.0.1:3000" spellcheck="false">
+        </label>
+        <label>
+          Writing mode
+          <select id="writing-mode">
+            <option value="auto">Auto</option>
+            <option value="arabic">Arabic</option>
+            <option value="english">English</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="actions" aria-label="Selection actions">
+        <button id="check-selection" type="button">Check Selection</button>
+        <button id="apply-safe" type="button" disabled>Apply Safe Fixes</button>
+      </section>
+
+      <section class="status-panel" aria-live="polite">
+        <p id="status-text">Select text in Word or PowerPoint, then check it here.</p>
+      </section>
+
+      <section class="preview-panel" aria-label="Corrected preview">
+        <label for="corrected-preview">Corrected preview</label>
+        <textarea id="corrected-preview" readonly></textarea>
+      </section>
+
+      <section class="suggestions-panel" aria-label="Suggestions">
+        <h2>Suggestions</h2>
+        <ol id="suggestions-list"></ol>
+      </section>
+    </main>
+  </body>
+</html>

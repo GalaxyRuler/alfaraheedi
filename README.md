@@ -187,6 +187,15 @@ local extension package, store-submission bundle, selected screenshots, manual
 QA report template, public privacy URL status, and remaining account-side
 blockers before store upload.
 
+The v0.8 Office add-ins foundation lives in `office-addins/`. It is an
+add-in-only XML manifest plus a Word/PowerPoint task pane for selected text:
+read the current Office selection through Office.js, analyze it through the
+local Alfaraheedi loopback API, and replace the selection with deterministic
+safe fixes. Package it with `.\scripts\package-office-addins.ps1` and validate
+the foundation with `.\scripts\validate-office-addins-release.ps1`. This does
+not yet include the required local HTTPS task-pane host, sideload QA, Office
+store submission, or live underline behavior.
+
 Build the desktop app from `frontend/`:
 
 ```powershell
@@ -293,7 +302,7 @@ Near-term work after the public MVP:
 - Keep dictionary and morphology work behind clear licensing and accuracy gates.
 - v0.6: in-app local LLM setup and selected-text LLM suggestions.
 - v0.7: browser extension for live web editor underlines.
-- v0.8: Word and PowerPoint Office add-ins.
+- v0.8: Word and PowerPoint Office add-ins foundation, then sideload QA.
 - v0.9: UI Automation pilot for supported Windows native text controls.
 - Add LSP or hosted integrations only after the local engine contract is stable.
 
@@ -303,7 +312,7 @@ Near-term work after the public MVP:
 - No Arabic morphology or context-heavy grammar correction.
 - No spell checking.
 - No English grammar layer.
-- No production packaged browser extension, Office add-in, UI Automation overlay, or LSP server.
+- No production Office add-in, UI Automation overlay, or LSP server.
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.

@@ -25,6 +25,9 @@
 - [ ] For browser-extension release candidates: `.\scripts\get-browser-extension-release-readiness.ps1 -RequireLocalReady` and confirm `StoreUploadPackageMatchesPackage`, `ReleaseManifestPackageHash`, `ReleaseManifestReviewerDocs`, `ReleaseManifestScreenshots`, `StoreSubmissionIntegrity`, and `ManualQaReportGateHashMatches` are all `true`; before public release, also confirm `ManualQaReportCompleted: true` and `ManualQaReleaseDecision: Public release approved`
 - [ ] Before browser-store upload: `.\scripts\check-browser-extension-pages-readiness.ps1 -RequireReady`
 - [ ] Before public browser-store release: complete `browser-extension/MANUAL_RELEASE_GATES.md` for live production-editor QA, manual screen-reader review, public privacy URL, and store-dashboard review, then run `.\scripts\check-browser-extension-manual-qa-report.ps1 -RequireCompleted`
+- [ ] For Office add-ins changes: `.\scripts\validate-office-addins-release.ps1`
+- [ ] Package Office add-ins with `.\scripts\package-office-addins.ps1`
+- [ ] Treat v0.8 Office add-ins as a task-pane foundation until the HTTPS task-pane host, sideload QA, and Word/PowerPoint replacement checks are complete
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
 - [ ] `cargo run -p write-cli -- llm doctor`
