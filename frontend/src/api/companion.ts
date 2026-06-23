@@ -1,5 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Analysis, ApplyOutcome, Suggestion } from "./types";
+import type {
+  Analysis,
+  ApplyOutcome,
+  LlmDoctorReport,
+  LlmStatus,
+  LlmSuggestion,
+  Suggestion,
+} from "./types";
 
 export type WritingMode = "auto" | "arabic" | "english" | "mixed";
 
@@ -9,6 +16,9 @@ export interface CompanionSettings {
   hotkey: string;
   restore_clipboard: boolean;
   first_run_privacy_seen: boolean;
+  llm_base_url: string;
+  llm_model_id: string;
+  llm_timeout_ms: number;
 }
 
 export interface CompanionStatus {
@@ -58,6 +68,9 @@ export const DEFAULT_COMPANION_SETTINGS: CompanionSettings = {
   hotkey: "Ctrl+Alt+A",
   restore_clipboard: true,
   first_run_privacy_seen: false,
+  llm_base_url: "",
+  llm_model_id: "qwen3-1.7b-q4_k_m",
+  llm_timeout_ms: 30_000,
 };
 
 export interface CompanionClient {
@@ -69,6 +82,10 @@ export interface CompanionClient {
   getSettings(): Promise<CompanionSettings>;
   saveSettings(settings: CompanionSettings): Promise<CompanionSettings>;
   getStatus(): Promise<CompanionStatus>;
+  getLlmStatus(): Promise<LlmStatus>;
+  runLlmDoctor(): Promise<LlmDoctorReport>;
+  suggestWithLocalLlmForSession(): Promise<LlmSuggestion>;
+  cancelLocalLlmSuggestion(): Promise<boolean>;
 }
 
 export const companionClient: CompanionClient = {
@@ -86,6 +103,12 @@ export const companionClient: CompanionClient = {
   saveSettings: (settings) =>
     invoke<CompanionSettings>("save_companion_settings", { settings }),
   getStatus: () => invoke<CompanionStatus>("get_companion_status"),
+  getLlmStatus: () => invoke<LlmStatus>("get_companion_llm_status"),
+  runLlmDoctor: () => invoke<LlmDoctorReport>("run_companion_llm_doctor"),
+  suggestWithLocalLlmForSession: () =>
+    invoke<LlmSuggestion>("suggest_with_local_llm_for_session"),
+  cancelLocalLlmSuggestion: () =>
+    invoke<boolean>("cancel_companion_llm_suggestion"),
 };
 
 export function applySuggestionReplacement(

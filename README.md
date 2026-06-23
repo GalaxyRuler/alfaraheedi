@@ -8,13 +8,13 @@
 
 Alfaraheedi is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
 
-The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. It is designed to keep user text on the user's machine by default.
+The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. The v0.7 browser-extension foundation adds local-first editable web-field checking with accessibility guardrails for panel semantics, text direction, contrast, and Windows forced-colors mode. It is designed to keep user text on the user's machine by default.
 
 ![Alfaraheedi local web workbench](docs/assets/workbench.png)
 
 ## What It Is Not
 
-Alfaraheedi is not a hosted writing service, a browser extension, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. The desktop companion does not provide live underlines in every app yet. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
+Alfaraheedi is not a hosted writing service, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. The desktop companion does not provide live underlines in every app yet, and the browser-extension work is still an unpacked v0.7 foundation rather than a store-ready extension. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
 
 ## Current Rules
 
@@ -176,6 +176,17 @@ The v0.5 desktop companion is a Tauri Windows tray app. It is for text that alre
 
 The companion uses the clipboard only after the user invokes the hotkey or tray action. It attempts to restore the previous clipboard content after capture and replacement. It does not monitor raw text in the background, does not require `writecheck serve`, and does not send selected text to a hosted service.
 
+In the v0.6 track, the companion can also call an optional local OpenAI-compatible LLM runtime from Settings. Configure the loopback runtime URL, model id, and timeout, then use "Check runtime" or "Run doctor" before requesting an "LLM suggestion" for the captured selection. The request shows progress and can be cancelled if the local runtime stalls. The app still does not bundle model weights, and LLM suggestions remain manual/suggestion-only.
+
+The v0.7 browser-extension foundation lives in `browser-extension/`. It is a Chrome Manifest V3 extension for editable web fields. This foundation currently uses the local HTTP API bridge (`cargo run -p write-cli -- serve`), shows a compact suggestions panel near the active editor, renders scroll- and layout-synchronized non-mutating wavy underline overlays for textarea fields and safe text-like inputs (`text`, `search`, `email`, `url`, and `tel`), renders CSS Highlight marks for simple contenteditable fields where supported, and can apply an individual suggestion when the current field still contains the original text. The panel exposes region semantics for assistive tech, gives Apply buttons unique replacement-specific accessible labels while keeping the visible label compact, sets `dir="auto"` on panel, source, and replacement text for mixed Arabic/English suggestions, shows stale or unanchored review suggestions without unsafe Apply controls, stays open when keyboard focus moves from the editor into the panel, clamps inside the viewport near right or bottom edge editors, reports stale Apply attempts when the underlying text no longer matches, and can be dismissed with Escape. Injected panels and marks are cleared immediately after successful apply, editor text changes, focus loss, or editor removal; pending analysis is cancelled when focus leaves before debounce, analysis waits until browser IME/composition input ends before sending active editor text, and delayed API responses are ignored if the editor text changed while the request was in flight. It detects contenteditable `true`, empty, and `plaintext-only` tokens while ignoring read-only/disabled textarea/input controls, ARIA read-only/disabled editable controls, password inputs, sensitive-looking editable hints or ancestor containers such as one-time-code, credit-card, token, API-key, and secret fields, other non-text-like inputs, `contenteditable="false"` islands, hidden rich-editor decoration nodes, and known invisible rich-editor sentinel nodes such as Slate zero-width spans and ProseMirror trailing breaks. Matching frames get the content script, so iframe-hosted text controls can be handled, and open Shadow DOM text controls are detected through composed browser event paths. Non-editable, hidden, and sentinel rich-editor island text is omitted from analysis text and offset mapping, so guarded replacements after chips/widgets/placeholders can still land in the editable text. Anchored contenteditable replacements use DOM ranges so simple inline markup is preserved, and simple contenteditable `<br>`, repeated `<br>`, empty block, and common block-element line breaks are analyzed as newlines so suggestion offsets remain aligned. Plain textarea/input replacements also prefer validated spans, so accepting a later suggestion in repeated text does not rewrite the first matching word; accepted replacements place the caret after the inserted text and dispatch a composed `InputEvent` with `inputType="insertReplacementText"` so page frameworks and open Shadow DOM hosts can observe the edit. Runtime analyze requests preserve the editor text exactly, including surrounding whitespace, so those spans stay aligned; oversized editor text is refused locally with a status message before it reaches the extension runtime/API, and runtime/API failure messages shown in the page are sanitized so raw exception strings, URLs, and editor text are not reflected back into web content. The extension options page stores a loopback API URL, default writing mode, and an enabled/paused switch in browser extension storage, so non-default local API ports such as `3402` can be used without editing source files; the toolbar popup shows those saved settings, checks the configured `/v1/health` endpoint, and can pause or resume checking without sending editor text while paused. Build the upload zip with `.\scripts\package-browser-extension.ps1`; the package keeps API host permissions loopback-only and includes only runtime extension files plus manifest-declared PNG icons. It does not yet provide live production-editor-specific integration for Gmail, WhatsApp Web, Google Docs, or a packaged desktop bridge.
+
+Before public browser-store release, use `browser-extension/MANUAL_RELEASE_GATES.md` and `.\scripts\new-browser-extension-manual-qa-report.ps1` to complete the live production-editor, manual screen-reader, public privacy URL, and store-dashboard checks. The report generator writes under `dist\browser-extension-manual-qa\` so private manual QA notes stay out of source control by default.
+
+Use `.\scripts\get-browser-extension-release-readiness.ps1` to summarize the
+local extension package, store-submission bundle, selected screenshots, manual
+QA report template, public privacy URL status, and remaining account-side
+blockers before store upload.
+
 Build the desktop app from `frontend/`:
 
 ```powershell
@@ -238,6 +249,8 @@ The repository does not bundle corpora, dictionaries, model weights, GPL-linked 
 
 The local LLM track is suggestion-only. The built-in catalog currently points at CPU-capable GGUF candidates such as `qwen3-1.7b-q4_k_m`, but Alfaraheedi does not download or redistribute model weights by default. LLM output is not eligible for `fix --safe`.
 
+The desktop companion can store local runtime settings under the app config directory. The runtime URL must be a loopback `http` or `https` URL such as `http://127.0.0.1:8000`; remote hosts are rejected. "Run doctor" checks policy, configuration, `/v1/models`, and a suggestion-only probe. After selecting text and opening the review window, use "LLM suggestion" to request a full-text suggestion, cancel the request if it takes too long, and apply it manually if it is useful.
+
 Set `ALFARAHEEDI_LLM_BASE_URL` to an OpenAI-compatible local runtime before starting the API:
 
 ```powershell
@@ -259,11 +272,11 @@ With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LL
 
 ## Download
 
-Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current v0.4 Windows package is `alfaraheedi-v0.4.1-windows-x64.zip`. The v0.5 release track changes the recommended package to a Windows desktop installer.
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current recommended Windows package is the desktop installer `Alfaraheedi-0.5.0-windows-x64-setup.exe`. The CLI/web zip remains available as an optional developer artifact.
 
 ## Packaging
 
-Build the Windows x64 package:
+Build the optional Windows x64 developer zip:
 
 ```powershell
 .\scripts\package-windows.ps1 -Version 0.5.0
@@ -290,7 +303,7 @@ Near-term work after the public MVP:
 - No Arabic morphology or context-heavy grammar correction.
 - No spell checking.
 - No English grammar layer.
-- No browser extension, Office add-in, editor integration, UI Automation overlay, or LSP server.
+- No production packaged browser extension, Office add-in, UI Automation overlay, or LSP server.
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.

@@ -27,8 +27,10 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-global-shortcut",
+ "tokio",
  "windows-sys 0.61.2",
  "write-core",
+ "write-llm",
  "write-service",
 ]
 
@@ -5169,6 +5171,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.18",
+ "tokio",
 ]
 
 [[package]]
@@ -5184,6 +5187,7 @@ name = "write-service"
 version = "0.5.0"
 dependencies = [
  "serde",
+ "tokio",
  "write-arabic",
  "write-core",
  "write-english",

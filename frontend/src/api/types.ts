@@ -105,6 +105,23 @@ export interface LlmStatus {
   catalog: LlmCatalog;
 }
 
+export type LlmDoctorOutcome = "pass" | "warn" | "fail" | "skip";
+
+export interface LlmDoctorCheck {
+  name: string;
+  outcome: LlmDoctorOutcome;
+  message: string;
+}
+
+export interface LlmDoctorReport {
+  ok: boolean;
+  available: boolean;
+  summary: string;
+  runtime: LlmRuntimeConfig | null;
+  catalog: LlmCatalog;
+  checks: LlmDoctorCheck[];
+}
+
 export interface LlmSuggestion {
   source: string;
   model_id: string;

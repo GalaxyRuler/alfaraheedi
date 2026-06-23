@@ -1023,6 +1023,104 @@ button {
   padding: 16px;
 }
 
+.companion-llm-settings {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.companion-llm-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr minmax(140px, 0.55fr);
+  gap: 12px;
+}
+
+.companion-field {
+  margin-bottom: 0;
+}
+
+.companion-llm-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.companion-llm-status {
+  margin: 0;
+}
+
+.companion-llm-status.is-error {
+  color: var(--danger);
+}
+
+.companion-llm-progress p {
+  margin: 0;
+}
+
+.companion-llm-progress {
+  display: grid;
+  gap: 6px;
+}
+
+.companion-llm-doctor {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.companion-llm-doctor__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.companion-llm-doctor__header h3 {
+  font-size: 0.98rem;
+  margin: 0 0 4px;
+}
+
+.companion-llm-doctor__checks {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.companion-llm-doctor__checks li {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(120px, 0.35fr) 1fr;
+}
+
+.doctor-outcome {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.doctor-outcome--pass {
+  background: var(--safe-tint);
+  color: var(--safe);
+}
+
+.doctor-outcome--warn,
+.doctor-outcome--skip {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.doctor-outcome--fail {
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--danger);
+}
+
 .companion-empty {
   margin-top: 14px;
 }
@@ -1129,6 +1227,20 @@ button {
     flex-direction: column;
   }
   .companion-controls {
+    grid-template-columns: 1fr;
+  }
+  .companion-llm-grid {
+    grid-template-columns: 1fr;
+  }
+  .companion-llm-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .companion-llm-doctor__header {
+    flex-direction: column;
+  }
+  .companion-llm-doctor__checks li {
+    align-items: start;
     grid-template-columns: 1fr;
   }
   .companion-privacy {

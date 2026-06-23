@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use write_core::{Analysis, ApplyOutcome, Engine, RuleInfo};
-use write_llm::{LlmRuntimeConfig, LlmStatus, LlmSuggestion};
+use write_llm::{LlmDoctorReport, LlmRuntimeConfig, LlmStatus, LlmSuggestion};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -105,6 +105,10 @@ pub async fn llm_status(config: Option<&LlmRuntimeConfig>) -> LlmStatus {
     }
 }
 
+pub async fn llm_doctor(config: Option<&LlmRuntimeConfig>) -> LlmDoctorReport {
+    write_llm::doctor_from_config(config, write_llm::DOCTOR_SAMPLE_TEXT).await
+}
+
 pub async fn llm_suggest(
     config: &LlmRuntimeConfig,
     input: LlmSuggestInput,
@@ -187,5 +191,18 @@ mod tests {
         .expect("safe English fixes apply");
 
         assert_eq!(outcome.text, "hello what are you doing?");
+    }
+
+    #[test]
+    fn service_llm_doctor_skips_when_runtime_unconfigured() {
+        let report = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("runtime")
+            .block_on(llm_doctor(None));
+
+        assert!(report.ok);
+        assert!(!report.available);
+        assert!(report.summary.contains("skipped live runtime checks"));
     }
 }

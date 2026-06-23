@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alfaraheedi</title>
+    <style>
+      body {
+        background: #ffffff;
+        color: #171717;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        min-width: 280px;
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 16px;
+        line-height: 1.25;
+        margin: 0 0 12px;
+      }
+
+      dl {
+        display: grid;
+        gap: 6px;
+        margin: 0;
+      }
+
+      dt {
+        color: #525252;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      dd {
+        font-size: 13px;
+        margin: 0 0 8px;
+        overflow-wrap: anywhere;
+      }
+
+      button {
+        box-sizing: border-box;
+        font: inherit;
+        margin-block-start: 10px;
+        min-height: 36px;
+        width: 100%;
+      }
+
+      #status {
+        min-height: 20px;
+      }
+
+      @media (forced-colors: active) {
+        body {
+          background: Canvas;
+          color: CanvasText;
+        }
+
+        dt,
+        #status {
+          color: CanvasText;
+        }
+
+        button {
+          background: ButtonFace;
+          border: 1px solid ButtonText;
+          color: ButtonText;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Alfaraheedi</h1>
+      <dl>
+        <dt>Local API</dt>
+        <dd id="api-base-url">Loading...</dd>
+        <dt>Writing mode</dt>
+        <dd id="writing-mode">Loading...</dd>
+        <dt>API status</dt>
+        <dd id="api-status">Checking...</dd>
+        <dt>Checking</dt>
+        <dd id="checking-status">Loading...</dd>
+      </dl>
+      <button id="toggle-enabled" type="button">Loading...</button>
+      <button id="open-options" type="button">Open settings</button>
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module" src="src/popup.js"></script>
+  </body>
+</html>

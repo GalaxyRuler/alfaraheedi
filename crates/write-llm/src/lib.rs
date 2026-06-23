@@ -278,6 +278,18 @@ pub async fn doctor_from_env_with_sample(sample_text: &str) -> LlmDoctorReport {
     run_doctor(LlmDoctorEnv::from_current(), sample_text).await
 }
 
+pub async fn doctor_from_config(
+    config: Option<&LlmRuntimeConfig>,
+    sample_text: &str,
+) -> LlmDoctorReport {
+    let env = config.map_or_else(LlmDoctorEnv::default, |config| LlmDoctorEnv {
+        base_url: Some(config.base_url.clone()),
+        model_id: Some(config.model_id.clone()),
+        timeout_ms: Some(config.timeout_ms.to_string()),
+    });
+    run_doctor(env, sample_text).await
+}
+
 #[derive(Debug, Clone, Default)]
 struct LlmDoctorEnv {
     base_url: Option<String>,
@@ -519,11 +531,7 @@ fn parse_timeout_ms(value: Option<&str>) -> Result<(u64, String), String> {
     let timeout_ms = value.parse::<u64>().map_err(|_| {
         format!("{ENV_LLM_TIMEOUT_MS} must be an integer between 1000 and 120000 milliseconds")
     })?;
-    if !(1_000..=120_000).contains(&timeout_ms) {
-        return Err(format!(
-            "{ENV_LLM_TIMEOUT_MS} must be between 1000 and 120000 milliseconds"
-        ));
-    }
+    validate_timeout_ms(timeout_ms)?;
 
     Ok((
         timeout_ms,
@@ -531,7 +539,16 @@ fn parse_timeout_ms(value: Option<&str>) -> Result<(u64, String), String> {
     ))
 }
 
-fn validate_local_base_url(base_url: &str) -> Result<(), String> {
+pub fn validate_timeout_ms(timeout_ms: u64) -> Result<(), String> {
+    if !(1_000..=120_000).contains(&timeout_ms) {
+        return Err(format!(
+            "{ENV_LLM_TIMEOUT_MS} must be between 1000 and 120000 milliseconds"
+        ));
+    }
+    Ok(())
+}
+
+pub fn validate_local_base_url(base_url: &str) -> Result<(), String> {
     let url = reqwest::Url::parse(base_url)
         .map_err(|error| format!("{ENV_LLM_BASE_URL} is not a valid URL: {error}"))?;
     if !matches!(url.scheme(), "http" | "https") {
@@ -879,5 +896,21 @@ mod tests {
         assert_eq!(parse_timeout_ms(Some("2000")).expect("custom").0, 2000);
         assert!(parse_timeout_ms(Some("999")).is_err());
         assert!(parse_timeout_ms(Some("abc")).is_err());
+    }
+
+    #[tokio::test]
+    async fn doctor_from_empty_config_skips_live_checks() {
+        let report = doctor_from_config(None, DOCTOR_SAMPLE_TEXT).await;
+
+        assert!(report.ok);
+        assert!(!report.available);
+        assert!(report.summary.contains("skipped live runtime checks"));
+        assert!(
+            report
+                .checks
+                .iter()
+                .any(|check| check.name == "runtime_config"
+                    && check.outcome == LlmDoctorOutcome::Skip)
+        );
     }
 }

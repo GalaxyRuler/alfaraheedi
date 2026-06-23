@@ -83,3 +83,5 @@ Current policy:
 - No hosted fallback by default.
 - No raw text logging.
 - No LLM safe auto-apply.
+
+In the desktop companion, v0.6 stores optional local LLM runtime settings in the app config directory and calls `write-service` directly from the Tauri host. The normal packaged-app path still does not require a browser tab, a visible localhost URL, or a separate `writecheck serve` process. Runtime URLs are loopback-only, and LLM output can update the review preview only through an explicit manual action.

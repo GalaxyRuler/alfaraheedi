@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alfaraheedi Browser Extension Privacy Policy</title>
+    <meta
+      name="description"
+      content="Privacy policy for the Alfaraheedi browser extension."
+    >
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        color: #1d2421;
+        background: #ffffff;
+      }
+
+      body {
+        margin: 0;
+        background: #ffffff;
+      }
+
+      main {
+        box-sizing: border-box;
+        width: min(100%, 860px);
+        margin: 0 auto;
+        padding: 48px 24px 72px;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        margin: 32px 0 10px;
+        font-size: 1.25rem;
+      }
+
+      p,
+      li {
+        line-height: 1.65;
+      }
+
+      p {
+        margin: 0 0 14px;
+      }
+
+      ul {
+        margin: 0 0 16px;
+        padding-inline-start: 1.4rem;
+      }
+
+      code {
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.95em;
+        color: #0f6b5c;
+      }
+
+      .updated {
+        color: #52605a;
+        margin-bottom: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Alfaraheedi Browser Extension Privacy Policy</h1>
+      <p class="updated">Last updated: 2026-06-22</p>
+
+      <p>
+        Alfaraheedi is a local-first writing companion for editable web fields.
+        This policy covers the Alfaraheedi browser extension only.
+      </p>
+
+      <h2>What The Extension Does</h2>
+      <p>
+        When the extension is enabled, it detects focused editable text fields
+        on web pages and sends active editable-field text to the user's
+        configured local Alfaraheedi API. The API URL must be a loopback address
+        such as <code>http://127.0.0.1</code> or <code>http://localhost</code>.
+        Suggestions are rendered in the page near the editable field and are
+        applied only when the user accepts them.
+      </p>
+
+      <h2>Data Accessed</h2>
+      <p>
+        The extension may access text in the active editable field so it can
+        provide writing suggestions. Supported fields include normal textareas,
+        safe text-like inputs, compatible contenteditable editors, matching
+        iframe-hosted fields, and open Shadow DOM text fields.
+      </p>
+      <p>The extension skips:</p>
+      <ul>
+        <li>password fields;</li>
+        <li>read-only or disabled fields;</li>
+        <li>
+          sensitive-looking fields such as one-time-code, credit-card, token,
+          API-key, and secret fields;
+        </li>
+        <li>editable fields inside sensitive-looking ancestor containers;</li>
+        <li>non-editable islands inside rich editors;</li>
+        <li>
+          hidden decoration nodes and known invisible rich-editor sentinel
+          nodes.
+        </li>
+      </ul>
+
+      <h2>Data Sent</h2>
+      <p>
+        The extension sends active-field text only to the configured local
+        loopback Alfaraheedi API. It does not send text to Alfaraheedi-hosted services, third party writing services, analytics providers, or telemetry services.
+      </p>
+      <p>In short: local loopback Alfaraheedi API only.</p>
+      <p>
+        If the user configures the local Alfaraheedi API to call a separate
+        local model runtime, that runtime is outside the browser extension. The
+        extension still connects only to the configured loopback Alfaraheedi API.
+      </p>
+
+      <h2>Data Stored</h2>
+      <p>The extension stores only extension settings in browser extension storage:</p>
+      <ul>
+        <li>local API URL;</li>
+        <li>writing mode;</li>
+        <li>enabled or paused state.</li>
+      </ul>
+      <p>
+        The background service worker uses these stored settings for analysis
+        requests. Content-script messages cannot override the stored API URL or
+        writing mode.
+      </p>
+      <p>
+        The extension does not store captured editor text, suggestions, browsing
+        history, page contents, credentials, or raw API responses.
+      </p>
+
+      <h2>Logging And Telemetry</h2>
+      <p>
+        The extension does not use telemetry, hosted analytics, tracking pixels,
+        beacons, remote logging, or raw editor text logging.
+      </p>
+
+      <h2>Remote Code</h2>
+      <p>
+        The extension does not load or execute remote code. It does not use
+        remote script imports, <code>eval</code>, <code>new Function</code>, or
+        <code>importScripts</code>.
+      </p>
+
+      <h2>User Controls</h2>
+      <p>
+        The extension can be paused from the toolbar popup or the options page.
+        When paused, it does not send active-field text for analysis.
+      </p>
+      <p>
+        Users can change the local API URL and writing mode from the options
+        page. Non-loopback API URLs are rejected.
+      </p>
+
+      <h2>Data Sharing</h2>
+      <p>
+        Alfaraheedi does not sell browser extension data and does not share
+        extension data with advertisers, analytics providers, hosted writing
+        services, or other third parties.
+      </p>
+
+      <h2>Human Review</h2>
+      <p>
+        No Alfaraheedi operator or reviewer receives or reads user editor text
+        through this browser extension. Text stays on the user's machine unless
+        the user independently configures their local environment to route the
+        local API elsewhere.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        If the extension later adds hosted services, telemetry, account sync, or
+        text retention, this policy must be updated before release and the
+        browser store privacy disclosures must be updated to match.
+      </p>
+    </main>
+  </body>
+</html>

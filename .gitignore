@@ -3,6 +3,7 @@
 /dist/
 /frontend/test-results/
 /frontend/playwright-report/
+/docs/testing/reports/
 /.idea/
 /.vscode/
 /.agents/

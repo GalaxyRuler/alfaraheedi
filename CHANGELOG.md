@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added a v0.7 Chrome Manifest V3 browser-extension foundation for editable web fields, including scroll- and layout-synchronized non-mutating wavy underline overlays for safe text-like inputs (`text`, `search`, `email`, `url`, and `tel`) and textarea fields while excluding password, sensitive-hinted fields, and sensitive-hinted ancestor containers, CSS Highlight marks for contenteditable fields, broader contenteditable token discovery, read-only/disabled and ARIA read-only/disabled text-control skipping, iframe-hosted editor injection, open Shadow DOM text-control event handling, loopback API URL and writing-mode extension settings, a toolbar popup for quick settings/status access with a loopback API health check and pause/resume control, keyboard-accessible suggestion panel focus handling with unique replacement-specific Apply labels, bidirectional `dir="auto"` panel/source/replacement text, AA contrast and Windows forced-colors fallbacks for extension UI, and Escape dismissal, non-actionable stale/unanchored suggestion display, IME/composition-safe debounce, local oversized-text refusal before runtime/API sends, sanitized runtime/API error messages, stale-response protection while users keep typing, stale Apply status when a rendered suggestion no longer matches current text, contenteditable line-break and blank-block newline/offset handling, non-editable, hidden, and production sentinel rich-editor island skipping, span-anchored plain-field replacement for repeated text with untrimmed analyze requests, composed replacement `InputEvent` dispatch for applied fixes, manifest-declared PNG extension icons, clean extension zip packaging, store-preflight manifest/privacy guardrails, and guarded individual suggestion apply/edit/focus/removal cleanup that clears injected review UI while preserving simple inline contenteditable markup.
+- Added a source-controlled browser-extension manual release gate and private report generator for live production-editor checks, manual screen-reader review, public privacy URL readiness, and store-dashboard review before public store submission.
+- Added desktop companion local LLM setup fields for loopback runtime URL, model id, and timeout.
+- Added desktop companion runtime status checking without requiring `writecheck serve`.
+- Added desktop companion runtime doctor checks for policy, configuration, `/v1/models`, and suggestion-only probing.
+- Added selected-text local LLM suggestions in the companion review window, with manual apply only.
+- Added progress and cancellation controls for in-flight desktop companion local LLM suggestions.
+
+### Safety
+
+- Desktop local LLM runtime URLs are validated as loopback-only.
+- LLM output remains suggestion-only and is not eligible for deterministic safe auto-apply.
+
 ## v0.5.0 - 2026-06-21
 
 ### Added

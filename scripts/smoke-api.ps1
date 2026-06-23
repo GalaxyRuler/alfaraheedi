@@ -3,7 +3,48 @@ $ErrorActionPreference = "Stop"
 $port = 3197
 $env:WRITECHECK_ADDR = "127.0.0.1:$port"
 $server = $null
-$expectedText = "مرحبا بالعالم"
+$sampleText = -join @(
+    [char]0x0645, [char]0x0631, [char]0x062D, [char]0x0628,
+    [char]0x0640, [char]0x0640, [char]0x0627,
+    [char]0x0020, [char]0x0020,
+    [char]0x0628, [char]0x0627, [char]0x0644, [char]0x0639,
+    [char]0x0627, [char]0x0644, [char]0x0645
+)
+$expectedText = -join @(
+    [char]0x0645, [char]0x0631, [char]0x062D, [char]0x0628,
+    [char]0x0627, [char]0x0020,
+    [char]0x0628, [char]0x0627, [char]0x0644, [char]0x0639,
+    [char]0x0627, [char]0x0644, [char]0x0645
+)
+
+function ConvertFrom-Utf8JsonResponse {
+    param(
+        [Parameter(Mandatory = $true)]
+        $Response
+    )
+
+    if ($null -eq $Response.RawContentStream) {
+        return $Response.Content | ConvertFrom-Json
+    }
+
+    if ($Response.RawContentStream.CanSeek) {
+        $Response.RawContentStream.Position = 0
+    }
+
+    $reader = [System.IO.StreamReader]::new(
+        $Response.RawContentStream,
+        [System.Text.Encoding]::UTF8,
+        $true
+    )
+    try {
+        $json = $reader.ReadToEnd()
+    }
+    finally {
+        $reader.Dispose()
+    }
+
+    $json | ConvertFrom-Json
+}
 
 try {
     cargo build -p write-api
@@ -37,12 +78,15 @@ try {
         throw "Health check failed"
     }
 
-    $body = @{ text = "مرحبــا  بالعالم"; mode = "safe" } | ConvertTo-Json
-    $apply = Invoke-RestMethod `
+    $body = @{ text = $sampleText; mode = "safe" } | ConvertTo-Json
+    $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($body)
+    $applyResponse = Invoke-WebRequest `
         -Uri "http://127.0.0.1:${port}/v1/apply" `
         -Method Post `
-        -ContentType "application/json" `
-        -Body $body
+        -ContentType "application/json; charset=utf-8" `
+        -Body $bodyBytes `
+        -UseBasicParsing
+    $apply = ConvertFrom-Utf8JsonResponse $applyResponse
 
     if ($apply.text -ne $expectedText) {
         throw "Unexpected API fixed text: $($apply.text)"

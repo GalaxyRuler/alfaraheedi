@@ -36,6 +36,18 @@ export const STRINGS = {
   },
   llmSuggest: { ar: "اقتراح النموذج", en: "LLM suggestion" },
   llmSuggesting: { ar: "جارٍ اقتراح النموذج…", en: "Getting LLM suggestion…" },
+  llmSuggestProgress: {
+    ar: "النموذج المحلي يعمل على الاقتراح. يمكنك الإلغاء إذا استغرق وقتًا طويلًا.",
+    en: "The local model is working on a suggestion. You can cancel if it takes too long.",
+  },
+  llmCancelSuggestion: {
+    ar: "إلغاء اقتراح النموذج",
+    en: "Cancel LLM suggestion",
+  },
+  llmCancelled: {
+    ar: "أُلغي اقتراح النموذج المحلي.",
+    en: "Cancelled the local LLM suggestion.",
+  },
   llmSuggestHint: {
     ar: "يطلب اقتراحًا يدوي التطبيق من النموذج المحلي",
     en: "Requests a manually applied suggestion from the local model",

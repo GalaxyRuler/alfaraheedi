@@ -1,8 +1,19 @@
 $ErrorActionPreference = "Stop"
 
 $sample = Join-Path $env:TEMP "alfaraheedi-cli-smoke.txt"
-$sampleText = "مرحبــا  بالعالم"
-$expectedText = "مرحبا بالعالم"
+$sampleText = -join @(
+    [char]0x0645, [char]0x0631, [char]0x062D, [char]0x0628,
+    [char]0x0640, [char]0x0640, [char]0x0627,
+    [char]0x0020, [char]0x0020,
+    [char]0x0628, [char]0x0627, [char]0x0644, [char]0x0639,
+    [char]0x0627, [char]0x0644, [char]0x0645
+)
+$expectedText = -join @(
+    [char]0x0645, [char]0x0631, [char]0x062D, [char]0x0628,
+    [char]0x0627, [char]0x0020,
+    [char]0x0628, [char]0x0627, [char]0x0644, [char]0x0639,
+    [char]0x0627, [char]0x0644, [char]0x0645
+)
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 try {
