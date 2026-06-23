@@ -25,12 +25,25 @@ export interface CompanionStatus {
   engine_online: boolean;
   hotkey: string;
   mode: "hotkey_companion";
+  uia_pilot: UiaPilotStatus;
+}
+
+export type CaptureMethod = "windows_uia_text_pattern" | "clipboard_shortcut";
+
+export interface UiaPilotStatus {
+  available: boolean;
+  capture_supported: boolean;
+  replacement_supported: boolean;
+  platform: string;
+  method: "windows_uia_text_pattern";
+  reason: string;
 }
 
 export interface CaptureResult {
   captured_text: string;
   current_text: string;
   source_app: string | null;
+  capture_method?: CaptureMethod;
   writing_mode: WritingMode;
   analysis: Analysis;
   safe_count: number;
@@ -41,6 +54,7 @@ export interface SessionAnalysis {
   captured_text: string;
   current_text: string;
   source_app: string | null;
+  capture_method?: CaptureMethod;
   writing_mode: WritingMode;
   analysis: Analysis;
   safe_count: number;
@@ -82,6 +96,7 @@ export interface CompanionClient {
   getSettings(): Promise<CompanionSettings>;
   saveSettings(settings: CompanionSettings): Promise<CompanionSettings>;
   getStatus(): Promise<CompanionStatus>;
+  getUiaPilotStatus(): Promise<UiaPilotStatus>;
   getLlmStatus(): Promise<LlmStatus>;
   runLlmDoctor(): Promise<LlmDoctorReport>;
   suggestWithLocalLlmForSession(): Promise<LlmSuggestion>;
@@ -103,6 +118,7 @@ export const companionClient: CompanionClient = {
   saveSettings: (settings) =>
     invoke<CompanionSettings>("save_companion_settings", { settings }),
   getStatus: () => invoke<CompanionStatus>("get_companion_status"),
+  getUiaPilotStatus: () => invoke<UiaPilotStatus>("get_uia_pilot_status"),
   getLlmStatus: () => invoke<LlmStatus>("get_companion_llm_status"),
   runLlmDoctor: () => invoke<LlmDoctorReport>("run_companion_llm_doctor"),
   suggestWithLocalLlmForSession: () =>

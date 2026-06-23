@@ -37,6 +37,7 @@ describe("companion local LLM setup", () => {
           captured_text: "helo wat you are do?",
           current_text: "helo wat you are do?",
           source_app: "Notepad",
+          capture_method: "windows_uia_text_pattern",
           writing_mode: "english",
           analysis: {
             text_len_bytes: 20,
@@ -142,6 +143,7 @@ describe("companion local LLM setup", () => {
 
     await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
     await screen.findByText(/Review selection/);
+    expect(screen.getByText(/Windows UI Automation capture/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /LLM suggestion/ }));
 
@@ -179,6 +181,7 @@ describe("companion local LLM setup", () => {
           captured_text: "helo wat you are do?",
           current_text: "helo wat you are do?",
           source_app: "Notepad",
+          capture_method: "clipboard_shortcut",
           writing_mode: "english",
           analysis: {
             text_len_bytes: 20,
@@ -205,6 +208,7 @@ describe("companion local LLM setup", () => {
 
     await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
     await screen.findByText(/Review selection/);
+    expect(screen.getByText(/Clipboard capture/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /LLM suggestion/ }));
 
     expect(await screen.findByRole("button", { name: /Cancel LLM suggestion/ }))

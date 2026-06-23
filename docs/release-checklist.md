@@ -43,6 +43,8 @@
 - [ ] Desktop installer bundle folder contains only the recommended setup installer, not stale or raw Tauri `Nahou_*_x64-setup.exe` files
 - [ ] `.\scripts\check-desktop-installer-bundle.ps1`
 - [ ] Desktop Windows CI artifact `nahou-desktop-windows-setup` contains the canonical setup installer
+- [ ] For v0.9 UI Automation changes: verify the review header identifies `Windows UI Automation capture` for a supported native control and `Clipboard capture` for fallback surfaces
+- [ ] Confirm v0.9 UI Automation remains capture-only and replacement still uses clipboard paste fallback
 - [ ] Manual desktop companion QA: Notepad, browser textarea, Word, PowerPoint, WhatsApp, no selection, clipboard restore, large selection, Arabic UI, English UI, offline
 - [ ] Fresh clone test
 - [ ] README reviewed

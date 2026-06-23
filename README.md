@@ -203,6 +203,12 @@ generate a private report with
 `.\scripts\new-office-addins-manual-qa-report.ps1` and check it with
 `.\scripts\check-office-addins-manual-qa-report.ps1`.
 
+The v0.9 desktop pilot adds Windows UI Automation TextPattern capture for
+supported focused native text controls. It tries UIA capture before the
+clipboard shortcut path, but replacement still uses the existing clipboard
+paste fallback. This is not a live underline overlay and does not monitor raw
+text in the background.
+
 Build the desktop app from `frontend/`:
 
 ```powershell
@@ -310,7 +316,7 @@ Near-term work after the public MVP:
 - v0.6: in-app local LLM setup and selected-text LLM suggestions.
 - v0.7: browser extension for live web editor underlines.
 - v0.8: Word and PowerPoint Office add-ins foundation, then sideload QA.
-- v0.9: UI Automation pilot for supported Windows native text controls.
+- v0.9: UI Automation TextPattern capture pilot for supported Windows native text controls.
 - Add LSP or hosted integrations only after the local engine contract is stable.
 
 ## Known Limitations
@@ -320,6 +326,7 @@ Near-term work after the public MVP:
 - No spell checking.
 - No English grammar layer.
 - No production Office add-in, UI Automation overlay, or LSP server.
+- UI Automation is capture-only in v0.9; replacement still uses clipboard paste fallback.
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.
