@@ -27,7 +27,9 @@
 - [ ] Before public browser-store release: complete `browser-extension/MANUAL_RELEASE_GATES.md` for live production-editor QA, manual screen-reader review, public privacy URL, and store-dashboard review, then run `.\scripts\check-browser-extension-manual-qa-report.ps1 -RequireCompleted`
 - [ ] For Office add-ins changes: `.\scripts\validate-office-addins-release.ps1`
 - [ ] Package Office add-ins with `.\scripts\package-office-addins.ps1`
-- [ ] Treat v0.8 Office add-ins as a task-pane foundation until the HTTPS task-pane host, sideload QA, and Word/PowerPoint replacement checks are complete
+- [ ] For local Office sideload checks: create a dev certificate with `.\scripts\New-OfficeAddinDevCertificate.ps1`; use `-Trust` only when you accept a CurrentUser certificate store change
+- [ ] Start the Office task-pane host with `.\scripts\serve-office-addins.ps1` and verify `https://localhost:3443/office-addins/taskpane.html`
+- [ ] Treat v0.8 Office add-ins as a task-pane foundation until sideload QA and Word/PowerPoint replacement checks are complete
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
 - [ ] `cargo run -p write-cli -- llm doctor`

@@ -58,12 +58,16 @@ $addinPath = Resolve-RepoPath $OfficeAddinsRoot
 $frontendPath = Resolve-RepoPath $FrontendRoot
 $manifestPath = Join-Path $addinPath "manifest.xml"
 $packageTool = Join-Path $addinPath "tools\package-office-addin.mjs"
+$serveTool = Join-Path $addinPath "tools\serve-office-addin.mjs"
 
 if (-not (Test-Path -LiteralPath $manifestPath)) {
     throw "Office add-in manifest not found: $manifestPath"
 }
 if (-not (Test-Path -LiteralPath $packageTool)) {
     throw "Office add-in package tool not found: $packageTool"
+}
+if (-not (Test-Path -LiteralPath $serveTool)) {
+    throw "Office add-in HTTPS host tool not found: $serveTool"
 }
 
 $manifestXml = [xml](Get-Content -LiteralPath $manifestPath -Raw)
@@ -100,9 +104,13 @@ if (-not $SkipPackageTests) {
 
 Invoke-Checked "node" @("--check", $packageTool) $RepoRoot
 $results.PackageToolSyntax = "passed"
+Invoke-Checked "node" @("--check", $serveTool) $RepoRoot
+$results.HttpsHostToolSyntax = "passed"
 
 $releaseScriptPaths = [string[]]@(
+    (Join-Path $PSScriptRoot "New-OfficeAddinDevCertificate.ps1"),
     (Join-Path $PSScriptRoot "package-office-addins.ps1"),
+    (Join-Path $PSScriptRoot "serve-office-addins.ps1"),
     (Join-Path $PSScriptRoot "validate-office-addins-release.ps1")
 )
 Assert-PowerShellScriptSyntax $releaseScriptPaths

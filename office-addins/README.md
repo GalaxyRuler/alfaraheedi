@@ -21,9 +21,29 @@ foundation manifest points at:
 https://localhost:3443/office-addins/taskpane.html
 ```
 
-That HTTPS task-pane host is intentionally not implemented in this first v0.8
-slice. The next slice should add a local HTTPS static host or dev certificate
-workflow before manual sideload QA.
+Create a local development certificate:
+
+```powershell
+.\scripts\New-OfficeAddinDevCertificate.ps1
+```
+
+Then serve the task pane locally:
+
+```powershell
+.\scripts\serve-office-addins.ps1
+```
+
+The host serves the source-controlled task pane at:
+
+```text
+https://localhost:3443/office-addins/taskpane.html
+```
+
+The certificate script can import the public certificate into
+`Cert:\CurrentUser\Root` only when called with `-Trust`. Do not use `-Trust`
+unless you accept the user certificate store change on that Windows account.
+The normal release validator checks script syntax and package shape, but it
+does not create or trust certificates.
 
 ## Sideload Boundary
 
@@ -31,7 +51,8 @@ Microsoft documents that Office add-in manifests describe how an add-in is
 loaded by Office, and that sideloading requires placing the manifest in a
 catalog or uploading it while the task-pane web application is served from the
 `SourceLocation` URL. This foundation follows that split: source-controlled
-manifest and task-pane assets first, runtime hosting and store submission later.
+manifest and task-pane assets plus local HTTPS hosting first, manual Office
+sideload QA and store submission later.
 
 ## Privacy Boundary
 

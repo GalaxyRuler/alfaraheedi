@@ -76,6 +76,18 @@ describe("Office add-ins package metadata", () => {
       path.join(repoRoot, "scripts/validate-office-addins-release.ps1"),
       "utf8",
     );
+    const serveScript = await fs.readFile(
+      path.join(repoRoot, "scripts/serve-office-addins.ps1"),
+      "utf8",
+    );
+    const certScript = await fs.readFile(
+      path.join(repoRoot, "scripts/New-OfficeAddinDevCertificate.ps1"),
+      "utf8",
+    );
+    const serveTool = await fs.readFile(
+      path.join(addinsRoot, "tools/serve-office-addin.mjs"),
+      "utf8",
+    );
 
     for (const entry of [
       "manifest.xml",
@@ -100,6 +112,22 @@ describe("Office add-ins package metadata", () => {
     expect(validateScript).toMatch(/Presentation/u);
     expect(validateScript).toMatch(/https:\/\/localhost:/u);
     expect(validateScript).toMatch(/package-office-addins\.ps1/u);
+    expect(validateScript).toMatch(/serve-office-addin\.mjs/u);
+    expect(validateScript).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
+    expect(validateScript).toMatch(/serve-office-addins\.ps1/u);
+    expect(serveScript).toMatch(/NAHOU_OFFICE_ADDIN_PFX_PASSWORD/u);
+    expect(serveScript).toMatch(/localhost-office-addin-dev\.pfx/u);
+    expect(serveScript).toMatch(/office-addins\\tools\\serve-office-addin\.mjs/u);
+    expect(certScript).toMatch(/\[switch\]\$Trust/u);
+    expect(certScript).toMatch(/Cert:\\CurrentUser\\Root/u);
+    expect(certScript).toMatch(/Export-PfxCertificate/u);
+    expect(certScript).toMatch(/if \(\$Trust\)/u);
+    expect(serveTool).toMatch(/https\.createServer/u);
+    expect(serveTool).toMatch(/fs\.realpath/u);
+    expect(serveTool).toMatch(/isInsideRepoRoot/u);
+    expect(serveTool).toMatch(/contentTypes/u);
+    expect(serveTool).toMatch(/office-addins\/taskpane\.html/u);
+    expect(serveTool).not.toMatch(/from "express"|from 'express'|require\("express"\)/u);
   });
 
   it("runs the Office add-ins foundation validator in CI", async () => {
@@ -120,12 +148,25 @@ describe("Office add-ins package metadata", () => {
 
   it("documents the v0.8 boundary without claiming live Office store readiness", async () => {
     const readme = await fs.readFile(path.join(addinsRoot, "README.md"), "utf8");
+    const rootReadme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+    const releaseChecklist = await fs.readFile(
+      path.join(repoRoot, "docs/release-checklist.md"),
+      "utf8",
+    );
 
     expect(readme).toMatch(/v0\.8 Word and PowerPoint add-in foundation/u);
     expect(readme).toMatch(/task-pane integration, not a live underline overlay/u);
-    expect(readme).toMatch(/HTTPS task-pane host is intentionally not implemented/u);
+    expect(readme).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
+    expect(readme).toMatch(/serve-office-addins\.ps1/u);
+    expect(readme).toMatch(/Do not use `-Trust`\s+unless you accept/u);
     expect(readme).toMatch(/Selected Office text is sent only to the configured loopback/u);
     expect(readme).toMatch(/No telemetry/u);
     expect(readme).not.toMatch(/store-ready|Chrome Web Store|Edge Add-ons/u);
+    expect(rootReadme).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
+    expect(rootReadme).toMatch(/serve-office-addins\.ps1/u);
+    expect(rootReadme).toMatch(/CurrentUser trusted root store/u);
+    expect(releaseChecklist).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
+    expect(releaseChecklist).toMatch(/serve-office-addins\.ps1/u);
+    expect(releaseChecklist).toMatch(/CurrentUser certificate store change/u);
   });
 });

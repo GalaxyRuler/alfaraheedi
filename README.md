@@ -192,9 +192,12 @@ add-in-only XML manifest plus a Word/PowerPoint task pane for selected text:
 read the current Office selection through Office.js, analyze it through the
 local Nahou loopback API, and replace the selection with deterministic
 safe fixes. Package it with `.\scripts\package-office-addins.ps1` and validate
-the foundation with `.\scripts\validate-office-addins-release.ps1`. This does
-not yet include the required local HTTPS task-pane host, sideload QA, Office
-store submission, or live underline behavior.
+the foundation with `.\scripts\validate-office-addins-release.ps1`. For local
+sideload development, create a localhost certificate with
+`.\scripts\New-OfficeAddinDevCertificate.ps1` and run the HTTPS task-pane host
+with `.\scripts\serve-office-addins.ps1`. The certificate script only changes
+the CurrentUser trusted root store if called with `-Trust`. This does not yet
+include sideload QA, Office store submission, or live underline behavior.
 
 Build the desktop app from `frontend/`:
 
