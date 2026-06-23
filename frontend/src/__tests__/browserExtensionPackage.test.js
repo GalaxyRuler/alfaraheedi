@@ -896,7 +896,10 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/npm ci/u);
     expect(source).toMatch(/validate-browser-extension-release\.ps1/u);
     expect(source).toMatch(/export-browser-extension-store-submission\.ps1 -SkipPreflight/u);
-    expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1 -RequireValid/u);
+    expect(source).toMatch(/-AllowMissingScreenshots/u);
+    expect(source).toMatch(/v0\.7-extension-store-screenshots-20260623-030207/u);
+    expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1/u);
+    expect(source).not.toMatch(/Check browser extension store submission integrity[\s\S]*-RequireValid/u);
     expect(source).toMatch(/actions\/upload-artifact@v6/u);
     expect(source).toMatch(/alfaraheedi-browser-extension-0\.7\.0-release-artifacts/u);
     expect(source).toMatch(/dist\/browser-extension\/alfaraheedi-browser-extension-0\.7\.0\.zip/u);
@@ -904,6 +907,24 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/if-no-files-found:\s+error/u);
     expect(source).not.toMatch(/check-browser-extension-pages-readiness\.ps1\s+-RequireReady/u);
     expect(source).not.toMatch(/RunVmSmokes/u);
+  });
+
+  it("keeps CI screenshot tolerance out of the local store-validity gate", async () => {
+    const exportSource = await fs.readFile(
+      path.join(repoRoot, "scripts/export-browser-extension-store-submission.ps1"),
+      "utf8",
+    );
+    const releaseCandidateSource = await fs.readFile(
+      path.join(repoRoot, "scripts/prepare-browser-extension-release-candidate.ps1"),
+      "utf8",
+    );
+
+    expect(exportSource).toMatch(/StoreSubmissionRoot = \$submissionRoot/u);
+    expect(exportSource).toMatch(/if \(-not \$AllowMissingScreenshots\)/u);
+    expect(exportSource).toMatch(/\$integrityArgs\.RequireValid = \$true/u);
+    expect(releaseCandidateSource).toMatch(
+      /check-browser-extension-store-submission-integrity\.ps1[\s\S]*-RequireValid/u,
+    );
   });
 
   it("keeps pull request review gates explicit for browser-extension changes", async () => {

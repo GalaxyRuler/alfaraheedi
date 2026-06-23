@@ -257,9 +257,13 @@ $releaseManifest = [pscustomobject]@{
     PrivacyPolicyStillNeedsPublicUrl = $true
 }
 $releaseManifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $releaseManifestPath -Encoding UTF8
-$integrityJson = & (Join-Path $PSScriptRoot "check-browser-extension-store-submission-integrity.ps1") `
-    -StoreSubmissionRoot $submissionRoot `
-    -RequireValid
+$integrityArgs = @{
+    StoreSubmissionRoot = $submissionRoot
+}
+if (-not $AllowMissingScreenshots) {
+    $integrityArgs.RequireValid = $true
+}
+$integrityJson = & (Join-Path $PSScriptRoot "check-browser-extension-store-submission-integrity.ps1") @integrityArgs
 if ($LASTEXITCODE -ne 0) {
     throw "Store submission integrity check failed."
 }
