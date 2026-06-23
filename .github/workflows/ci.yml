@@ -69,10 +69,33 @@ jobs:
       - name: Upload browser extension release artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: alfaraheedi-browser-extension-0.7.0-release-artifacts
+          name: nahou-browser-extension-0.7.0-release-artifacts
           path: |
-            dist/browser-extension/alfaraheedi-browser-extension-0.7.0.zip
-            dist/browser-extension-store-submission/alfaraheedi-browser-extension-0.7.0-store-submission/**
+            dist/browser-extension/nahou-browser-extension-0.7.0.zip
+            dist/browser-extension-store-submission/nahou-browser-extension-0.7.0-store-submission/**
+          if-no-files-found: error
+          retention-days: 14
+
+  office-addins:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Validate Office add-ins foundation package
+        shell: pwsh
+        run: .\scripts\validate-office-addins-release.ps1
+      - name: Upload Office add-ins foundation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: nahou-office-addins-0.8.0-foundation
+          path: dist/office-addins/nahou-office-addins-0.8.0.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -123,8 +146,8 @@ jobs:
       - name: Upload Windows desktop installer
         uses: actions/upload-artifact@v6
         with:
-          name: alfaraheedi-desktop-windows-setup
-          path: target/release/bundle/nsis/Alfaraheedi-*-windows-x64-setup.exe
+          name: nahou-desktop-windows-setup
+          path: target/release/bundle/nsis/Nahou-*-windows-x64-setup.exe
           if-no-files-found: error
           retention-days: 14
 

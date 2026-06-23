@@ -126,7 +126,7 @@ if (-not (Test-Path -LiteralPath $manifestPath)) {
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $version = $manifest.version
 if (-not $StoreSubmissionRoot) {
-    $StoreSubmissionRoot = Join-Path $RepoRoot "dist\browser-extension-store-submission\alfaraheedi-browser-extension-$version-store-submission"
+    $StoreSubmissionRoot = Join-Path $RepoRoot "dist\browser-extension-store-submission\nahou-browser-extension-$version-store-submission"
 } else {
     $StoreSubmissionRoot = Resolve-RepoPath $StoreSubmissionRoot
 }
@@ -193,7 +193,7 @@ $allRecords += $reviewerDocRecords
 $allRecords += $screenshotRecords
 
 $invalidRecords = @($allRecords | Where-Object { -not $_.Valid })
-$expectedPackagePath = "01-upload-package/alfaraheedi-browser-extension-$version.zip"
+$expectedPackagePath = "01-upload-package/nahou-browser-extension-$version.zip"
 $packageRecordPathMatches = $false
 if ($packageRecord) {
     $packageRecordPathMatches = $packageRecord.Path -eq $expectedPackagePath

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.5.0",
   "type": "module",
-  "description": "Local-first writing workbench for the Alfaraheedi engine.",
+  "description": "Local-first writing workbench for the Nahou engine.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

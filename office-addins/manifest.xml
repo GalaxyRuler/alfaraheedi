@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xsi:type="TaskPaneApp">
+  <Id>9f4a2a6d-6c20-44a1-90e4-642c3d407c08</Id>
+  <Version>0.8.0</Version>
+  <ProviderName>Nahou</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Nahou"/>
+  <Description DefaultValue="Local-first writing suggestions for selected Word and PowerPoint text."/>
+  <IconUrl DefaultValue="https://localhost:3443/browser-extension/icons/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:3443/browser-extension/icons/icon-128.png"/>
+  <SupportUrl DefaultValue="https://github.com/GalaxyRuler/alfaraheedi"/>
+  <AppDomains>
+    <AppDomain>https://localhost:3443</AppDomain>
+    <AppDomain>http://127.0.0.1:3000</AppDomain>
+    <AppDomain>http://localhost:3000</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+    <Host Name="Presentation"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="OfficeApi"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:3443/office-addins/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+</OfficeApp>

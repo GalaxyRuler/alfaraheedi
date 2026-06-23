@@ -56,10 +56,10 @@ $safeRunLabel = if ($RunLabel) {
 $outputRoot = Assert-PathUnderRepo (Resolve-RepoPath $OutDir) "Manual QA report output root"
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
 
-$reportPath = Join-Path $outputRoot "alfaraheedi-browser-extension-$safeRunLabel-manual-qa-$timestamp.md"
+$reportPath = Join-Path $outputRoot "nahou-browser-extension-$safeRunLabel-manual-qa-$timestamp.md"
 
 @"
-# Alfaraheedi Browser Extension Manual QA Report
+# Nahou Browser Extension Manual QA Report
 
 Version: $Version
 Run label: $safeRunLabel

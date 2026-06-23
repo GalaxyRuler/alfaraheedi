@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CredentialPath,
 
-    [string]$ZipPath = "dist\browser-extension\alfaraheedi-browser-extension-0.7.0.zip",
+    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-0.7.0.zip",
 
     [string]$QaRoot = ""
 )
@@ -26,7 +26,7 @@ function New-GuestQaRoot {
     $baseRoot = $env:ALFARAHEEDI_VM_QA_ROOT
     if (-not $baseRoot) {
         $systemDrive = if ($env:SystemDrive) { $env:SystemDrive } else { "C:" }
-        $baseRoot = Join-Path ($systemDrive.TrimEnd("\") + "\") "Temp\Alfaraheedi"
+        $baseRoot = Join-Path ($systemDrive.TrimEnd("\") + "\") "Temp\Nahou"
     }
 
     return (Join-Path $baseRoot ("v0.7-extension-$RunName-" + (Get-Date -Format 'yyyyMMdd-HHmmss')))
@@ -273,7 +273,7 @@ ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
                 Start-Sleep -Milliseconds 250
             }
             if (-not $serviceWorker) {
-                throw ('Alfaraheedi service worker target not found. Targets=' + (($targets | Select-Object type, title, url) | ConvertTo-Json -Compress))
+                throw ('Nahou service worker target not found. Targets=' + (($targets | Select-Object type, title, url) | ConvertTo-Json -Compress))
             }
             $extensionId = ($serviceWorker.url -replace '^chrome-extension://([^/]+)/.*$', '$1')
 

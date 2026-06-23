@@ -1,6 +1,6 @@
-# Alfaraheedi — Web App
+# Nahou — Web App
 
-A local-first Arabic writing workbench for the Alfaraheedi engine. TypeScript +
+A local-first Arabic writing workbench for the Nahou engine. TypeScript +
 React + Vite, with a CodeMirror 6 editor for RTL-aware Arabic editing and inline
 suggestion decorations.
 

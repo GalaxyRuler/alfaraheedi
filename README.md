@@ -1,4 +1,4 @@
-# Alfaraheedi
+# Nahou
 
 [![CI](https://github.com/GalaxyRuler/alfaraheedi/actions/workflows/ci.yml/badge.svg)](https://github.com/GalaxyRuler/alfaraheedi/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/GalaxyRuler/alfaraheedi?include_prereleases)](https://github.com/GalaxyRuler/alfaraheedi/releases)
@@ -6,15 +6,15 @@
 
 ## What It Is
 
-Alfaraheedi is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
+Nahou is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
 
 The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. The v0.7 browser-extension foundation adds local-first editable web-field checking with accessibility guardrails for panel semantics, text direction, contrast, and Windows forced-colors mode. It is designed to keep user text on the user's machine by default.
 
-![Alfaraheedi local web workbench](docs/assets/workbench.png)
+![Nahou local web workbench](docs/assets/workbench.png)
 
 ## What It Is Not
 
-Alfaraheedi is not a hosted writing service, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. The desktop companion does not provide live underlines in every app yet, and the browser-extension work is still an unpacked v0.7 foundation rather than a store-ready extension. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
+Nahou is not a hosted writing service, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. The desktop companion does not provide live underlines in every app yet, and the browser-extension work is still an unpacked v0.7 foundation rather than a store-ready extension. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
 
 ## Current Rules
 
@@ -187,13 +187,25 @@ local extension package, store-submission bundle, selected screenshots, manual
 QA report template, public privacy URL status, and remaining account-side
 blockers before store upload.
 
+The v0.8 Office add-ins foundation lives in `office-addins/`. It is an
+add-in-only XML manifest plus a Word/PowerPoint task pane for selected text:
+read the current Office selection through Office.js, analyze it through the
+local Nahou loopback API, and replace the selection with deterministic
+safe fixes. Package it with `.\scripts\package-office-addins.ps1` and validate
+the foundation with `.\scripts\validate-office-addins-release.ps1`. For local
+sideload development, create a localhost certificate with
+`.\scripts\New-OfficeAddinDevCertificate.ps1` and run the HTTPS task-pane host
+with `.\scripts\serve-office-addins.ps1`. The certificate script only changes
+the CurrentUser trusted root store if called with `-Trust`. This does not yet
+include sideload QA, Office store submission, or live underline behavior.
+
 Build the desktop app from `frontend/`:
 
 ```powershell
 npm run desktop:build
 ```
 
-For v0.5 releases, the recommended user artifact is a Windows installer named like `Alfaraheedi-0.5.0-windows-x64-setup.exe`. The CLI zip is a developer artifact, not the main install path.
+For v0.5 releases, the recommended user artifact is a Windows installer named like `Nahou-0.5.0-windows-x64-setup.exe`. The CLI zip is a developer artifact, not the main install path.
 
 ## Docker
 
@@ -235,7 +247,7 @@ Maintainer triage, patch-release criteria, and the report-to-eval-fixture proces
 
 ## Privacy
 
-Alfaraheedi is local-first by default. The CLI, API, Docker image, and eval tooling do not require sending text to a hosted service.
+Nahou is local-first by default. The CLI, API, Docker image, and eval tooling do not require sending text to a hosted service.
 
 Project policy treats raw user text logging, retained analyzed text, and unredacted telemetry as privacy bugs. See `docs/privacy.md`.
 
@@ -247,7 +259,7 @@ The repository does not bundle corpora, dictionaries, model weights, GPL-linked 
 
 ## Optional Local LLM
 
-The local LLM track is suggestion-only. The built-in catalog currently points at CPU-capable GGUF candidates such as `qwen3-1.7b-q4_k_m`, but Alfaraheedi does not download or redistribute model weights by default. LLM output is not eligible for `fix --safe`.
+The local LLM track is suggestion-only. The built-in catalog currently points at CPU-capable GGUF candidates such as `qwen3-1.7b-q4_k_m`, but Nahou does not download or redistribute model weights by default. LLM output is not eligible for `fix --safe`.
 
 The desktop companion can store local runtime settings under the app config directory. The runtime URL must be a loopback `http` or `https` URL such as `http://127.0.0.1:8000`; remote hosts are rejected. "Run doctor" checks policy, configuration, `/v1/models`, and a suggestion-only probe. After selecting text and opening the review window, use "LLM suggestion" to request a full-text suggestion, cancel the request if it takes too long, and apply it manually if it is useful.
 
@@ -272,7 +284,7 @@ With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LL
 
 ## Download
 
-Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current recommended Windows package is the desktop installer `Alfaraheedi-0.5.0-windows-x64-setup.exe`. The CLI/web zip remains available as an optional developer artifact.
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current recommended Windows package is the desktop installer `Nahou-0.5.0-windows-x64-setup.exe`. The CLI/web zip remains available as an optional developer artifact.
 
 ## Packaging
 
@@ -282,7 +294,7 @@ Build the optional Windows x64 developer zip:
 .\scripts\package-windows.ps1 -Version 0.5.0
 ```
 
-This legacy package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Alfaraheedi.ps1`. For v0.5 user releases, prefer the desktop installer produced by `npm run desktop:build`.
+This legacy package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Nahou.ps1`. For v0.5 user releases, prefer the desktop installer produced by `npm run desktop:build`.
 
 ## Roadmap
 
@@ -293,7 +305,7 @@ Near-term work after the public MVP:
 - Keep dictionary and morphology work behind clear licensing and accuracy gates.
 - v0.6: in-app local LLM setup and selected-text LLM suggestions.
 - v0.7: browser extension for live web editor underlines.
-- v0.8: Word and PowerPoint Office add-ins.
+- v0.8: Word and PowerPoint Office add-ins foundation, then sideload QA.
 - v0.9: UI Automation pilot for supported Windows native text controls.
 - Add LSP or hosted integrations only after the local engine contract is stable.
 
@@ -303,7 +315,7 @@ Near-term work after the public MVP:
 - No Arabic morphology or context-heavy grammar correction.
 - No spell checking.
 - No English grammar layer.
-- No production packaged browser extension, Office add-in, UI Automation overlay, or LSP server.
+- No production Office add-in, UI Automation overlay, or LSP server.
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.

@@ -14,7 +14,7 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 
 $bundleDir = Join-Path $repoRoot "target\release\bundle\nsis"
-$expectedName = "Alfaraheedi-$Version-windows-x64-setup.exe"
+$expectedName = "Nahou-$Version-windows-x64-setup.exe"
 $expectedPath = Join-Path $bundleDir $expectedName
 
 if (-not (Test-Path -LiteralPath $bundleDir -PathType Container)) {
@@ -22,7 +22,7 @@ if (-not (Test-Path -LiteralPath $bundleDir -PathType Container)) {
 }
 
 $setupInstallers = @(
-    Get-ChildItem -LiteralPath $bundleDir -Filter "Alfaraheedi*setup.exe" -File |
+    Get-ChildItem -LiteralPath $bundleDir -Filter "Nahou*setup.exe" -File |
         Select-Object -ExpandProperty Name
 )
 

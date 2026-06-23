@@ -420,8 +420,8 @@ function CompanionApp({
             <ShieldIcon />
             <p>
               {lang === "ar"
-                ? "ينسخ الفراهيدي النص المحدد محليًا فقط بعد الاختصار. لا توجد خدمة مستضافة أو تتبع، وتُستعاد الحافظة عند الإمكان."
-                : "Alfaraheedi copies selected text locally only after the hotkey. There is no hosted service or telemetry, and the clipboard is restored when possible."}
+                ? "ينسخ Nahou النص المحدد محليًا فقط بعد الاختصار. لا توجد خدمة مستضافة أو تتبع، وتُستعاد الحافظة عند الإمكان."
+                : "Nahou copies selected text locally only after the hotkey. There is no hosted service or telemetry, and the clipboard is restored when possible."}
             </p>
             <button
               type="button"

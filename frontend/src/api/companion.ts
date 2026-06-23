@@ -134,7 +134,7 @@ export function buildPrivacySafeSuggestionReport({
   sourceApp: string | null;
 }): string {
   return [
-    "# Alfaraheedi Companion Feedback",
+    "# Nahou Companion Feedback",
     "",
     `App version: ${appVersion}`,
     `Surface: ${sourceApp ?? "unknown"}`,

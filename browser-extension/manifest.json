@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Alfaraheedi Writing Companion",
-  "short_name": "Alfaraheedi",
+  "name": "Nahou Writing Companion",
+  "short_name": "Nahou",
   "version": "0.7.0",
   "description": "Local-first writing suggestions for editable web fields.",
   "icons": {
@@ -11,7 +11,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "Alfaraheedi",
+    "default_title": "Nahou",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"

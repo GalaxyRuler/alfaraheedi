@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CredentialPath,
 
-    [string]$ZipPath = "dist\browser-extension\alfaraheedi-browser-extension-0.7.0.zip",
+    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-0.7.0.zip",
 
     [string]$OutDir = "dist\browser-extension-store-assets",
 
@@ -28,7 +28,7 @@ function New-GuestQaRoot {
     $baseRoot = $env:ALFARAHEEDI_VM_QA_ROOT
     if (-not $baseRoot) {
         $systemDrive = if ($env:SystemDrive) { $env:SystemDrive } else { "C:" }
-        $baseRoot = Join-Path ($systemDrive.TrimEnd("\") + "\") "Temp\Alfaraheedi"
+        $baseRoot = Join-Path ($systemDrive.TrimEnd("\") + "\") "Temp\Nahou"
     }
 
     return (Join-Path $baseRoot ("v0.7-extension-$RunName-" + (Get-Date -Format 'yyyyMMdd-HHmmss')))
@@ -163,7 +163,7 @@ PAGE = """<!doctype html>
   }
 </style>
 <main>
-  <h1>Alfaraheedi checks text where you write</h1>
+  <h1>Nahou checks text where you write</h1>
   <p>Local suggestions appear next to editable web fields. The extension talks only to the loopback local API configured in settings.</p>
   <label for="draft">Draft message</label>
   <textarea id="draft">helo wat you are do?</textarea>
@@ -291,7 +291,7 @@ ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
             }
 
             if (-not $serviceWorker) {
-                throw ('Alfaraheedi service worker target not found. Targets=' + (($targets | Select-Object type, title, url) | ConvertTo-Json -Compress))
+                throw ('Nahou service worker target not found. Targets=' + (($targets | Select-Object type, title, url) | ConvertTo-Json -Compress))
             }
 
             $extensionId = ([uri]$serviceWorker.url).Host
@@ -392,7 +392,7 @@ ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
 
             $ok = (
                 $settingsStatus -eq 'Saved.' -and
-                $popupState.title -eq 'Alfaraheedi' -and
+                $popupState.title -eq 'Nahou' -and
                 $popupState.apiStatus -eq 'Local API reachable.' -and
                 $popupState.checking -eq 'On' -and
                 $panelState.panelText -like '*hello*' -and

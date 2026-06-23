@@ -151,7 +151,7 @@ if (-not (Test-Path -LiteralPath $manifestPath)) {
 }
 
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-$submissionRootName = "alfaraheedi-browser-extension-$($manifest.version)-store-submission"
+$submissionRootName = "nahou-browser-extension-$($manifest.version)-store-submission"
 $submissionRoot = Join-Path (Resolve-RepoPath $OutDir) $submissionRootName
 $submissionRoot = Assert-PathUnderRepo $submissionRoot "Store submission export root"
 $uploadRoot = Join-Path $submissionRoot "01-upload-package"
@@ -163,7 +163,7 @@ if (-not $SkipPreflight) {
     if ($LASTEXITCODE -ne 0) {
         throw "Browser extension release preflight failed."
     }
-    $packagePath = Join-Path $RepoRoot "dist\browser-extension\alfaraheedi-browser-extension-$($manifest.version).zip"
+    $packagePath = Join-Path $RepoRoot "dist\browser-extension\nahou-browser-extension-$($manifest.version).zip"
 } else {
     $packageJson = & (Join-Path $PSScriptRoot "package-browser-extension.ps1") -ExtensionRoot $ExtensionRoot
     if ($LASTEXITCODE -ne 0) {
@@ -206,9 +206,9 @@ Copy-RequiredFile $publicPrivacyPagePath $reviewerDocPaths[6]
 
 $readmePath = Join-Path $submissionRoot "README.md"
 @"
-# Alfaraheedi Browser Extension Store Submission Bundle
+# Nahou Browser Extension Store Submission Bundle
 
-This folder is a local upload-prep bundle for Alfaraheedi browser extension
+This folder is a local upload-prep bundle for Nahou browser extension
 v$($manifest.version). It does not prove Chrome Web Store or Edge Add-ons
 approval.
 

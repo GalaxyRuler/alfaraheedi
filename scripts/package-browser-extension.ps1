@@ -20,7 +20,7 @@ $manifestPath = Join-Path $extensionPath "manifest.json"
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 
 if (-not $PackageName) {
-    $PackageName = "alfaraheedi-browser-extension-$($manifest.version)"
+    $PackageName = "nahou-browser-extension-$($manifest.version)"
 }
 
 $outPath = Resolve-RepoPath $OutDir
@@ -29,7 +29,7 @@ $stageRoot = Join-Path $RepoRoot "target\browser-extension-package\$PackageName.
 $zipPath = Join-Path $outPath "$PackageName.zip"
 $tempZipPath = Join-Path $outPath "$PackageName.tmp.$PID.zip"
 $backupZipPath = Join-Path $outPath "$PackageName.previous.$PID.zip"
-$packageMutexName = "AlfaraheediBrowserExtensionPackage-" + ($PackageName -replace '[^A-Za-z0-9_.-]', '_')
+$packageMutexName = "NahouBrowserExtensionPackage-" + ($PackageName -replace '[^A-Za-z0-9_.-]', '_')
 
 $entriesJson = node (Join-Path $extensionPath "tools\package-extension.mjs") $extensionPath
 $entries = [string[]]($entriesJson | ConvertFrom-Json)

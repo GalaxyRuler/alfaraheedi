@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CredentialPath,
 
-    [string]$ZipPath = "dist\browser-extension\alfaraheedi-browser-extension-0.7.0.zip",
+    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-0.7.0.zip",
 
     [string]$QaRoot = ""
 )
@@ -26,7 +26,7 @@ function New-GuestQaRoot {
     $baseRoot = $env:ALFARAHEEDI_VM_QA_ROOT
     if (-not $baseRoot) {
         $systemDrive = if ($env:SystemDrive) { $env:SystemDrive } else { "C:" }
-        $baseRoot = Join-Path ($systemDrive.TrimEnd("\") + "\") "Temp\Alfaraheedi"
+        $baseRoot = Join-Path ($systemDrive.TrimEnd("\") + "\") "Temp\Nahou"
     }
 
     return (Join-Path $baseRoot ("v0.7-extension-$RunName-" + (Get-Date -Format 'yyyyMMdd-HHmmss')))
@@ -252,7 +252,7 @@ ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
             }
 
             if (-not $serviceWorker) {
-                throw ('Alfaraheedi service worker target not found. Targets=' + (($targets | Select-Object type, title, url) | ConvertTo-Json -Compress))
+                throw ('Nahou service worker target not found. Targets=' + (($targets | Select-Object type, title, url) | ConvertTo-Json -Compress))
             }
 
             $extensionId = ([uri]$serviceWorker.url).Host
@@ -318,16 +318,16 @@ ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
             }
 
             $checks = [ordered]@{
-                OptionsHeading = Test-AxNode $optionsAx 'heading' 'Alfaraheedi Settings'
+                OptionsHeading = Test-AxNode $optionsAx 'heading' 'Nahou Settings'
                 OptionsApiTextbox = Test-AxNode $optionsAx 'textbox' 'Local API URL'
                 OptionsWritingMode = Test-AxNode $optionsAx 'combobox' 'Writing mode'
                 OptionsEnabledCheckbox = Test-AxNode $optionsAx 'checkbox' 'Check editable fields'
                 OptionsSaveButton = Test-AxNode $optionsAx 'button' 'Save'
                 OptionsStatusText = Test-AxNode $optionsAx 'StaticText' 'Saved.'
-                PopupHeading = Test-AxNode $popupAx 'heading' 'Alfaraheedi'
+                PopupHeading = Test-AxNode $popupAx 'heading' 'Nahou'
                 PopupPauseButton = Test-AxNode $popupAx 'button' 'Pause checking'
                 PopupOptionsButton = Test-AxNode $popupAx 'button' 'Open settings'
-                PanelRegion = Test-AxNode $panelAx 'region' 'Alfaraheedi suggestions'
+                PanelRegion = Test-AxNode $panelAx 'region' 'Nahou suggestions'
                 PanelApplyButton = Test-AxNode $panelAx 'button' 'Apply suggestion: hello'
             }
             $ok = -not @($checks.GetEnumerator() | Where-Object { $_.Value -ne $true })
