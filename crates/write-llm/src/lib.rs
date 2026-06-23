@@ -684,7 +684,7 @@ fn ensure_input_bounds(text: &str) -> Result<(), LlmError> {
 }
 
 fn system_prompt() -> &'static str {
-    "You are Alfaraheedi's local Arabic writing assistant. Return JSON only. \
+    "You are Nahou's local Arabic writing assistant. Return JSON only. \
 Use this exact shape: {\"replacement\":\"...\",\"explanation\":\"...\",\"confidence\":0.0}. \
 The replacement is a full revised version of the user's text. \
 Do not invent facts. Do not explain outside JSON. \

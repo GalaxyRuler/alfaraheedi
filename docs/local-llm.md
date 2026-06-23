@@ -1,6 +1,6 @@
 # Local LLM
 
-Alfaraheedi can call an opt-in local OpenAI-compatible runtime for suggestion-only rewrites. The default install does not download, bundle, or redistribute model weights.
+Nahou can call an opt-in local OpenAI-compatible runtime for suggestion-only rewrites. The default install does not download, bundle, or redistribute model weights.
 
 ## Policy
 
@@ -22,7 +22,7 @@ $env:ALFARAHEEDI_LLM_MODEL = "qwen3-1.7b-q4_k_m"
 $env:ALFARAHEEDI_LLM_TIMEOUT_MS = "30000"
 ```
 
-`ALFARAHEEDI_LLM_BASE_URL` is the only required variable. If no model is set, Alfaraheedi uses the catalog default model id.
+`ALFARAHEEDI_LLM_BASE_URL` is the only required variable. If no model is set, Nahou uses the catalog default model id.
 
 ## Desktop Companion
 
@@ -67,9 +67,9 @@ CPU-only guidance:
 - Start with `Qwen3-1.7B-Q4_K_M.gguf` on machines with at least 4 GB available RAM.
 - Use `Qwen3-0.6B-Q4_0.gguf` for lower-memory tests.
 - Keep downloaded GGUF files outside the repository and release package, for example under `C:\Models`.
-- Do not commit model weights or download them automatically from Alfaraheedi scripts.
+- Do not commit model weights or download them automatically from Nahou scripts.
 
-Then start Alfaraheedi:
+Then start Nahou:
 
 ```powershell
 cargo run -p write-cli -- serve --addr 127.0.0.1:3000

@@ -1,6 +1,6 @@
 # Browser Extension v0.7 Validation Summary
 
-This is the public-safe validation summary for the Alfaraheedi v0.7 browser
+This is the public-safe validation summary for the Nahou v0.7 browser
 extension foundation. Detailed VM evidence logs are intentionally kept out of
 the public release branch under `docs/testing/reports/` because they can contain
 local guest artifact paths and private QA-machine identifiers.
@@ -8,7 +8,7 @@ local guest artifact paths and private QA-machine identifiers.
 ## Scope
 
 The v0.7 extension is a Manifest V3 browser-extension foundation for editable
-web fields. It connects only to the configured loopback Alfaraheedi local API,
+web fields. It connects only to the configured loopback Nahou local API,
 stores only extension settings, avoids telemetry and hosted services, and does
 not claim live Gmail, WhatsApp Web, Google Docs, Word, or PowerPoint integration
 until those exact surfaces have separate current verification.
@@ -63,7 +63,7 @@ With `-RunVmSmokes`, the preflight runs:
 - Packaged Edge keyboard-flow smoke.
 - Packaged Chrome for Testing keyboard-flow smoke.
 
-VM smoke scripts write guest-side artifacts under `C:\Temp\Alfaraheedi` by
+VM smoke scripts write guest-side artifacts under `C:\Temp\Nahou` by
 default. Set `ALFARAHEEDI_VM_QA_ROOT`, or pass `-QaRoot <guest-path>`, when a
 QA machine needs a different guest artifact root.
 

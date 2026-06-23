@@ -52,7 +52,7 @@ async function request<T>(
     }
     throw new ApiError(
       "network",
-      `Could not reach the Alfaraheedi API at ${baseUrl}.`,
+      `Could not reach the Nahou API at ${baseUrl}.`,
     );
   } finally {
     clearTimeout(timer);
@@ -74,7 +74,7 @@ async function request<T>(
   }
 }
 
-export interface AlfaraheediApi {
+export interface NahouApi {
   health(): Promise<HealthResponse>;
   rules(): Promise<RuleInfo[]>;
   llmStatus(): Promise<LlmStatus>;
@@ -83,7 +83,7 @@ export interface AlfaraheediApi {
   applySafe(text: string): Promise<ApplyOutcome>;
 }
 
-export function createApi(baseUrl: string): AlfaraheediApi {
+export function createApi(baseUrl: string): NahouApi {
   return {
     health: () => request<HealthResponse>(baseUrl, "/v1/health", {}, 5_000),
     rules: () =>

@@ -34,7 +34,7 @@ if (-not $SkipNpmInstall -and -not (Test-Path -LiteralPath (Join-Path $frontendR
 $apiAddr = "127.0.0.1:$ApiPort"
 $apiBaseUrl = "http://$apiAddr"
 
-Write-Host "Starting Alfaraheedi API at $apiBaseUrl"
+Write-Host "Starting Nahou API at $apiBaseUrl"
 $backend = Start-Process `
     -FilePath "cargo" `
     -ArgumentList @("run", "-p", "write-cli", "--", "serve", "--addr", $apiAddr) `
@@ -54,7 +54,7 @@ try {
 }
 finally {
     if ($backend -and -not $backend.HasExited) {
-        Write-Host "Stopping Alfaraheedi API process $($backend.Id)"
+        Write-Host "Stopping Nahou API process $($backend.Id)"
         Stop-Process -Id $backend.Id -Force
         $backend.WaitForExit()
     }

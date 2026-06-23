@@ -1,6 +1,6 @@
 # Feedback Triage And Patch Releases
 
-This process keeps public feedback useful without turning GitHub issues into a raw-text archive. Alfaraheedi is local-first: the app does not send reports automatically, and the web workbench report defaults to no raw text.
+This process keeps public feedback useful without turning GitHub issues into a raw-text archive. Nahou is local-first: the app does not send reports automatically, and the web workbench report defaults to no raw text.
 
 Use this document when classifying public reports, deciding whether a patch release is warranted, and turning reported rule behavior into release eval coverage.
 
@@ -8,8 +8,8 @@ Use this document when classifying public reports, deciding whether a patch rele
 
 Public issues are useful for:
 
-- **False positives**: Alfaraheedi reports a suggestion that should not be reported.
-- **False negatives**: Alfaraheedi misses a suggestion that an existing shipped rule should catch.
+- **False positives**: Nahou reports a suggestion that should not be reported.
+- **False negatives**: Nahou misses a suggestion that an existing shipped rule should catch.
 - **UI bugs**: The local web workbench behaves incorrectly, loses state, applies the wrong fix, exports a bad report, or is hard to use.
 - **Packaging bugs**: A release zip, executable, startup script, Docker image, or install path does not work.
 - **LLM runtime issues**: Optional local LLM status, configuration, or suggestion flow does not match the documented local-only contract.

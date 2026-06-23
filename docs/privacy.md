@@ -2,7 +2,7 @@
 
 The default product posture is local-first and no text retention. The CLI, local API server, Docker image, and eval tooling do not require sending user text to a hosted service.
 
-Optional local LLM suggestions are off unless `ALFARAHEEDI_LLM_BASE_URL` is set before the API starts. When enabled, `POST /v1/llm/suggest` sends the submitted text to that local runtime only; Alfaraheedi still does not provide a hosted fallback or retain raw text.
+Optional local LLM suggestions are off unless `ALFARAHEEDI_LLM_BASE_URL` is set before the API starts. When enabled, `POST /v1/llm/suggest` sends the submitted text to that local runtime only; Nahou still does not provide a hosted fallback or retain raw text.
 
 Implementation rules:
 

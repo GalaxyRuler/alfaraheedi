@@ -9,7 +9,7 @@ Set-StrictMode -Version Latest
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $frontendRoot = Join-Path $repoRoot "frontend"
 $distRoot = Join-Path $repoRoot "dist"
-$packageName = "alfaraheedi-v$Version-windows-x64"
+$packageName = "nahou-v$Version-windows-x64"
 $packageRoot = Join-Path $distRoot $packageName
 $zipPath = Join-Path $distRoot "$packageName.zip"
 
@@ -94,13 +94,13 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $addr = "127.0.0.1:3000"
 $url = "http://$addr"
 
-Write-Host "Starting Alfaraheedi at $url"
+Write-Host "Starting Nahou at $url"
 Write-Host "Press Ctrl+C to stop."
 Start-Process $url | Out-Null
 & (Join-Path $root "writecheck.exe") serve --addr $addr --frontend-dir (Join-Path $root "web")
 '@
 
-Set-Content -LiteralPath (Join-Path $packageRoot "Start-Alfaraheedi.ps1") -Value $launcher -Encoding UTF8
+Set-Content -LiteralPath (Join-Path $packageRoot "Start-Nahou.ps1") -Value $launcher -Encoding UTF8
 
 Compress-Archive -LiteralPath $packageRoot -DestinationPath $zipPath -Force
 

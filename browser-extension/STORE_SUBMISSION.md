@@ -17,7 +17,7 @@ Current policy references checked on 2026-06-22:
 
 ## Single Purpose
 
-Alfaraheedi provides local-first writing suggestions for editable web fields.
+Nahou provides local-first writing suggestions for editable web fields.
 It detects focused editable fields, sends the current text only to the
 configured loopback local API, and renders page-local suggestions that the user
 can review or apply.
@@ -25,9 +25,9 @@ can review or apply.
 Chrome single-purpose field:
 
 ```text
-Alfaraheedi provides local-first writing suggestions for editable web fields.
+Nahou provides local-first writing suggestions for editable web fields.
 When enabled, it checks text in focused web text fields by sending that text
-only to the user's configured loopback Alfaraheedi API, then shows suggestions
+only to the user's configured loopback Nahou API, then shows suggestions
 near the field for review or manual apply.
 ```
 
@@ -40,13 +40,13 @@ Local-first writing suggestions for editable web fields.
 Long store description:
 
 ```text
-Alfaraheedi is a local-first writing companion for editable web fields. It
+Nahou is a local-first writing companion for editable web fields. It
 checks text in focused textareas, safe text-like inputs, iframe-hosted fields,
 open Shadow DOM fields, and supported contenteditable editors. Suggestions are
 shown in a compact page-local panel and are applied only when the user accepts
 them.
 
-The extension connects only to a loopback Alfaraheedi API configured in
+The extension connects only to a loopback Nahou API configured in
 settings. It does not use a hosted writing service, telemetry, analytics, or
 raw text logging. It skips password fields, read-only or disabled fields,
 sensitive-looking fields, and sensitive-looking ancestor containers. Checking
@@ -71,11 +71,11 @@ still needs separate QA before store release claims are broadened.
 Chrome permission field text:
 
 ```text
-storage: Used only to save Alfaraheedi extension settings, including the local
+storage: Used only to save Nahou extension settings, including the local
 API URL, writing mode, and enabled/paused state.
 
 http://127.0.0.1/* and http://localhost/*: Used only by the extension service
-worker to call the user's local Alfaraheedi API. The extension does not call a
+worker to call the user's local Nahou API. The extension does not call a
 hosted writing API.
 
 http://*/* and https://*/* content scripts: Required to detect and assist
@@ -115,7 +115,7 @@ Chrome privacy-practices answers:
   `https://galaxyruler.github.io/alfaraheedi/browser-extension/privacy.html`.
   The linked policy must state that the extension sends active-field text only
   to the configured local loopback API, does not log raw editor text, does not
-  use telemetry, and does not transfer text to Alfaraheedi-hosted services.
+  use telemetry, and does not transfer text to Nahou-hosted services.
 
 Microsoft Edge Partner Center notes:
 
@@ -135,14 +135,14 @@ Microsoft Edge Partner Center notes:
 Reviewer notes:
 
 ```text
-Alfaraheedi is local-first. The extension sends active editable-field text only
+Nahou is local-first. The extension sends active editable-field text only
 to a loopback API configured by the user, defaulting to localhost/127.0.0.1.
 There is no hosted writing API, telemetry, analytics, remote code execution, or
 raw text logging. The extension can be paused from the toolbar popup or options
 page. Password fields, read-only/disabled fields, sensitive-looking fields, and
 sensitive-looking ancestor containers are skipped before analysis.
 
-To test manually, run the local Alfaraheedi API, configure the extension API URL
+To test manually, run the local Nahou API, configure the extension API URL
 to the loopback address, type "helo wat you are do?" in a normal textarea, wait
 for the suggestion panel, then apply the "hello" suggestion.
 ```
@@ -190,7 +190,7 @@ Export a local upload-prep bundle after preflight with:
 ```
 
 The export writes
-`dist\browser-extension-store-submission\alfaraheedi-browser-extension-0.7.0-store-submission\`
+`dist\browser-extension-store-submission\nahou-browser-extension-0.7.0-store-submission\`
 with the upload zip, reviewer docs, privacy policy source, store asset
 checklist, selected screenshots, and `RELEASE_MANIFEST.json` containing SHA-256
 hashes and byte counts for the upload package, reviewer docs, and screenshots.
@@ -263,7 +263,7 @@ With `-RunVmSmokes`, the preflight runs packaged Edge Accessibility Tree,
 production-editor fixture, store screenshot, Edge keyboard-flow, and Chrome for
 Testing keyboard-flow checks.
 
-VM smoke scripts write guest-side artifacts under `C:\Temp\Alfaraheedi` by
+VM smoke scripts write guest-side artifacts under `C:\Temp\Nahou` by
 default. Set `ALFARAHEEDI_VM_QA_ROOT` before running the scripts, or pass
 `-QaRoot <guest-path>`, when a QA machine needs a different guest artifact root.
 

@@ -24,7 +24,7 @@ describe("desktop release packaging", () => {
     const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
 
     expect(readme).toMatch(/current recommended Windows package/u);
-    expect(readme).toMatch(/Alfaraheedi-0\.5\.0-windows-x64-setup\.exe/u);
+    expect(readme).toMatch(/Nahou-0\.5\.0-windows-x64-setup\.exe/u);
     expect(readme).not.toMatch(/current v0\.4 Windows package/u);
   });
 
@@ -42,15 +42,15 @@ describe("desktop release packaging", () => {
       "utf8",
     );
 
-    expect(source).toMatch(/Alfaraheedi_\$\(\$Version\)_x64-setup\.exe/u);
-    expect(source).toMatch(/Alfaraheedi-\$Version-windows-x64-setup\.exe/u);
-    expect(source).toMatch(/Get-ChildItem -LiteralPath \$bundleDir -Filter "Alfaraheedi\*setup\.exe"/u);
+    expect(source).toMatch(/Nahou_\$\(\$Version\)_x64-setup\.exe/u);
+    expect(source).toMatch(/Nahou-\$Version-windows-x64-setup\.exe/u);
+    expect(source).toMatch(/Get-ChildItem -LiteralPath \$bundleDir -Filter "Nahou\*setup\.exe"/u);
     expect(source).toMatch(/Remove-Item -Force/u);
     expect(source).toMatch(/Move-Item -LiteralPath \$source -Destination \$destination -Force/u);
     expect(source).toMatch(/Desktop installer moved to \$destination/u);
     expect(source).not.toMatch(/Copy-Item/u);
     expect(verifier).toMatch(/target\\release\\bundle\\nsis/u);
-    expect(verifier).toMatch(/Alfaraheedi-\$Version-windows-x64-setup\.exe/u);
+    expect(verifier).toMatch(/Nahou-\$Version-windows-x64-setup\.exe/u);
     expect(verifier).toMatch(/Expected exactly one desktop setup installer/u);
     expect(verifier).toMatch(/Get-FileHash/u);
     expect(verifier).toMatch(/ConvertTo-Json/u);
@@ -173,9 +173,9 @@ describe("desktop release packaging", () => {
     expect(workflow).toMatch(/npm run desktop:build/u);
     expect(workflow).toMatch(/check-desktop-installer-bundle\.ps1/u);
     expect(workflow).toMatch(/actions\/upload-artifact@v6/u);
-    expect(workflow).toMatch(/alfaraheedi-desktop-windows-setup/u);
+    expect(workflow).toMatch(/nahou-desktop-windows-setup/u);
     expect(workflow).toMatch(
-      /target\/release\/bundle\/nsis\/Alfaraheedi-\*-windows-x64-setup\.exe/u,
+      /target\/release\/bundle\/nsis\/Nahou-\*-windows-x64-setup\.exe/u,
     );
     expect(workflow).toMatch(/if-no-files-found:\s+error/u);
 

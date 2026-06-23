@@ -25,7 +25,7 @@ if (-not (Test-Path -LiteralPath $manifestPath)) {
 $manifestXml = [xml](Get-Content -LiteralPath $manifestPath -Raw)
 $version = [string]$manifestXml.OfficeApp.Version
 if (-not $PackageName) {
-    $PackageName = "alfaraheedi-office-addins-$version"
+    $PackageName = "nahou-office-addins-$version"
 }
 
 $outPath = Resolve-RepoPath $OutDir
@@ -34,7 +34,7 @@ $stageRoot = Join-Path $RepoRoot "target\office-addins-package\$PackageName.$run
 $zipPath = Join-Path $outPath "$PackageName.zip"
 $tempZipPath = Join-Path $outPath "$PackageName.tmp.$PID.zip"
 $backupZipPath = Join-Path $outPath "$PackageName.previous.$PID.zip"
-$packageMutexName = "AlfaraheediOfficeAddinsPackage-" + ($PackageName -replace '[^A-Za-z0-9_.-]', '_')
+$packageMutexName = "NahouOfficeAddinsPackage-" + ($PackageName -replace '[^A-Za-z0-9_.-]', '_')
 
 $entriesJson = node (Join-Path $addinPath "tools\package-office-addin.mjs") $addinPath
 $entries = [string[]]($entriesJson | ConvertFrom-Json)

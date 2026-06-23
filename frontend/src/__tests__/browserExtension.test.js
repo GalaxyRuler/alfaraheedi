@@ -426,7 +426,7 @@ describe("browser extension editor surface", () => {
     });
 
     const panel = screen.getByRole("region", {
-      name: "Alfaraheedi suggestions",
+      name: "Nahou suggestions",
     });
     const applyButton = screen.getByRole("button", {
       name: "Apply suggestion: hello",
@@ -471,7 +471,7 @@ describe("browser extension editor surface", () => {
     });
 
     const panel = screen.getByRole("region", {
-      name: "Alfaraheedi suggestions",
+      name: "Nahou suggestions",
     });
     expect(screen.getAllByRole("button", { name: /Apply suggestion:/u })).toHaveLength(1);
     expect(panel).toHaveTextContent("english:valid");
@@ -1241,7 +1241,7 @@ describe("browser extension content script", () => {
 
     const panel = document.querySelector("[data-alfaraheedi-panel]");
     expect(panel).not.toBeNull();
-    expect(panel).toHaveTextContent("Alfaraheedi local API is unavailable.");
+    expect(panel).toHaveTextContent("Nahou local API is unavailable.");
     expect(panel).not.toHaveTextContent("private");
     expect(panel).not.toHaveTextContent("127.0.0.1");
     expect(panel).toHaveAttribute("role", "status");
@@ -1324,7 +1324,7 @@ describe("browser extension content script", () => {
     await Promise.resolve();
 
     expect(document.querySelector("[data-alfaraheedi-panel]")).toHaveTextContent(
-      "Alfaraheedi local API is unavailable.",
+      "Nahou local API is unavailable.",
     );
 
     secondEditor.value = "helo second";
@@ -1337,7 +1337,7 @@ describe("browser extension content script", () => {
     const panels = document.querySelectorAll("[data-alfaraheedi-panel]");
     expect(panels).toHaveLength(1);
     expect(panels[0]).toHaveTextContent("hello");
-    expect(panels[0]).not.toHaveTextContent("Alfaraheedi local API is unavailable.");
+    expect(panels[0]).not.toHaveTextContent("Nahou local API is unavailable.");
     expect(panels[0]).not.toHaveTextContent("private");
     expect(globalThis.chrome.runtime.sendMessage).toHaveBeenCalledWith({
       type: "ALFARAHEEDI_ANALYZE_TEXT",
@@ -2043,7 +2043,7 @@ describe("browser extension content script", () => {
         sendMessage: vi.fn(async () => ({
           ok: false,
           skipped: true,
-          error: "Alfaraheedi checking is paused.",
+          error: "Nahou checking is paused.",
         })),
       },
     };

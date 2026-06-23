@@ -32,7 +32,7 @@ export async function analyzeTextWithLocalApi({
 }) {
   const baseUrl = normalizeApiBaseUrl(apiBaseUrl);
   if (!isLoopbackApiBaseUrl(baseUrl)) {
-    throw new Error("Alfaraheedi extension only connects to a loopback API URL.");
+    throw new Error("Nahou extension only connects to a loopback API URL.");
   }
 
   const response = await fetchImpl(`${baseUrl}/v1/analyze`, {
@@ -44,7 +44,7 @@ export async function analyzeTextWithLocalApi({
   });
 
   if (!response.ok) {
-    throw new Error(`Alfaraheedi local API returned HTTP ${response.status}`);
+    throw new Error(`Nahou local API returned HTTP ${response.status}`);
   }
 
   return response.json();
@@ -58,7 +58,7 @@ export async function checkLocalApiHealth({
   if (!isLoopbackApiBaseUrl(baseUrl)) {
     return {
       ok: false,
-      error: "Alfaraheedi extension only connects to a loopback API URL.",
+      error: "Nahou extension only connects to a loopback API URL.",
     };
   }
 

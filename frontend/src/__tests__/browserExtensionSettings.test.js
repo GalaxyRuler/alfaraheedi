@@ -150,7 +150,7 @@ describe("browser extension settings", () => {
         },
         chromeApi,
       ),
-    ).rejects.toThrow("Alfaraheedi extension only connects to a loopback API URL.");
+    ).rejects.toThrow("Nahou extension only connects to a loopback API URL.");
     expect(chromeApi.storage.local.set).not.toHaveBeenCalled();
   });
 
@@ -173,7 +173,7 @@ describe("browser extension settings", () => {
           },
           chromeApi,
         ),
-      ).rejects.toThrow("Alfaraheedi extension only connects to a loopback API URL.");
+      ).rejects.toThrow("Nahou extension only connects to a loopback API URL.");
     }
     expect(chromeApi.storage.local.set).not.toHaveBeenCalled();
   });
@@ -435,7 +435,7 @@ describe("browser extension settings", () => {
     expect(sendResponse).toHaveBeenCalledWith({
       ok: false,
       skipped: true,
-      error: "Alfaraheedi checking is paused.",
+      error: "Nahou checking is paused.",
     });
 
     vi.unstubAllGlobals();
@@ -475,7 +475,7 @@ describe("browser extension settings", () => {
   it("shows local API reachability in the toolbar popup", async () => {
     document.body.innerHTML = `
       <main>
-        <h1>Alfaraheedi</h1>
+        <h1>Nahou</h1>
         <dl>
           <dt>Local API</dt>
           <dd id="api-base-url">Loading...</dd>
@@ -542,7 +542,7 @@ describe("browser extension settings", () => {
   it("lets the toolbar popup pause extension checking", async () => {
     document.body.innerHTML = `
       <main>
-        <h1>Alfaraheedi</h1>
+        <h1>Nahou</h1>
         <dl>
           <dt>Local API</dt>
           <dd id="api-base-url">Loading...</dd>
@@ -711,7 +711,7 @@ describe("browser extension settings", () => {
     );
     await vi.waitFor(() =>
       expect(document.querySelector("#status").textContent).toBe(
-        "Alfaraheedi extension only connects to a loopback API URL.",
+        "Nahou extension only connects to a loopback API URL.",
       ),
     );
 

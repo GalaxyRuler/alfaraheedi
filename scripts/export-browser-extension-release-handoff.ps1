@@ -129,7 +129,7 @@ if ($LASTEXITCODE -ne 0) {
 $candidate = ConvertFrom-CommandJson -CommandOutput $candidateOutput -StepName "Release candidate preparation"
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$baseName = "alfaraheedi-browser-extension-$($candidate.Version)-release-handoff-$timestamp"
+$baseName = "nahou-browser-extension-$($candidate.Version)-release-handoff-$timestamp"
 $jsonPath = Join-Path $outputRoot "$baseName.json"
 $markdownPath = Join-Path $outputRoot "$baseName.md"
 
@@ -153,7 +153,7 @@ $vmRootLines = @(
 ) -join "`r`n"
 
 @"
-# Alfaraheedi Browser Extension Release Handoff
+# Nahou Browser Extension Release Handoff
 
 Generated: $($candidate.GeneratedAtUtc)
 Version: $($candidate.Version)

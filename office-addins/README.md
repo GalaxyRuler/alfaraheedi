@@ -1,4 +1,4 @@
-# Alfaraheedi Office Add-ins
+# Nahou Office Add-ins
 
 This folder starts the v0.8 Word and PowerPoint add-in foundation. It is a
 task-pane integration, not a live underline overlay.
@@ -8,7 +8,7 @@ task-pane integration, not a live underline overlay.
 - `manifest.xml` is an add-in-only XML manifest for Word and PowerPoint.
 - `taskpane.html` and `src/` provide a compact selected-text review pane.
 - The pane reads the current Office selection through Office.js, sends it to the
-  local Alfaraheedi API, and can replace the selected Office text with
+  local Nahou API, and can replace the selected Office text with
   deterministic safe fixes.
 - The pane only accepts loopback API URLs such as `http://127.0.0.1:3000`.
 
@@ -36,8 +36,8 @@ manifest and task-pane assets first, runtime hosting and store submission later.
 ## Privacy Boundary
 
 - No telemetry.
-- No hosted Alfaraheedi service.
-- Selected Office text is sent only to the configured loopback Alfaraheedi API.
+- No hosted Nahou service.
+- Selected Office text is sent only to the configured loopback Nahou API.
 - Raw selected text is not written to logs or source-controlled reports.
 - Office.js is loaded from Microsoft's hosted Office Add-ins runtime URL because
   Office task-pane add-ins require that platform runtime.

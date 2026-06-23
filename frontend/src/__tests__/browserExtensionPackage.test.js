@@ -72,8 +72,8 @@ function contrastRatio(foreground, background) {
 describe("browser extension package metadata", () => {
   const safeManifest = {
     manifest_version: 3,
-    name: "Alfaraheedi Writing Companion",
-    short_name: "Alfaraheedi",
+    name: "Nahou Writing Companion",
+    short_name: "Nahou",
     version: "0.7.0",
     description: "Local-first writing suggestions for editable web fields.",
     icons: {
@@ -83,7 +83,7 @@ describe("browser extension package metadata", () => {
       "128": "icons/icon-128.png",
     },
     action: {
-      default_title: "Alfaraheedi",
+      default_title: "Nahou",
       default_icon: {
         "16": "icons/icon-16.png",
         "32": "icons/icon-32.png",
@@ -145,7 +145,7 @@ describe("browser extension package metadata", () => {
     );
 
     expect(manifest.action).toEqual({
-      default_title: "Alfaraheedi",
+      default_title: "Nahou",
       default_icon: {
         "16": "icons/icon-16.png",
         "32": "icons/icon-32.png",
@@ -201,7 +201,7 @@ describe("browser extension package metadata", () => {
     );
 
     expect(manifest.name.length).toBeLessThanOrEqual(75);
-    expect(manifest.short_name).toBe("Alfaraheedi");
+    expect(manifest.short_name).toBe("Nahou");
     expect(manifest.short_name.length).toBeLessThanOrEqual(12);
     expect(manifest.description.length).toBeLessThanOrEqual(132);
   });
@@ -338,8 +338,8 @@ describe("browser extension package metadata", () => {
     );
 
     expect(source).toMatch(/active editable-field text/iu);
-    expect(source).toMatch(/local loopback Alfaraheedi API/iu);
-    expect(source).toMatch(/does not send text to Alfaraheedi-hosted services/iu);
+    expect(source).toMatch(/local loopback Nahou API/iu);
+    expect(source).toMatch(/does not send text to Nahou-hosted services/iu);
     expect(source).toMatch(/stores only extension settings/iu);
     expect(source).toMatch(/local API URL/iu);
     expect(source).toMatch(/writing mode/iu);
@@ -352,7 +352,7 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/sensitive-looking fields/iu);
     expect(source).toMatch(/Non-loopback API URLs are rejected/u);
     expect(source).toMatch(/does not sell browser extension data/iu);
-    expect(source).toMatch(/No Alfaraheedi operator or reviewer receives or reads user editor text/iu);
+    expect(source).toMatch(/No Nahou operator or reviewer receives or reads user editor text/iu);
   });
 
   it("keeps reviewer-ready store submission notes current and bounded", async () => {
@@ -566,8 +566,8 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/Invoke-WebRequest/u);
     expect(source).toMatch(/ReadyForStorePrivacyUrl/u);
     expect(source).toMatch(/RequireLive/u);
-    expect(source).toMatch(/does not send text to Alfaraheedi-hosted services/u);
-    expect(source).toMatch(/No Alfaraheedi operator or reviewer receives or reads user editor text/u);
+    expect(source).toMatch(/does not send text to Nahou-hosted services/u);
+    expect(source).toMatch(/No Nahou operator or reviewer receives or reads user editor text/u);
   });
 
   it("keeps the GitHub Pages readiness checker read-only and explicit", async () => {
@@ -756,7 +756,7 @@ describe("browser extension package metadata", () => {
     for (const [docPath, source] of Object.entries(docs)) {
       expect(source, docPath).toMatch(/ALFARAHEEDI_VM_QA_ROOT/u);
       expect(source, docPath).toMatch(/-QaRoot <guest-path>/u);
-      expect(source, docPath).toMatch(/C:\\Temp\\Alfaraheedi/u);
+      expect(source, docPath).toMatch(/C:\\Temp\\Nahou/u);
       expect(source, docPath).not.toMatch(/LisanStudio-QA/u);
       expect(source, docPath).not.toMatch(/C:\\QA/u);
       expect(source, docPath).not.toMatch(/C:\\CodexProjects/u);
@@ -854,15 +854,15 @@ describe("browser extension package metadata", () => {
       "utf8",
     );
 
-    expect(source).toMatch(/Alfaraheedi Browser Extension Privacy Policy/u);
+    expect(source).toMatch(/Nahou Browser Extension Privacy Policy/u);
     expect(source).toMatch(/Last updated: 2026-06-22/u);
-    expect(source).toMatch(/local loopback Alfaraheedi API/u);
-    expect(source).toMatch(/does not send text to Alfaraheedi-hosted services/u);
+    expect(source).toMatch(/local loopback Nahou API/u);
+    expect(source).toMatch(/does not send text to Nahou-hosted services/u);
     expect(source).toMatch(/does not store captured editor text/u);
     expect(source).toMatch(/Content-script messages cannot override the stored API URL or\s+writing mode/u);
     expect(source).toMatch(/does not use telemetry/u);
     expect(source).toMatch(/does not load or execute remote code/u);
-    expect(source).toMatch(/No Alfaraheedi operator or reviewer receives or reads user editor text/u);
+    expect(source).toMatch(/No Nahou operator or reviewer receives or reads user editor text/u);
   });
 
   it("keeps GitHub Pages publishing wired for the public privacy URL path", async () => {
@@ -901,9 +901,9 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1/u);
     expect(source).not.toMatch(/Check browser extension store submission integrity[\s\S]*-RequireValid/u);
     expect(source).toMatch(/actions\/upload-artifact@v6/u);
-    expect(source).toMatch(/alfaraheedi-browser-extension-0\.7\.0-release-artifacts/u);
-    expect(source).toMatch(/dist\/browser-extension\/alfaraheedi-browser-extension-0\.7\.0\.zip/u);
-    expect(source).toMatch(/dist\/browser-extension-store-submission\/alfaraheedi-browser-extension-0\.7\.0-store-submission\/\*\*/u);
+    expect(source).toMatch(/nahou-browser-extension-0\.7\.0-release-artifacts/u);
+    expect(source).toMatch(/dist\/browser-extension\/nahou-browser-extension-0\.7\.0\.zip/u);
+    expect(source).toMatch(/dist\/browser-extension-store-submission\/nahou-browser-extension-0\.7\.0-store-submission\/\*\*/u);
     expect(source).toMatch(/if-no-files-found:\s+error/u);
     expect(source).not.toMatch(/check-browser-extension-pages-readiness\.ps1\s+-RequireReady/u);
     expect(source).not.toMatch(/RunVmSmokes/u);

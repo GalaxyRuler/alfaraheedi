@@ -30,7 +30,7 @@
 
 ### Changed
 
-- Made the recommended Windows user artifact a desktop installer: `Alfaraheedi-0.5.0-windows-x64-setup.exe`.
+- Made the recommended Windows user artifact a desktop installer: `Nahou-0.5.0-windows-x64-setup.exe`.
 - Kept the CLI/web zip as an optional developer artifact instead of the main user install path.
 
 ### Fixed

@@ -119,14 +119,14 @@ function Assert-PublicPrivacyPage {
 
     $publicPrivacyPage = Get-Content -LiteralPath $publicPrivacyPath -Raw
     foreach ($requiredText in @(
-        "Alfaraheedi Browser Extension Privacy Policy",
+        "Nahou Browser Extension Privacy Policy",
         "Last updated: 2026-06-22",
-        "local loopback Alfaraheedi API",
-        "does not send text to Alfaraheedi-hosted services",
+        "local loopback Nahou API",
+        "does not send text to Nahou-hosted services",
         "does not store captured editor text",
         "does not use telemetry",
         "does not load or execute remote code",
-        "No Alfaraheedi operator or reviewer receives or reads user editor text"
+        "No Nahou operator or reviewer receives or reads user editor text"
     )) {
         if (-not $publicPrivacyPage.Contains($requiredText)) {
             throw "Public privacy page missing required text: $requiredText"

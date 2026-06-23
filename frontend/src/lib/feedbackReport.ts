@@ -184,7 +184,7 @@ function rawTextSection(rawText: RawTextPayload): string {
 
 export function renderFeedbackMarkdown(payload: FeedbackReportPayload): string {
   const lines = [
-    "# Alfaraheedi Feedback Report",
+    "# Nahou Feedback Report",
     "",
     "This report was generated locally in the browser. Nothing is sent automatically.",
     "",

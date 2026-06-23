@@ -1,15 +1,15 @@
-# Alfaraheedi Browser Extension Privacy Policy
+# Nahou Browser Extension Privacy Policy
 
 Last updated: 2026-06-22
 
-Alfaraheedi is a local-first writing companion for editable web fields. This
-policy covers the Alfaraheedi browser extension only.
+Nahou is a local-first writing companion for editable web fields. This
+policy covers the Nahou browser extension only.
 
 ## What The Extension Does
 
 When the extension is enabled, it detects focused editable text fields on web
 pages and sends active editable-field text to the user's configured local
-Alfaraheedi API. The API URL must be a loopback address such as
+Nahou API. The API URL must be a loopback address such as
 `http://127.0.0.1` or `http://localhost`. Suggestions are rendered in the page
 near the editable field and are applied only when the user accepts them.
 
@@ -33,14 +33,14 @@ The extension skips:
 ## Data Sent
 
 The extension sends active-field text only to the configured local loopback
-Alfaraheedi API. It does not send text to Alfaraheedi-hosted services, third
+Nahou API. It does not send text to Nahou-hosted services, third
 party writing services, analytics providers, or telemetry services.
 
-In short: local loopback Alfaraheedi API only.
+In short: local loopback Nahou API only.
 
-If the user configures the local Alfaraheedi API to call a separate local model
+If the user configures the local Nahou API to call a separate local model
 runtime, that runtime is outside the browser extension. The extension still
-connects only to the configured loopback Alfaraheedi API.
+connects only to the configured loopback Nahou API.
 
 ## Data Stored
 
@@ -76,13 +76,13 @@ Non-loopback API URLs are rejected.
 
 ## Data Sharing
 
-Alfaraheedi does not sell browser extension data and does not share extension
+Nahou does not sell browser extension data and does not share extension
 data with advertisers, analytics providers, hosted writing services, or other
 third parties.
 
 ## Human Review
 
-No Alfaraheedi operator or reviewer receives or reads user editor text through
+No Nahou operator or reviewer receives or reads user editor text through
 this browser extension. Text stays on the user's machine unless the user
 independently configures their local environment to route the local API
 elsewhere.

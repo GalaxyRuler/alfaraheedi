@@ -13,14 +13,14 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 
 $bundleDir = Join-Path $repoRoot "target\release\bundle\nsis"
-$source = Join-Path $bundleDir "Alfaraheedi_$($Version)_x64-setup.exe"
-$destination = Join-Path $bundleDir "Alfaraheedi-$Version-windows-x64-setup.exe"
+$source = Join-Path $bundleDir "Nahou_$($Version)_x64-setup.exe"
+$destination = Join-Path $bundleDir "Nahou-$Version-windows-x64-setup.exe"
 $sourcePath = [IO.Path]::GetFullPath($source)
 $destinationPath = [IO.Path]::GetFullPath($destination)
 
 if (-not (Test-Path -LiteralPath $source)) {
     if (Test-Path -LiteralPath $destination) {
-        Get-ChildItem -LiteralPath $bundleDir -Filter "Alfaraheedi*setup.exe" |
+        Get-ChildItem -LiteralPath $bundleDir -Filter "Nahou*setup.exe" |
             Where-Object { [IO.Path]::GetFullPath($_.FullName) -ne $destinationPath } |
             Remove-Item -Force
         Write-Host "Desktop installer already available at $destination"
@@ -30,7 +30,7 @@ if (-not (Test-Path -LiteralPath $source)) {
     throw "Tauri installer was not found at $source"
 }
 
-Get-ChildItem -LiteralPath $bundleDir -Filter "Alfaraheedi*setup.exe" |
+Get-ChildItem -LiteralPath $bundleDir -Filter "Nahou*setup.exe" |
     Where-Object {
         $path = [IO.Path]::GetFullPath($_.FullName)
         $path -ne $sourcePath -and $path -ne $destinationPath

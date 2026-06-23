@@ -6,9 +6,9 @@
   xsi:type="TaskPaneApp">
   <Id>9f4a2a6d-6c20-44a1-90e4-642c3d407c08</Id>
   <Version>0.8.0</Version>
-  <ProviderName>Alfaraheedi</ProviderName>
+  <ProviderName>Nahou</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Alfaraheedi"/>
+  <DisplayName DefaultValue="Nahou"/>
   <Description DefaultValue="Local-first writing suggestions for selected Word and PowerPoint text."/>
   <IconUrl DefaultValue="https://localhost:3443/browser-extension/icons/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3443/browser-extension/icons/icon-128.png"/>

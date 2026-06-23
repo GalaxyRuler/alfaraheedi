@@ -13,7 +13,7 @@ export const DEFAULT_EXTENSION_SETTINGS = Object.freeze({
   enabled: true,
 });
 export const LOOPBACK_API_URL_ERROR =
-  "Alfaraheedi extension only connects to a loopback API URL.";
+  "Nahou extension only connects to a loopback API URL.";
 
 export function normalizeExtensionSettings(settings = {}) {
   const apiBaseUrl = normalizeApiBaseUrl(

@@ -7,7 +7,7 @@ async function openCleanApp(page: Page) {
     localStorage.clear();
   });
   await page.reload();
-  await expect(page.getByRole("heading", { name: "الفراهيدي" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nahou" })).toBeVisible();
   await expect(page.getByTestId("health")).toContainText("المحرك متصل");
 }
 
@@ -120,7 +120,7 @@ test("opens rules, model policy, and settings drawers", async ({ page }) => {
   const settingsDialog = page.getByRole("dialog", { name: "الإعدادات" });
   await expect(settingsDialog).toBeVisible();
   await settingsDialog.getByText("English", { exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Alfaraheedi" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nahou" })).toBeVisible();
   await expect(page.locator(".app")).toHaveAttribute("dir", "ltr");
 });
 

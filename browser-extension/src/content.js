@@ -160,7 +160,7 @@
     requestSeq = currentSeq;
     const response = await Promise.resolve(sendAnalyzeMessage(text)).catch((error) => ({
       ok: false,
-      error: "Alfaraheedi local API is unavailable.",
+      error: "Nahou local API is unavailable.",
     }));
     if (requestSeq !== currentSeq || activeEditor !== editor) return;
     if (textFromEditor(editor) !== text) return;
@@ -181,13 +181,13 @@
   }
 
   function safeAnalysisError(response) {
-    if (response?.error === "Alfaraheedi checking is paused.") {
+    if (response?.error === "Nahou checking is paused.") {
       return response.error;
     }
-    if (response?.error === "Alfaraheedi extension only connects to a loopback API URL.") {
+    if (response?.error === "Nahou extension only connects to a loopback API URL.") {
       return response.error;
     }
-    return "Alfaraheedi local API is unavailable.";
+    return "Nahou local API is unavailable.";
   }
 
   function editorHasFocus(editor) {
@@ -504,7 +504,7 @@
     panel.classList.add("alfaraheedi-extension-panel--muted");
     panel.setAttribute("role", "status");
     panel.setAttribute("aria-live", "polite");
-    panel.setAttribute("aria-label", "Alfaraheedi status");
+    panel.setAttribute("aria-label", "Nahou status");
     panel.textContent = message;
     document.body.append(panel);
     positionPanel(panel, editor);
@@ -525,8 +525,8 @@
     const heading = document.createElement("strong");
     heading.textContent =
       suggestions.length === 1
-        ? "Alfaraheedi suggestion"
-        : `Alfaraheedi suggestions (${suggestions.length})`;
+        ? "Nahou suggestion"
+        : `Nahou suggestions (${suggestions.length})`;
     panel.append(heading);
 
     const list = document.createElement("ul");
@@ -651,7 +651,7 @@
     panel.className = "alfaraheedi-extension-panel";
     panel.dir = "auto";
     panel.setAttribute("role", "region");
-    panel.setAttribute("aria-label", "Alfaraheedi suggestions");
+    panel.setAttribute("aria-label", "Nahou suggestions");
     editorByPanel.set(panel, editor);
     panel.addEventListener("focusout", (event) => {
       if (shouldKeepSuggestionUiForFocusMove(editor, panel, event.relatedTarget)) {

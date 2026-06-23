@@ -193,7 +193,7 @@ export function renderSuggestionPanel(editor, analysis) {
   panel.className = "alfaraheedi-extension-panel";
   panel.dir = "auto";
   panel.setAttribute("role", "region");
-  panel.setAttribute("aria-label", "Alfaraheedi suggestions");
+  panel.setAttribute("aria-label", "Nahou suggestions");
   panel.addEventListener("focusout", (event) => {
     if (shouldKeepSuggestionUiForFocusMove(editor, panel, event.relatedTarget)) {
       return;
@@ -205,8 +205,8 @@ export function renderSuggestionPanel(editor, analysis) {
   const heading = document.createElement("strong");
   heading.textContent =
     suggestions.length === 1
-      ? "Alfaraheedi suggestion"
-      : `Alfaraheedi suggestions (${suggestions.length})`;
+      ? "Nahou suggestion"
+      : `Nahou suggestions (${suggestions.length})`;
   panel.append(heading);
 
   const list = document.createElement("ul");

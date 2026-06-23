@@ -155,9 +155,9 @@ if (-not (Test-Path -LiteralPath $manifestPath)) {
 
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $version = $manifest.version
-$packagePath = Join-Path $RepoRoot "dist\browser-extension\alfaraheedi-browser-extension-$version.zip"
+$packagePath = Join-Path $RepoRoot "dist\browser-extension\nahou-browser-extension-$version.zip"
 if (-not $StoreSubmissionRoot) {
-    $StoreSubmissionRoot = Join-Path $RepoRoot "dist\browser-extension-store-submission\alfaraheedi-browser-extension-$version-store-submission"
+    $StoreSubmissionRoot = Join-Path $RepoRoot "dist\browser-extension-store-submission\nahou-browser-extension-$version-store-submission"
 } else {
     $StoreSubmissionRoot = Resolve-RepoPath $StoreSubmissionRoot
 }
@@ -187,7 +187,7 @@ if ($selectedScreenshotRoot -and (Test-Path -LiteralPath $selectedScreenshotRoot
     $missingScreenshots = $selectedScreenshotFiles
 }
 
-$uploadPackagePath = Join-Path $StoreSubmissionRoot "01-upload-package\alfaraheedi-browser-extension-$version.zip"
+$uploadPackagePath = Join-Path $StoreSubmissionRoot "01-upload-package\nahou-browser-extension-$version.zip"
 $releaseManifestPath = Join-Path $StoreSubmissionRoot "RELEASE_MANIFEST.json"
 $reviewerDocsRoot = Join-Path $StoreSubmissionRoot "02-reviewer-docs"
 $storeScreenshotsRoot = Join-Path $StoreSubmissionRoot "03-screenshots"

@@ -12,7 +12,7 @@ export const LANGS: { value: Lang; label: string }[] = [
 type Entry = { ar: string; en: string };
 
 export const STRINGS = {
-  brandName: { ar: "الفراهيدي", en: "Alfaraheedi" },
+  brandName: { ar: "Nahou", en: "Nahou" },
   brandTag: { ar: "مدقّق كتابة محلي", en: "local-first writing checker" },
 
   engineOnline: { ar: "المحرك متصل", en: "Engine online" },
@@ -162,8 +162,8 @@ export const STRINGS = {
     en: "Can't reach the engine at ",
   },
   engineUnavailableHint: {
-    ar: "أعد تشغيل تطبيق الفراهيدي أو الخادم المحلي.",
-    en: "Restart the Alfaraheedi app or local server.",
+    ar: "أعد تشغيل تطبيق Nahou أو الخادم المحلي.",
+    en: "Restart the Nahou app or local server.",
   },
   settingsDirection: { ar: "اتجاه المحرر", en: "Editor direction" },
   dirRtl: { ar: "من اليمين", en: "Right-to-left" },

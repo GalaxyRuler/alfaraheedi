@@ -689,7 +689,7 @@ fn setup_tray(app: &mut tauri::App) -> tauri::Result<()> {
     let menu = Menu::with_id_and_items(app, "tray-menu", &[&show, &check, &settings, &quit])?;
 
     TrayIconBuilder::with_id("main-tray")
-        .tooltip("Alfaraheedi")
+        .tooltip("Nahou")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "show" | "settings" => show_review_window(app),
@@ -744,7 +744,7 @@ pub fn run() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running Alfaraheedi desktop app");
+        .expect("error while running Nahou desktop app");
 }
 
 #[cfg(windows)]

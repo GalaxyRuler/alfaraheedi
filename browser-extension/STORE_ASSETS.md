@@ -16,7 +16,7 @@ The script writes the selected PNG filenames under
 `dist\browser-extension-store-assets\<qa-run>\` and verifies each image is a
 valid `1280x800` PNG before reporting success.
 
-The VM guest-side working directory defaults to `C:\Temp\Alfaraheedi`. Set
+The VM guest-side working directory defaults to `C:\Temp\Nahou`. Set
 `ALFARAHEEDI_VM_QA_ROOT` or pass `-QaRoot <guest-path>` if the QA VM needs a
 different guest artifact root.
 
@@ -38,9 +38,9 @@ Selected screenshots:
 
 | File | Required size | Store-facing purpose | Alt text |
 | --- | --- | --- | --- |
-| `01-options-settings.png` | `1280x800` | Shows loopback API and writing-mode settings. | Alfaraheedi extension options showing local API URL, writing mode, and enabled checking controls. |
-| `02-popup-status.png` | `1280x800` | Shows toolbar popup status and pause/settings controls. | Alfaraheedi toolbar popup showing local API status, checking status, pause control, and settings button. |
-| `03-web-field-suggestions.png` | `1280x800` | Shows suggestions beside a normal editable web field. | Alfaraheedi suggestions panel beside a web textarea with local writing corrections. |
+| `01-options-settings.png` | `1280x800` | Shows loopback API and writing-mode settings. | Nahou extension options showing local API URL, writing mode, and enabled checking controls. |
+| `02-popup-status.png` | `1280x800` | Shows toolbar popup status and pause/settings controls. | Nahou toolbar popup showing local API status, checking status, pause control, and settings button. |
+| `03-web-field-suggestions.png` | `1280x800` | Shows suggestions beside a normal editable web field. | Nahou suggestions panel beside a web textarea with local writing corrections. |
 
 ## Listing Image Rules
 

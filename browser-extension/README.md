@@ -1,4 +1,4 @@
-# Alfaraheedi Browser Extension
+# Nahou Browser Extension
 
 This is the v0.7 browser-extension foundation for live web-editor assistance.
 
@@ -13,7 +13,7 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - Read-only, disabled, password, sensitive-hinted, and other non-text-like textarea/input controls are ignored, sensitive-hinted contenteditable roots are ignored, and editors inside sensitive-hinted forms, fieldsets, groups, or regions are ignored.
 - The content script is injected into matching frames so iframe-hosted editable fields can be handled.
 - Editable fields inside open shadow roots are detected through composed browser event paths.
-- Text is debounced and sent through the extension service worker to the configured local Alfaraheedi HTTP API.
+- Text is debounced and sent through the extension service worker to the configured local Nahou HTTP API.
 - Extension options store the loopback API URL and default writing mode in `chrome.storage.local`.
 - The service worker uses the stored loopback API URL and writing mode for analysis requests; content-script messages cannot override those settings.
 - The service worker rejects blank, malformed, and oversized analysis messages before reading settings or calling the local API.
@@ -78,7 +78,7 @@ Build a clean extension zip from the repository root:
 .\scripts\package-browser-extension.ps1
 ```
 
-The package is written to `dist\browser-extension\alfaraheedi-browser-extension-0.7.0.zip`.
+The package is written to `dist\browser-extension\nahou-browser-extension-0.7.0.zip`.
 The packaging helper validates the MV3 manifest, keeps API host permissions loopback-only, rejects optional permissions, rejects external-connection or web-accessible-resource expansion, requires matching-frame injection for iframe editors, verifies the manifest-declared PNG icons and toolbar action, and includes only runtime extension files, icons, and required static imports.
 `src/editorSurface.js` is a source/test helper for focused DOM behavior coverage; it is intentionally excluded from the upload zip because the packaged content script is self-contained.
 Store-submission notes live in `STORE_SUBMISSION.md`; they document the single purpose, permission justifications, privacy claims, and still-manual review items.
@@ -99,7 +99,7 @@ With `-RunVmSmokes`, the preflight runs the packaged Edge Accessibility Tree
 smoke, production-editor fixture smoke, store screenshot capture, Edge
 keyboard-flow smoke, and Chrome for Testing keyboard-flow smoke.
 
-VM smoke scripts write guest-side artifacts under `C:\Temp\Alfaraheedi` by
+VM smoke scripts write guest-side artifacts under `C:\Temp\Nahou` by
 default. Set `ALFARAHEEDI_VM_QA_ROOT` before running the scripts, or pass
 `-QaRoot <guest-path>`, when a QA machine needs a different guest artifact root.
 

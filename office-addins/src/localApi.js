@@ -25,7 +25,7 @@ export async function analyzeTextWithLocalApi({
 }) {
   const baseUrl = normalizeApiBaseUrl(apiBaseUrl);
   if (!isLoopbackApiBaseUrl(baseUrl)) {
-    throw new Error("Office add-in only connects to the local Alfaraheedi API.");
+    throw new Error("Office add-in only connects to the local Nahou API.");
   }
 
   const response = await fetchImpl(`${baseUrl}/v1/analyze`, {
@@ -35,7 +35,7 @@ export async function analyzeTextWithLocalApi({
   });
 
   if (!response.ok) {
-    throw new Error(`Alfaraheedi local API returned HTTP ${response.status}`);
+    throw new Error(`Nahou local API returned HTTP ${response.status}`);
   }
 
   return response.json();
@@ -49,7 +49,7 @@ export async function applySafeWithLocalApi({
 }) {
   const baseUrl = normalizeApiBaseUrl(apiBaseUrl);
   if (!isLoopbackApiBaseUrl(baseUrl)) {
-    throw new Error("Office add-in only connects to the local Alfaraheedi API.");
+    throw new Error("Office add-in only connects to the local Nahou API.");
   }
 
   const response = await fetchImpl(`${baseUrl}/v1/apply`, {
@@ -63,7 +63,7 @@ export async function applySafeWithLocalApi({
   });
 
   if (!response.ok) {
-    throw new Error(`Alfaraheedi local API returned HTTP ${response.status}`);
+    throw new Error(`Nahou local API returned HTTP ${response.status}`);
   }
 
   return response.json();

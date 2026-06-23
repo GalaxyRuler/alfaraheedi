@@ -90,7 +90,7 @@ describe("Office add-ins package metadata", () => {
     }
 
     expect(packageScript).toMatch(/\$version = \[string\]\$manifestXml\.OfficeApp\.Version/u);
-    expect(packageScript).toMatch(/alfaraheedi-office-addins-\$version/u);
+    expect(packageScript).toMatch(/nahou-office-addins-\$version/u);
     expect(packageScript).toMatch(/target\\office-addins-package/u);
     expect(packageScript).toMatch(/System\.Threading\.Mutex/u);
     expect(packageScript).toMatch(/StagingRootRemoved/u);
@@ -114,8 +114,8 @@ describe("Office add-ins package metadata", () => {
     expect(workflow).toMatch(/cache-dependency-path:\s+frontend\/package-lock\.json/u);
     expect(workflow).toMatch(/validate-office-addins-release\.ps1/u);
     expect(workflow).toMatch(/actions\/upload-artifact@v6/u);
-    expect(workflow).toMatch(/alfaraheedi-office-addins-0\.8\.0-foundation/u);
-    expect(workflow).toMatch(/dist\/office-addins\/alfaraheedi-office-addins-0\.8\.0\.zip/u);
+    expect(workflow).toMatch(/nahou-office-addins-0\.8\.0-foundation/u);
+    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-0\.8\.0\.zip/u);
   });
 
   it("documents the v0.8 boundary without claiming live Office store readiness", async () => {

@@ -1,6 +1,6 @@
 # Browser Extension Manual Release Gates
 
-These gates define the manual evidence required before Alfaraheedi browser
+These gates define the manual evidence required before Nahou browser
 extension v0.7 is submitted as a public Chrome Web Store or Microsoft Edge
 Add-ons release. Automated VM smokes are necessary, but they do not replace
 live editor, screen-reader, privacy URL, or store-dashboard verification.

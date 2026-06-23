@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (!settings.enabled) {
         return {
           skipped: true,
-          error: "Alfaraheedi checking is paused.",
+          error: "Nahou checking is paused.",
         };
       }
 
@@ -52,7 +52,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     .catch((error) =>
       sendResponse({
         ok: false,
-        error: "Alfaraheedi local API is unavailable.",
+        error: "Nahou local API is unavailable.",
       }),
     );
 
