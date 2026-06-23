@@ -57,11 +57,15 @@ $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $addinPath = Resolve-RepoPath $OfficeAddinsRoot
 $frontendPath = Resolve-RepoPath $FrontendRoot
 $manifestPath = Join-Path $addinPath "manifest.xml"
+$manualGatePath = Join-Path $addinPath "MANUAL_RELEASE_GATES.md"
 $packageTool = Join-Path $addinPath "tools\package-office-addin.mjs"
 $serveTool = Join-Path $addinPath "tools\serve-office-addin.mjs"
 
 if (-not (Test-Path -LiteralPath $manifestPath)) {
     throw "Office add-in manifest not found: $manifestPath"
+}
+if (-not (Test-Path -LiteralPath $manualGatePath)) {
+    throw "Office add-ins manual release gate document not found: $manualGatePath"
 }
 if (-not (Test-Path -LiteralPath $packageTool)) {
     throw "Office add-in package tool not found: $packageTool"
@@ -87,6 +91,20 @@ $sourceLocation = [string]$manifestXml.OfficeApp.DefaultSettings.SourceLocation.
 if (-not $sourceLocation.StartsWith("https://localhost:", [StringComparison]::OrdinalIgnoreCase)) {
     throw "Office add-in SourceLocation must use localhost HTTPS for sideload foundation."
 }
+$manualGateText = Get-Content -LiteralPath $manualGatePath -Raw
+foreach ($requiredGateText in @(
+    "Gate 1: Fresh Local Preflight",
+    "Gate 2: Local HTTPS Task-Pane Host",
+    "Gate 3: Word Sideload Flow",
+    "Gate 4: PowerPoint Sideload Flow",
+    "Gate 5: Accessibility And Keyboard Smoke",
+    "Decision: Sideload QA approved"
+)) {
+    if (-not $manualGateText.Contains($requiredGateText)) {
+        throw "Office add-ins manual release gate document missing required text: $requiredGateText"
+    }
+}
+$results.ManualGateDocument = "passed"
 
 if (-not $SkipPackageTests) {
     Invoke-Checked "npm" @(
@@ -108,7 +126,9 @@ Invoke-Checked "node" @("--check", $serveTool) $RepoRoot
 $results.HttpsHostToolSyntax = "passed"
 
 $releaseScriptPaths = [string[]]@(
+    (Join-Path $PSScriptRoot "check-office-addins-manual-qa-report.ps1"),
     (Join-Path $PSScriptRoot "New-OfficeAddinDevCertificate.ps1"),
+    (Join-Path $PSScriptRoot "new-office-addins-manual-qa-report.ps1"),
     (Join-Path $PSScriptRoot "package-office-addins.ps1"),
     (Join-Path $PSScriptRoot "serve-office-addins.ps1"),
     (Join-Path $PSScriptRoot "validate-office-addins-release.ps1")

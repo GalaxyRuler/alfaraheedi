@@ -198,6 +198,10 @@ sideload development, create a localhost certificate with
 with `.\scripts\serve-office-addins.ps1`. The certificate script only changes
 the CurrentUser trusted root store if called with `-Trust`. This does not yet
 include sideload QA, Office store submission, or live underline behavior.
+Manual sideload gates are documented in `office-addins/MANUAL_RELEASE_GATES.md`;
+generate a private report with
+`.\scripts\new-office-addins-manual-qa-report.ps1` and check it with
+`.\scripts\check-office-addins-manual-qa-report.ps1`.
 
 Build the desktop app from `frontend/`:
 

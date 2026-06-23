@@ -76,6 +76,18 @@ describe("Office add-ins package metadata", () => {
       path.join(repoRoot, "scripts/validate-office-addins-release.ps1"),
       "utf8",
     );
+    const manualGateDoc = await fs.readFile(
+      path.join(addinsRoot, "MANUAL_RELEASE_GATES.md"),
+      "utf8",
+    );
+    const newManualQaScript = await fs.readFile(
+      path.join(repoRoot, "scripts/new-office-addins-manual-qa-report.ps1"),
+      "utf8",
+    );
+    const checkManualQaScript = await fs.readFile(
+      path.join(repoRoot, "scripts/check-office-addins-manual-qa-report.ps1"),
+      "utf8",
+    );
     const serveScript = await fs.readFile(
       path.join(repoRoot, "scripts/serve-office-addins.ps1"),
       "utf8",
@@ -112,6 +124,9 @@ describe("Office add-ins package metadata", () => {
     expect(validateScript).toMatch(/Presentation/u);
     expect(validateScript).toMatch(/https:\/\/localhost:/u);
     expect(validateScript).toMatch(/package-office-addins\.ps1/u);
+    expect(validateScript).toMatch(/MANUAL_RELEASE_GATES\.md/u);
+    expect(validateScript).toMatch(/check-office-addins-manual-qa-report\.ps1/u);
+    expect(validateScript).toMatch(/new-office-addins-manual-qa-report\.ps1/u);
     expect(validateScript).toMatch(/serve-office-addin\.mjs/u);
     expect(validateScript).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
     expect(validateScript).toMatch(/serve-office-addins\.ps1/u);
@@ -128,6 +143,17 @@ describe("Office add-ins package metadata", () => {
     expect(serveTool).toMatch(/contentTypes/u);
     expect(serveTool).toMatch(/office-addins\/taskpane\.html/u);
     expect(serveTool).not.toMatch(/from "express"|from 'express'|require\("express"\)/u);
+    expect(manualGateDoc).toMatch(/Gate 1: Fresh Local Preflight/u);
+    expect(manualGateDoc).toMatch(/Gate 3: Word Sideload Flow/u);
+    expect(manualGateDoc).toMatch(/Gate 4: PowerPoint Sideload Flow/u);
+    expect(manualGateDoc).toMatch(/Decision: Sideload QA approved/u);
+    expect(newManualQaScript).toMatch(/office-addins\\MANUAL_RELEASE_GATES\.md/u);
+    expect(newManualQaScript).toMatch(/dist\\office-addins-manual-qa/u);
+    expect(newManualQaScript).toMatch(/Gate source SHA256/u);
+    expect(newManualQaScript).toMatch(/Decision: TODO Sideload QA approved/u);
+    expect(checkManualQaScript).toMatch(/GateHashMatches/u);
+    expect(checkManualQaScript).toMatch(/ReleaseDecision/u);
+    expect(checkManualQaScript).toMatch(/Sideload QA approved/u);
   });
 
   it("runs the Office add-ins foundation validator in CI", async () => {
@@ -153,6 +179,10 @@ describe("Office add-ins package metadata", () => {
       path.join(repoRoot, "docs/release-checklist.md"),
       "utf8",
     );
+    const validationSummary = await fs.readFile(
+      path.join(repoRoot, "docs/testing/office-addins-v0.8-validation.md"),
+      "utf8",
+    );
 
     expect(readme).toMatch(/v0\.8 Word and PowerPoint add-in foundation/u);
     expect(readme).toMatch(/task-pane integration, not a live underline overlay/u);
@@ -161,6 +191,9 @@ describe("Office add-ins package metadata", () => {
     expect(readme).toMatch(/Do not use `-Trust`\s+unless you accept/u);
     expect(readme).toMatch(/Selected Office text is sent only to the configured loopback/u);
     expect(readme).toMatch(/No telemetry/u);
+    expect(readme).toMatch(/MANUAL_RELEASE_GATES\.md/u);
+    expect(readme).toMatch(/new-office-addins-manual-qa-report\.ps1/u);
+    expect(readme).toMatch(/check-office-addins-manual-qa-report\.ps1/u);
     expect(readme).not.toMatch(/store-ready|Chrome Web Store|Edge Add-ons/u);
     expect(rootReadme).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
     expect(rootReadme).toMatch(/serve-office-addins\.ps1/u);
@@ -168,5 +201,10 @@ describe("Office add-ins package metadata", () => {
     expect(releaseChecklist).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
     expect(releaseChecklist).toMatch(/serve-office-addins\.ps1/u);
     expect(releaseChecklist).toMatch(/CurrentUser certificate store change/u);
+    expect(releaseChecklist).toMatch(/check-office-addins-manual-qa-report\.ps1 -RequireCompleted/u);
+    expect(validationSummary).toMatch(/Office Add-ins v0\.8 Validation Summary/u);
+    expect(validationSummary).toMatch(/Manual Sideload Gates/u);
+    expect(validationSummary).toMatch(/Sideload QA approved/u);
+    expect(validationSummary).toMatch(/AppSource readiness/u);
   });
 });

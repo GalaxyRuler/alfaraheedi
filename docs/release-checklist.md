@@ -29,6 +29,7 @@
 - [ ] Package Office add-ins with `.\scripts\package-office-addins.ps1`
 - [ ] For local Office sideload checks: create a dev certificate with `.\scripts\New-OfficeAddinDevCertificate.ps1`; use `-Trust` only when you accept a CurrentUser certificate store change
 - [ ] Start the Office task-pane host with `.\scripts\serve-office-addins.ps1` and verify `https://localhost:3443/office-addins/taskpane.html`
+- [ ] For Office add-ins manual sideload QA: generate `.\scripts\new-office-addins-manual-qa-report.ps1`, complete Word/PowerPoint gates, then run `.\scripts\check-office-addins-manual-qa-report.ps1 -RequireCompleted`
 - [ ] Treat v0.8 Office add-ins as a task-pane foundation until sideload QA and Word/PowerPoint replacement checks are complete
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
