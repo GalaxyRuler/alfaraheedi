@@ -1,7 +1,6 @@
 use serde::Serialize;
 
 pub const UIA_PILOT_METHOD: &str = "windows_uia_text_pattern";
-const MAX_UIA_CAPTURE_CHARS: i32 = 20_001;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct UiaPilotStatus {
@@ -31,6 +30,8 @@ pub fn try_capture_selected_text() -> Result<UiaSelectedText, String> {
 mod platform {
     use std::{ffi::c_void, ptr};
 
+    const MAX_UIA_CAPTURE_CHARS: i32 = 20_001;
+
     use windows_sys::{
         Win32::{
             Foundation::{HWND, RPC_E_CHANGED_MODE, S_FALSE, S_OK, SysFreeString, SysStringLen},
@@ -55,7 +56,7 @@ mod platform {
         core::BSTR,
     };
 
-    use super::{MAX_UIA_CAPTURE_CHARS, UIA_PILOT_METHOD, UiaPilotStatus, UiaSelectedText};
+    use super::{UIA_PILOT_METHOD, UiaPilotStatus, UiaSelectedText};
 
     pub fn status() -> UiaPilotStatus {
         UiaPilotStatus {
