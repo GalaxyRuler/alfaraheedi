@@ -45,6 +45,30 @@ unless you accept the user certificate store change on that Windows account.
 The normal release validator checks script syntax and package shape, but it
 does not create or trust certificates.
 
+## Manual Sideload QA
+
+Manual Word and PowerPoint evidence is tracked by:
+
+```text
+office-addins/MANUAL_RELEASE_GATES.md
+```
+
+Generate a private report template with:
+
+```powershell
+.\scripts\new-office-addins-manual-qa-report.ps1
+```
+
+Check the latest private report with:
+
+```powershell
+.\scripts\check-office-addins-manual-qa-report.ps1
+```
+
+Private reports are written under `dist\office-addins-manual-qa\` by default.
+Do not include private document text, account names, tenant names, certificate
+passwords, tokens, or private screenshots in those reports.
+
 ## Sideload Boundary
 
 Microsoft documents that Office add-in manifests describe how an add-in is
