@@ -2,7 +2,7 @@ param(
     [string]$ApiAddr = "127.0.0.1:3198",
     [switch]$MockRuntime,
     [int]$MockRuntimePort = 3199,
-    [string]$SampleText = "مرحبــا  بالعالم"
+    [string]$SampleText = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,11 +62,14 @@ function Start-HiddenProcess {
 
     $startArgs = @{
         FilePath = $FilePath
-        ArgumentList = $ArgumentList
         WorkingDirectory = $WorkingDirectory
         PassThru = $true
         RedirectStandardOutput = $OutputPath
         RedirectStandardError = $ErrorPath
+    }
+
+    if ($ArgumentList.Count -gt 0) {
+        $startArgs.ArgumentList = $ArgumentList
     }
 
     if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
@@ -89,6 +92,16 @@ $mockOutput = Join-Path ([System.IO.Path]::GetTempPath()) "alfaraheedi-mock-open
 $mockError = Join-Path ([System.IO.Path]::GetTempPath()) "alfaraheedi-mock-openai.err.log"
 $apiOutput = Join-Path ([System.IO.Path]::GetTempPath()) "alfaraheedi-llm-smoke-api.out.log"
 $apiError = Join-Path ([System.IO.Path]::GetTempPath()) "alfaraheedi-llm-smoke-api.err.log"
+
+if ([string]::IsNullOrWhiteSpace($SampleText)) {
+    $SampleText = -join @(
+        [char]0x0645, [char]0x0631, [char]0x062D, [char]0x0628,
+        [char]0x0640, [char]0x0640, [char]0x0627,
+        [char]0x0020, [char]0x0020,
+        [char]0x0628, [char]0x0627, [char]0x0644, [char]0x0639,
+        [char]0x0627, [char]0x0644, [char]0x0645
+    )
+}
 
 $originalBaseUrl = [System.Environment]::GetEnvironmentVariable("ALFARAHEEDI_LLM_BASE_URL", "Process")
 $originalModel = [System.Environment]::GetEnvironmentVariable("ALFARAHEEDI_LLM_MODEL", "Process")
@@ -165,11 +178,12 @@ try {
     }
 
     $request = @{ text = $SampleText } | ConvertTo-Json -Compress
+    $requestBytes = [System.Text.Encoding]::UTF8.GetBytes($request)
     $suggestion = Invoke-RestMethod `
         -Uri "$apiBaseUrl/v1/llm/suggest" `
         -Method Post `
         -ContentType "application/json; charset=utf-8" `
-        -Body $request `
+        -Body $requestBytes `
         -TimeoutSec 60
 
     if ($suggestion.source -ne "llm:local") {

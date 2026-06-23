@@ -45,6 +45,89 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
 
+  browser-extension:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Validate browser extension release package
+        shell: pwsh
+        run: .\scripts\validate-browser-extension-release.ps1
+      - name: Export browser extension store submission bundle
+        shell: pwsh
+        run: .\scripts\export-browser-extension-store-submission.ps1 -SkipPreflight
+      - name: Check browser extension store submission integrity
+        shell: pwsh
+        run: .\scripts\check-browser-extension-store-submission-integrity.ps1 -RequireValid
+      - name: Upload browser extension release artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: alfaraheedi-browser-extension-0.7.0-release-artifacts
+          path: |
+            dist/browser-extension/alfaraheedi-browser-extension-0.7.0.zip
+            dist/browser-extension-store-submission/alfaraheedi-browser-extension-0.7.0-store-submission/**
+          if-no-files-found: error
+          retention-days: 14
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies for mock LLM runtime
+        working-directory: frontend
+        run: npm ci
+      - name: Smoke CLI
+        shell: powershell
+        run: .\scripts\smoke-cli.ps1
+      - name: Smoke API
+        shell: powershell
+        run: .\scripts\smoke-api.ps1
+      - name: LLM doctor
+        run: cargo run -p write-cli -- llm doctor
+      - name: Smoke mock local LLM
+        shell: powershell
+        run: .\scripts\smoke-llm.ps1 -MockRuntime
+
+  desktop-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build Windows desktop installer
+        working-directory: frontend
+        run: npm run desktop:build
+      - name: Verify desktop installer bundle
+        shell: pwsh
+        run: .\scripts\check-desktop-installer-bundle.ps1
+      - name: Upload Windows desktop installer
+        uses: actions/upload-artifact@v6
+        with:
+          name: alfaraheedi-desktop-windows-setup
+          path: target/release/bundle/nsis/Alfaraheedi-*-windows-x64-setup.exe
+          if-no-files-found: error
+          retention-days: 14
+
   cargo-deny:
     runs-on: ubuntu-latest
     steps:

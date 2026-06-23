@@ -1,0 +1,110 @@
+.alfaraheedi-extension-panel {
+  background: #ffffff;
+  border: 1px solid #c5d1cb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(29, 36, 33, 0.16);
+  color: #1d2421;
+  display: grid;
+  font: 13px/1.45 system-ui, "Segoe UI", sans-serif;
+  gap: 8px;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: 10px 12px;
+  position: absolute;
+  z-index: 2147483647;
+}
+
+.alfaraheedi-extension-panel--muted {
+  color: #52605a;
+}
+
+.alfaraheedi-extension-panel strong {
+  font-size: 13px;
+}
+
+.alfaraheedi-extension-panel ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.alfaraheedi-extension-panel li {
+  display: grid;
+  gap: 4px;
+}
+
+.alfaraheedi-extension-panel code {
+  color: #0f6b5c;
+  font: 11px/1.3 "Cascadia Code", Consolas, monospace;
+}
+
+.alfaraheedi-extension-panel button {
+  align-self: start;
+  background: #0f6b5c;
+  border: 0;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font: 12px/1.2 system-ui, "Segoe UI", sans-serif;
+  min-height: 28px;
+  padding: 6px 10px;
+}
+
+.alfaraheedi-extension-panel button:focus-visible {
+  outline: 2px solid #123c69;
+  outline-offset: 2px;
+}
+
+.alfaraheedi-extension-marks {
+  color: transparent;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre-wrap;
+  z-index: 2147483646;
+}
+
+.alfaraheedi-extension-marks mark {
+  background: transparent;
+  color: transparent;
+  text-decoration: underline wavy #c93535;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+::highlight(alfaraheedi-suggestions) {
+  background-color: transparent;
+  text-decoration: underline wavy #c93535;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  .alfaraheedi-extension-panel {
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+    color: CanvasText;
+    forced-color-adjust: auto;
+  }
+
+  .alfaraheedi-extension-panel--muted,
+  .alfaraheedi-extension-panel code {
+    color: CanvasText;
+  }
+
+  .alfaraheedi-extension-panel button {
+    background: ButtonFace;
+    border: 1px solid ButtonText;
+    color: ButtonText;
+  }
+
+  .alfaraheedi-extension-panel button:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .alfaraheedi-extension-marks mark,
+  ::highlight(alfaraheedi-suggestions) {
+    text-decoration-color: Highlight;
+  }
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alfaraheedi Extension Settings</title>
+    <style>
+      body {
+        background: #ffffff;
+        color: #171717;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 24px;
+      }
+
+      main {
+        max-width: 560px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-block: 18px 6px;
+      }
+
+      input,
+      select {
+        box-sizing: border-box;
+        font: inherit;
+        min-height: 40px;
+        width: 100%;
+      }
+
+      input[type="checkbox"] {
+        min-height: auto;
+        width: auto;
+      }
+
+      button {
+        font: inherit;
+        margin-block-start: 18px;
+        min-height: 40px;
+        padding-inline: 14px;
+      }
+
+      #status {
+        min-height: 24px;
+      }
+
+      @media (forced-colors: active) {
+        body {
+          background: Canvas;
+          color: CanvasText;
+        }
+
+        input,
+        select,
+        button {
+          border: 1px solid ButtonText;
+        }
+
+        button {
+          background: ButtonFace;
+          color: ButtonText;
+        }
+
+        #status {
+          color: CanvasText;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Alfaraheedi Settings</h1>
+      <form id="settings-form">
+        <label for="api-base-url">Local API URL</label>
+        <input id="api-base-url" name="apiBaseUrl" type="url" required>
+
+        <label for="writing-mode">Writing mode</label>
+        <select id="writing-mode" name="writingMode">
+          <option value="auto">Auto</option>
+          <option value="arabic">Arabic</option>
+          <option value="english">English</option>
+          <option value="mixed">Mixed</option>
+        </select>
+
+        <label for="enabled">
+          <input id="enabled" name="enabled" type="checkbox">
+          Check editable fields
+        </label>
+
+        <button type="submit">Save</button>
+      </form>
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module" src="src/options.js"></script>
+  </body>
+</html>
