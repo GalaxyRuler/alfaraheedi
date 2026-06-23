@@ -12,6 +12,7 @@ import {
   buildPrivacySafeSuggestionReport,
   companionClient,
   DEFAULT_COMPANION_SETTINGS,
+  type CaptureMethod,
   type CaptureResult,
   type CommandError,
   type CompanionSettings,
@@ -28,6 +29,13 @@ const WRITING_MODES: { value: WritingMode; label: { ar: string; en: string } }[]
   { value: "english", label: { ar: "إنجليزي", en: "English" } },
   { value: "mixed", label: { ar: "مختلط", en: "Mixed" } },
 ];
+
+function captureMethodLabel(method: CaptureMethod | undefined, lang: "ar" | "en") {
+  if (method === "windows_uia_text_pattern") {
+    return lang === "ar" ? "التقاط عبر Windows UI Automation" : "Windows UI Automation capture";
+  }
+  return lang === "ar" ? "التقاط عبر الحافظة" : "Clipboard capture";
+}
 
 export function CompanionRoot() {
   const [settings, setSettings] = useState<CompanionSettings>(
@@ -660,7 +668,8 @@ function CompanionApp({
                 <h2>{lang === "ar" ? "مراجعة النص المحدد" : "Review selection"}</h2>
                 <p className="muted">
                   {capture.source_app ?? (lang === "ar" ? "تطبيق غير معروف" : "Unknown app")} ·{" "}
-                  {[...capture.captured_text].length} {t("charCount")}
+                  {[...capture.captured_text].length} {t("charCount")} ·{" "}
+                  {captureMethodLabel(capture.capture_method, lang)}
                 </p>
               </div>
               <div className="companion-review__actions">

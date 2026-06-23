@@ -184,4 +184,52 @@ describe("desktop release packaging", () => {
       expect(source).toMatch(/canonical setup installer/u);
     }
   });
+
+  it("documents v0.9 UI Automation as a bounded capture-only desktop pilot", async () => {
+    const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+    const architecture = await fs.readFile(
+      path.join(repoRoot, "docs/architecture.md"),
+      "utf8",
+    );
+    const validation = await fs.readFile(
+      path.join(repoRoot, "docs/testing/uia-v0.9-validation.md"),
+      "utf8",
+    );
+    const releaseChecklist = await fs.readFile(
+      path.join(repoRoot, "docs/release-checklist.md"),
+      "utf8",
+    );
+    const cargoToml = await fs.readFile(
+      path.join(repoRoot, "src-tauri/Cargo.toml"),
+      "utf8",
+    );
+    const desktopLib = await fs.readFile(
+      path.join(repoRoot, "src-tauri/src/lib.rs"),
+      "utf8",
+    );
+    const uiaPilot = await fs.readFile(
+      path.join(repoRoot, "src-tauri/src/uia_pilot.rs"),
+      "utf8",
+    );
+
+    for (const source of [readme, architecture, validation]) {
+      expect(source).toMatch(/UI Automation/u);
+      expect(source).toMatch(/capture/u);
+      expect(source).toMatch(/clipboard paste fallback/u);
+    }
+
+    expect(readme).toMatch(/not a live underline overlay/u);
+    expect(architecture).toMatch(/No always-on UIA polling/u);
+    expect(releaseChecklist).toMatch(/Windows UI Automation capture/u);
+    expect(releaseChecklist).toMatch(/replacement still uses clipboard paste fallback/u);
+    expect(cargoToml).toMatch(/Win32_UI_Accessibility/u);
+    expect(cargoToml).toMatch(/Win32_System_Com/u);
+    expect(desktopLib).toMatch(/CaptureMethod::WindowsUiaTextPattern/u);
+    expect(desktopLib).toMatch(/CaptureMethod::ClipboardShortcut/u);
+    expect(desktopLib).toMatch(/get_uia_pilot_status/u);
+    expect(uiaPilot).toMatch(/UiaNodeFromHandle/u);
+    expect(uiaPilot).toMatch(/TextPattern_GetSelection/u);
+    expect(uiaPilot).toMatch(/TextRange_GetText/u);
+    expect(uiaPilot).toMatch(/replacement_supported: false/u);
+  });
 });

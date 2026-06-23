@@ -30,6 +30,7 @@ The MVP spine is:
 - Allow CORS for loopback origins only so local Vite development can call the API without enabling hosted or arbitrary website access.
 - Use Tauri for the packaged desktop companion. The OS WebView is only the app window; the normal user path must not require a browser tab or a localhost URL.
 - Use a hotkey-plus-clipboard workflow for v0.5 universal app support. Windows does not expose one reliable universal text read/decorate/replace API across Word, PowerPoint, browsers, chat apps, and native controls.
+- In v0.9, try Windows UI Automation TextPattern capture before clipboard capture for supported focused native text controls. This is a best-effort capture pilot only; replacement still uses clipboard paste fallback.
 - Treat raw selected text as session-only state in the desktop companion. It must not be logged, retained by default, or included in feedback reports unless the user explicitly supplies a reduced public example.
 
 ## v0.5 Companion Scope
@@ -44,6 +45,30 @@ The v0.5 desktop companion is the primary product surface for cross-app writing 
 - Replacement writes the corrected text to the clipboard, refocuses the source app when possible, sends `Ctrl+V`, and restores the previous clipboard text when possible.
 
 Live underlines in browsers, Office-native document ranges, and UI Automation overlays are intentionally later integration milestones.
+
+## v0.9 UI Automation Pilot
+
+The v0.9 desktop companion adds a Windows-only UI Automation probe in
+`src-tauri/src/uia_pilot.rs`.
+
+Scope:
+
+- Use the currently focused Windows control, not a background text monitor.
+- Read selected text through UI Automation TextPattern when the control exposes
+  it.
+- Fall back to the existing clipboard-mediated capture path when UIA is not
+  available, unsupported, empty, or blocked.
+- Expose the capture method to the review UI so QA can tell whether a session
+  used UIA or clipboard capture.
+- Keep replacement on the proven clipboard paste path.
+
+Non-goals:
+
+- No always-on UIA polling.
+- No cross-app underline overlay.
+- No raw selected text in logs or reports.
+- No UIA replacement or document-range mutation until capture reliability is
+  proven on real apps.
 
 ## Arabic MVP Scope
 

@@ -20,6 +20,8 @@ use write_core::{Analysis, ApplyOutcome, Suggestion};
 use write_llm::{LlmDoctorReport, LlmStatus, LlmSuggestion};
 use write_service::{AnalyzeInput, ApplySafeInput, LlmSuggestInput, RulesResponse, WritingMode};
 
+mod uia_pilot;
+
 const DEFAULT_HOTKEY: &str = "Ctrl+Alt+A";
 const MAX_CAPTURE_CHARS: usize = 20_000;
 const CAPTURE_POLL_ATTEMPTS: usize = 12;
@@ -100,6 +102,14 @@ pub struct CompanionStatus {
     pub engine_online: bool,
     pub hotkey: String,
     pub mode: &'static str,
+    pub uia_pilot: uia_pilot::UiaPilotStatus,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CaptureMethod {
+    WindowsUiaTextPattern,
+    ClipboardShortcut,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -107,6 +117,7 @@ pub struct CaptureResult {
     pub captured_text: String,
     pub current_text: String,
     pub source_app: Option<String>,
+    pub capture_method: CaptureMethod,
     pub writing_mode: WritingMode,
     pub analysis: Analysis,
     pub safe_count: usize,
@@ -118,6 +129,7 @@ pub struct SessionAnalysis {
     pub captured_text: String,
     pub current_text: String,
     pub source_app: Option<String>,
+    pub capture_method: CaptureMethod,
     pub writing_mode: WritingMode,
     pub analysis: Analysis,
     pub safe_count: usize,
@@ -136,6 +148,7 @@ struct SessionState {
     writing_mode: WritingMode,
     source_app: Option<String>,
     source_hwnd: Option<isize>,
+    capture_method: CaptureMethod,
     previous_clipboard_text: Option<String>,
 }
 
@@ -287,7 +300,13 @@ fn get_companion_status(state: State<'_, CompanionState>) -> Result<CompanionSta
         engine_online: true,
         hotkey: settings.hotkey.clone(),
         mode: "hotkey_companion",
+        uia_pilot: uia_pilot::status(),
     })
+}
+
+#[tauri::command]
+fn get_uia_pilot_status() -> uia_pilot::UiaPilotStatus {
+    uia_pilot::status()
 }
 
 #[tauri::command]
@@ -365,6 +384,20 @@ fn capture_selected_text_impl(
     let previous_clipboard_text = app.clipboard().read_text().ok();
     let source_hwnd = foreground_window_handle();
     let source_app = foreground_window_title();
+
+    if let Ok(captured) = uia_pilot::try_capture_selected_text()
+        && !captured.text.trim().is_empty()
+    {
+        let context = CapturedTextContext {
+            source_app,
+            source_hwnd,
+            capture_method: CaptureMethod::WindowsUiaTextPattern,
+            previous_clipboard_text,
+            restore_warning: None,
+        };
+        return build_capture_result(state, settings, captured.text, context);
+    }
+
     let sequence_before = clipboard_sequence_number();
 
     send_copy_shortcut()?;
@@ -377,6 +410,30 @@ fn capture_selected_text_impl(
     let captured_text =
         captured.ok_or_else(|| CommandError::new("Select text first, then press Ctrl+Alt+A."))?;
 
+    let context = CapturedTextContext {
+        source_app,
+        source_hwnd,
+        capture_method: CaptureMethod::ClipboardShortcut,
+        previous_clipboard_text,
+        restore_warning,
+    };
+    build_capture_result(state, settings, captured_text, context)
+}
+
+struct CapturedTextContext {
+    source_app: Option<String>,
+    source_hwnd: Option<isize>,
+    capture_method: CaptureMethod,
+    previous_clipboard_text: Option<String>,
+    restore_warning: Option<String>,
+}
+
+fn build_capture_result(
+    state: &CompanionState,
+    settings: CompanionSettings,
+    captured_text: String,
+    context: CapturedTextContext,
+) -> Result<CaptureResult, CommandError> {
     if captured_text.chars().count() > MAX_CAPTURE_CHARS {
         return Err(CommandError::new(
             "Selected text is too large for the companion review window.",
@@ -391,11 +448,12 @@ fn capture_selected_text_impl(
     let result = CaptureResult {
         captured_text: captured_text.clone(),
         current_text: captured_text.clone(),
-        source_app,
+        source_app: context.source_app,
+        capture_method: context.capture_method,
         writing_mode: settings.writing_mode,
         analysis,
         safe_count,
-        restore_warning,
+        restore_warning: context.restore_warning,
     };
 
     let mut guard = state
@@ -407,8 +465,9 @@ fn capture_selected_text_impl(
         current_text: result.current_text.clone(),
         writing_mode: result.writing_mode,
         source_app: result.source_app.clone(),
-        source_hwnd,
-        previous_clipboard_text,
+        source_hwnd: context.source_hwnd,
+        capture_method: context.capture_method,
+        previous_clipboard_text: context.previous_clipboard_text,
     });
 
     Ok(result)
@@ -495,6 +554,7 @@ fn analyze_session(session: SessionState) -> SessionAnalysis {
         captured_text: session.captured_text,
         current_text: session.current_text,
         source_app: session.source_app,
+        capture_method: session.capture_method,
         writing_mode: session.writing_mode,
         analysis,
         safe_count,
@@ -733,6 +793,7 @@ pub fn run() {
             run_companion_llm_doctor,
             suggest_with_local_llm_for_session,
             cancel_companion_llm_suggestion,
+            get_uia_pilot_status,
             list_rules,
         ])
         .setup(|app| {
@@ -1030,6 +1091,7 @@ mod tests {
             writing_mode: WritingMode::English,
             source_app: Some("Notepad".to_owned()),
             source_hwnd: None,
+            capture_method: CaptureMethod::ClipboardShortcut,
             previous_clipboard_text: None,
         };
 
@@ -1061,6 +1123,7 @@ mod tests {
             writing_mode: WritingMode::Arabic,
             source_app: Some("Notepad".to_owned()),
             source_hwnd: None,
+            capture_method: CaptureMethod::WindowsUiaTextPattern,
             previous_clipboard_text: Some("clipboard".to_owned()),
         };
 
@@ -1068,6 +1131,10 @@ mod tests {
 
         assert_eq!(analysis.safe_count, 2);
         assert_eq!(analysis.source_app.as_deref(), Some("Notepad"));
+        assert_eq!(
+            analysis.capture_method,
+            CaptureMethod::WindowsUiaTextPattern
+        );
         assert_eq!(analysis.current_text, "مرحبــا  بالعالم");
     }
 
