@@ -29,7 +29,7 @@ export const STRINGS = {
 
   analyze: { ar: "تحليل", en: "Analyze" },
   analyzing: { ar: "جارٍ التحليل…", en: "Analyzing…" },
-  applySafe: { ar: "إصلاحات آمنة", en: "Apply safe" },
+  applySafe: { ar: "إصلاحات آمنة", en: "Apply Safe Fixes" },
   applySafeHint: {
     ar: "يطبّق الإصلاحات الآمنة عبر ‎/v1/apply",
     en: "Applies safe fixes via /v1/apply",

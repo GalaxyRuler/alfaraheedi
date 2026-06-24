@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
 import { DEFAULT_COMPANION_SETTINGS } from "../api/companion";
@@ -255,7 +255,7 @@ describe("companion local LLM setup", () => {
 
     await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
     await screen.findByText(/Review selection/);
-    expect(screen.getByText(/Windows UI Automation capture/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Windows UI Automation capture/).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /LLM suggestion/ })).toBeDisabled();
 
     await user.type(screen.getByLabelText("Local runtime URL"), "http://127.0.0.1:8000");
@@ -283,6 +283,27 @@ describe("companion local LLM setup", () => {
     expect(screen.getByLabelText("Corrected text preview")).toHaveValue(
       "hello what are you doing?",
     );
+  });
+
+  it("shows review context and clear primary actions for a captured selection", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
+
+    expect(await screen.findByText(/Review selection/)).toBeInTheDocument();
+    const reviewContext = screen.getByTestId("companion-review-context");
+    expect(within(reviewContext).getByText("Interface language")).toBeInTheDocument();
+    expect(within(reviewContext).getByText("English")).toBeInTheDocument();
+    expect(within(reviewContext).getByText("Writing mode")).toBeInTheDocument();
+    expect(within(reviewContext).getByText("Auto")).toBeInTheDocument();
+    expect(within(reviewContext).getByText("Capture method")).toBeInTheDocument();
+    expect(within(reviewContext).getByText(/Windows UI Automation capture/))
+      .toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Apply Safe Fixes/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Copy Corrected Text/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Replace Selection/ })).toBeDisabled();
+    expect(screen.getByText(/No active suggestions/)).toBeInTheDocument();
   });
 
   it("cancels an in-flight selected-text local LLM suggestion", async () => {
@@ -360,7 +381,7 @@ describe("companion local LLM setup", () => {
 
     await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
     await screen.findByText(/Review selection/);
-    expect(screen.getByText(/Clipboard capture/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Clipboard capture/).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: /LLM suggestion/ }));
 
     expect(await screen.findByRole("button", { name: /Cancel LLM suggestion/ }))

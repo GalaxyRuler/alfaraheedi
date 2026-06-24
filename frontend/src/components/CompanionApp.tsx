@@ -188,6 +188,12 @@ function CompanionApp({
     LLM_RUNTIME_PRESETS.find(
       (preset) => preset.value === settings.llm_runtime_preset,
     ) ?? LLM_RUNTIME_PRESETS[0];
+  const interfaceLanguageLabel =
+    LANGS.find((option) => option.value === settings.ui_language)?.label ??
+    settings.ui_language;
+  const writingModeLabel =
+    WRITING_MODES.find((option) => option.value === settings.writing_mode)
+      ?.label[lang] ?? settings.writing_mode;
   const llmSetupReady =
     llmConsentAccepted && llmValidatedSetup === llmSetupSignature;
 
@@ -509,13 +515,13 @@ function CompanionApp({
         <section className="companion-hero">
           <div>
             <p className="companion-kicker">
-              {lang === "ar" ? "مرافق كتابة شامل" : "Universal writing companion"}
+              {lang === "ar" ? "مراجعة النص المحدد" : "Review selected text"}
             </p>
             <h1>{t("brandName")}</h1>
             <p>
               {lang === "ar"
-                ? `حدد نصًا في أي تطبيق واضغط ${settings.hotkey}.`
-                : `Select text in any app and press ${settings.hotkey}.`}
+                ? `حدد نصًا في تطبيق مدعوم واضغط ${settings.hotkey}.`
+                : `Select text in a supported app and press ${settings.hotkey}.`}
             </p>
           </div>
           <button
@@ -850,6 +856,24 @@ function CompanionApp({
                   {[...capture.captured_text].length} {t("charCount")} ·{" "}
                   {captureMethodLabel(capture.capture_method, lang)}
                 </p>
+                <dl
+                  className="companion-review__meta"
+                  aria-label="Review context"
+                  data-testid="companion-review-context"
+                >
+                  <div>
+                    <dt>{lang === "ar" ? "لغة الواجهة" : "Interface language"}</dt>
+                    <dd>{interfaceLanguageLabel}</dd>
+                  </div>
+                  <div>
+                    <dt>{lang === "ar" ? "وضع الكتابة" : "Writing mode"}</dt>
+                    <dd>{writingModeLabel}</dd>
+                  </div>
+                  <div>
+                    <dt>{lang === "ar" ? "طريقة الالتقاط" : "Capture method"}</dt>
+                    <dd>{captureMethodLabel(capture.capture_method, lang)}</dd>
+                  </div>
+                </dl>
               </div>
               <div className="companion-review__actions">
                 <button
@@ -868,7 +892,7 @@ function CompanionApp({
                   onClick={() => void copyCorrectedText()}
                 >
                   <CopyIcon />
-                  {lang === "ar" ? "نسخ المصحح" : "Copy corrected"}
+                  {lang === "ar" ? "نسخ النص المصحح" : "Copy Corrected Text"}
                 </button>
                 <button
                   type="button"
@@ -907,7 +931,7 @@ function CompanionApp({
                   onClick={() => void replaceSelection()}
                   disabled={currentText === capture.captured_text}
                 >
-                  {lang === "ar" ? "استبدال المحدد" : "Replace selection"}
+                  {lang === "ar" ? "استبدال التحديد" : "Replace Selection"}
                 </button>
               </div>
             </header>

@@ -147,6 +147,12 @@ button:disabled {
   border: 1px solid #d7ddea;
   border-radius: 6px;
   background: #ffffff;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+#suggestions-list li[dir="auto"] {
+  text-align: start;
 }
 
 @media (forced-colors: active) {
