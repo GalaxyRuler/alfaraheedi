@@ -117,3 +117,28 @@ fn is_arabic_script(character: char) -> bool {
             | 0xFE70..=0xFEFF
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use write_core::Language;
+
+    use super::{Direction, dominant_direction, segment_scripts};
+
+    #[test]
+    fn v1_mixed_fixture_segmentation_preserves_urls_code_emails_and_numbers_as_boundaries() {
+        let spans = segment_scripts("راجع https://example.com ثم `helo` and 3.5%");
+
+        assert_eq!(spans[0].language, Language::Arabic);
+        assert_eq!(spans[0].direction, Direction::Rtl);
+        assert_eq!(spans[1].language, Language::English);
+        assert_eq!(spans[1].text, "https://example.com");
+        assert!(spans.iter().any(|span| span.text.contains("helo")));
+        assert!(spans.iter().any(|span| span.text.contains("and")));
+    }
+
+    #[test]
+    fn v1_mixed_direction_uses_first_strong_script() {
+        assert_eq!(dominant_direction("123 مرحبا and hello"), Direction::Rtl);
+        assert_eq!(dominant_direction("123 hello مرحبا"), Direction::Ltr);
+    }
+}

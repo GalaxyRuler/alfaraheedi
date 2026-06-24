@@ -23,7 +23,42 @@ The command prints JSON and exits non-zero on release-gating failures. The repor
 - `true_positives`, `false_positives`, and `false_negatives`.
 - Overall `precision` and `recall`.
 - Rule-level precision and recall.
+- `release_blocked`, which is `true` when any release-blocking fixture fails or
+  an explicit `blocked_sources` entry is present.
+- `false_positives_by_rule` and `false_negatives_by_rule`, each listing the
+  affected case ids by rule source.
 - Failure rows with `kind` set to `false_positive` or `missing_expected`.
+- Failure rows include `fixture_file` and `case_id` so CI output can point back
+  to the exact JSON or JSONL fixture.
+
+## v1.0 Fixture Files
+
+The v1.0 release fixtures live in JSONL files so focused cases can be appended
+without rewriting large arrays:
+
+- `datasets/eval/v1.0-arabic.jsonl`
+- `datasets/eval/v1.0-english.jsonl`
+- `datasets/eval/v1.0-mixed.jsonl`
+
+Each row uses the normal eval fields plus:
+
+- `mode`: `arabic`, `english`, or `mixed`.
+- `blocked_sources`: explicit release blockers that do not depend on a rule
+  firing, usually for manual QA or policy evidence.
+- `notes`: public-safe context for maintainers.
+
+Every new safe rule must add at least one positive fixture, two negative
+fixtures, and a false-positive guard when there is an obvious risk. The current
+rule taxonomy is:
+
+| Taxonomy | Current category/source examples |
+| --- | --- |
+| spelling-like | `english:common-typo` |
+| punctuation | `arabic:latin-comma`, `arabic:latin-question-mark`, `arabic:latin-semicolon` |
+| spacing | `arabic:repeated-space`, `arabic:space-before-punctuation`, `arabic:space-after-punctuation` |
+| grammar | `arabic:conversational-greeting`, `english:you-are-do` |
+| style | future suggest-only rules; no v1.0 safe auto-apply style rule |
+| LLM-only | optional local LLM suggestions; never safe auto-apply in v1.0 |
 
 ## Report-Derived Fixtures
 

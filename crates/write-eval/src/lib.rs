@@ -3,12 +3,22 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use write_core::Engine;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EvalCase {
     pub id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<String>,
     pub text: String,
+    #[serde(default)]
     pub expected_sources: Vec<String>,
+    #[serde(default)]
+    pub blocked_sources: Vec<String>,
+    #[serde(default)]
     pub max_false_positives: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fixture_file: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<EvalCaseMetadata>,
 }
@@ -48,6 +58,8 @@ pub enum ExpectedBehavior {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EvalFailure {
     pub case_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fixture_file: Option<String>,
     pub source: String,
     pub original: String,
     pub kind: EvalFailureKind,
@@ -75,6 +87,10 @@ pub struct EvalReport {
     pub true_positives: usize,
     pub false_positives: usize,
     pub false_negatives: usize,
+    pub release_blocked: bool,
+    pub release_blockers: Vec<String>,
+    pub false_positives_by_rule: BTreeMap<String, Vec<String>>,
+    pub false_negatives_by_rule: BTreeMap<String, Vec<String>>,
     pub failures: Vec<EvalFailure>,
     pub precision: f32,
     pub recall: f32,
@@ -83,37 +99,87 @@ pub struct EvalReport {
 
 pub fn seed_cases() -> anyhow::Result<Vec<EvalCase>> {
     let mut cases = Vec::new();
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/seed.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/known-correct.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/rules/tatweel.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/rules/repeated-space.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/rules/punctuation.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/protected-spans.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/reported/v0.4-public-safe.json"
-    ))?);
-    cases.extend(read_cases(include_str!(
-        "../../../datasets/eval/reported/v0.5-public-safe.json"
-    ))?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/seed.json"),
+        "datasets/eval/seed.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/known-correct.json"),
+        "datasets/eval/known-correct.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/rules/tatweel.json"),
+        "datasets/eval/rules/tatweel.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/rules/repeated-space.json"),
+        "datasets/eval/rules/repeated-space.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/rules/punctuation.json"),
+        "datasets/eval/rules/punctuation.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/protected-spans.json"),
+        "datasets/eval/protected-spans.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/reported/v0.4-public-safe.json"),
+        "datasets/eval/reported/v0.4-public-safe.json",
+    )?);
+    cases.extend(read_json_cases(
+        include_str!("../../../datasets/eval/reported/v0.5-public-safe.json"),
+        "datasets/eval/reported/v0.5-public-safe.json",
+    )?);
+    cases.extend(read_jsonl_cases(
+        include_str!("../../../datasets/eval/v1.0-arabic.jsonl"),
+        "datasets/eval/v1.0-arabic.jsonl",
+    )?);
+    cases.extend(read_jsonl_cases(
+        include_str!("../../../datasets/eval/v1.0-english.jsonl"),
+        "datasets/eval/v1.0-english.jsonl",
+    )?);
+    cases.extend(read_jsonl_cases(
+        include_str!("../../../datasets/eval/v1.0-mixed.jsonl"),
+        "datasets/eval/v1.0-mixed.jsonl",
+    )?);
     Ok(cases)
 }
 
-fn read_cases(raw: &str) -> anyhow::Result<Vec<EvalCase>> {
-    let cases: Vec<EvalCase> = serde_json::from_str(raw)?;
+fn read_json_cases(raw: &str, fixture_file: &str) -> anyhow::Result<Vec<EvalCase>> {
+    let mut cases: Vec<EvalCase> = serde_json::from_str(raw)?;
+    annotate_fixture_file(&mut cases, fixture_file);
     validate_cases(&cases)?;
     Ok(cases)
+}
+
+fn read_jsonl_cases(raw: &str, fixture_file: &str) -> anyhow::Result<Vec<EvalCase>> {
+    let mut cases = Vec::new();
+    for (line_index, line) in raw.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let case = serde_json::from_str::<EvalCase>(trimmed).map_err(|error| {
+            anyhow::anyhow!(
+                "failed to parse {} line {}: {}",
+                fixture_file,
+                line_index + 1,
+                error
+            )
+        })?;
+        cases.push(case);
+    }
+    annotate_fixture_file(&mut cases, fixture_file);
+    validate_cases(&cases)?;
+    Ok(cases)
+}
+
+fn annotate_fixture_file(cases: &mut [EvalCase], fixture_file: &str) {
+    for case in cases {
+        case.fixture_file
+            .get_or_insert_with(|| fixture_file.to_owned());
+    }
 }
 
 pub fn validate_cases(cases: &[EvalCase]) -> anyhow::Result<()> {
@@ -129,6 +195,13 @@ fn validate_case(case: &EvalCase) -> anyhow::Result<()> {
         "eval case {} allows false positives; release eval is strict",
         case.id
     );
+    for blocked_source in &case.blocked_sources {
+        anyhow::ensure!(
+            !blocked_source.trim().is_empty(),
+            "eval case {} has an empty blocked source",
+            case.id
+        );
+    }
 
     let Some(metadata) = &case.metadata else {
         return Ok(());
@@ -171,8 +244,15 @@ pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
     let mut false_negatives = 0usize;
     let mut failures = Vec::new();
     let mut by_rule = BTreeMap::<String, (usize, usize, usize)>::new();
+    let mut release_blockers = Vec::new();
+    let mut false_positives_by_rule = BTreeMap::<String, Vec<String>>::new();
+    let mut false_negatives_by_rule = BTreeMap::<String, Vec<String>>::new();
 
     for case in cases {
+        for blocked_source in &case.blocked_sources {
+            release_blockers.push(format!("{}: {}", case.id, blocked_source));
+        }
+
         let analysis = engine.analyze(case.text.clone());
         let mut expected = expected_counts(&case.expected_sources);
 
@@ -188,8 +268,13 @@ pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
             } else {
                 false_positives += 1;
                 entry.1 += 1;
+                false_positives_by_rule
+                    .entry(suggestion.source.clone())
+                    .or_default()
+                    .push(case.id.clone());
                 failures.push(EvalFailure {
                     case_id: case.id.clone(),
+                    fixture_file: case.fixture_file.clone(),
                     source: suggestion.source.clone(),
                     original: suggestion.original.clone(),
                     kind: EvalFailureKind::FalsePositive,
@@ -205,9 +290,12 @@ pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
             let entry = by_rule.entry(source.clone()).or_insert((0, 0, 0));
             entry.2 += missing;
             false_negatives += missing;
+            let missing_cases = false_negatives_by_rule.entry(source.clone()).or_default();
             for _ in 0..missing {
+                missing_cases.push(case.id.clone());
                 failures.push(EvalFailure {
                     case_id: case.id.clone(),
+                    fixture_file: case.fixture_file.clone(),
                     source: source.clone(),
                     original: String::new(),
                     kind: EvalFailureKind::MissingExpected,
@@ -240,6 +328,10 @@ pub fn evaluate(engine: &Engine, cases: &[EvalCase]) -> EvalReport {
         true_positives,
         false_positives,
         false_negatives,
+        release_blocked: !failures.is_empty() || !release_blockers.is_empty(),
+        release_blockers,
+        false_positives_by_rule,
+        false_negatives_by_rule,
         failures,
         precision,
         recall,
