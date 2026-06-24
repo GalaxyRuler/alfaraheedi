@@ -48,7 +48,8 @@ The extension stores only extension settings in browser extension storage:
 
 - local API URL;
 - writing mode;
-- enabled or paused state.
+- enabled or paused state;
+- disabled-site hostnames chosen by the user.
 
 The background service worker uses these stored settings for analysis requests.
 Content-script messages cannot override the stored API URL or writing mode.
@@ -71,6 +72,10 @@ script imports, `eval`, `new Function`, or `importScripts`.
 The extension can be paused from the toolbar popup or the options page. When
 paused, it does not send active-field text for analysis.
 
+The extension can also be disabled for the current site from the toolbar popup
+and re-enabled for that site later. Disabled-site hostnames can be reviewed or
+edited from the options page.
+
 Users can change the local API URL and writing mode from the options page.
 Non-loopback API URLs are rejected.
 
@@ -79,6 +84,11 @@ Non-loopback API URLs are rejected.
 Nahou does not sell browser extension data and does not share extension
 data with advertisers, analytics providers, hosted writing services, or other
 third parties.
+
+Chrome limited-use disclosure: Nahou does not sell extension data, does not use
+extension data for telemetry or advertising, processes editor text locally
+through the configured loopback Nahou API only, and does not transfer editor
+text to Nahou-hosted services.
 
 ## Human Review
 

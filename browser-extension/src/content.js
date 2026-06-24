@@ -1,5 +1,6 @@
 (() => {
   const ANALYZE_MESSAGE = "ALFARAHEEDI_ANALYZE_TEXT";
+  const PAGE_LOCATION_MESSAGE = "ALFARAHEEDI_PAGE_LOCATION";
   const DEBOUNCE_MS = 650;
   const MAX_TEXT_CHARS = 6_000;
   const HIGHLIGHT_NAME = "alfaraheedi-suggestions";
@@ -63,6 +64,14 @@
   let requestSeq = 0;
   let cssHighlightEditor = null;
   let editorRemovalObserver = null;
+
+  if (globalThis.chrome?.runtime?.onMessage?.addListener) {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message?.type !== PAGE_LOCATION_MESSAGE) return false;
+      sendResponse({ url: window.location.href });
+      return false;
+    });
+  }
 
   document.addEventListener("focusin", (event) => {
     activeEditor = editableElementForEvent(event);
@@ -182,6 +191,9 @@
 
   function safeAnalysisError(response) {
     if (response?.error === "Nahou checking is paused.") {
+      return response.error;
+    }
+    if (response?.error === "Nahou checking is disabled on this site.") {
       return response.error;
     }
     if (response?.error === "Nahou extension only connects to a loopback API URL.") {
