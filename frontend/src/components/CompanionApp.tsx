@@ -12,6 +12,7 @@ import {
   buildPrivacySafeSuggestionReport,
   companionClient,
   DEFAULT_COMPANION_SETTINGS,
+  type CapturePreference,
   type CaptureMethod,
   type CaptureResult,
   type CommandError,
@@ -30,11 +31,35 @@ const WRITING_MODES: { value: WritingMode; label: { ar: string; en: string } }[]
   { value: "mixed", label: { ar: "مختلط", en: "Mixed" } },
 ];
 
+const CAPTURE_PREFERENCES: {
+  value: CapturePreference;
+  label: { ar: string; en: string };
+}[] = [
+  { value: "auto", label: { ar: "تلقائي", en: "Auto" } },
+  { value: "clipboard_first", label: { ar: "الحافظة أولًا", en: "Clipboard first" } },
+  { value: "uia_first", label: { ar: "UIA أولًا", en: "UIA first" } },
+];
+
 function captureMethodLabel(method: CaptureMethod | undefined, lang: "ar" | "en") {
   if (method === "windows_uia_text_pattern") {
     return lang === "ar" ? "التقاط عبر Windows UI Automation" : "Windows UI Automation capture";
   }
   return lang === "ar" ? "التقاط عبر الحافظة" : "Clipboard capture";
+}
+
+function captureNotice(result: CaptureResult, lang: "ar" | "en"): string | null {
+  if (result.restore_warning) return result.restore_warning;
+  if (result.capture_method === "windows_uia_text_pattern") {
+    return lang === "ar"
+      ? "التُقط النص عبر Windows UI Automation."
+      : "Captured through Windows UI Automation.";
+  }
+  if (result.capture_method === "clipboard_shortcut") {
+    return lang === "ar"
+      ? "التُقط النص عبر الحافظة. استُعيدت الحافظة عند الإمكان."
+      : "Captured through clipboard fallback. Clipboard was restored when possible.";
+  }
+  return null;
 }
 
 export function CompanionRoot() {
@@ -127,11 +152,11 @@ function CompanionApp({
     setLlmSuggestion(null);
     setLlmError(null);
     setError(null);
-    setNotice(result.restore_warning);
-  }, []);
+    setNotice(captureNotice(result, lang));
+  }, [lang]);
 
   const showError = useCallback((payload: CommandError | unknown) => {
-    const message =
+    let message =
       typeof payload === "object" &&
       payload !== null &&
       "message" in payload &&
@@ -140,6 +165,34 @@ function CompanionApp({
         : lang === "ar"
           ? "تعذّر تنفيذ العملية."
           : "The operation failed.";
+    const category =
+      typeof payload === "object" &&
+      payload !== null &&
+      "category" in payload &&
+      typeof payload.category === "string"
+        ? payload.category
+        : null;
+    if (category === "no_selected_text") {
+      message =
+        lang === "ar"
+          ? "لم يكشف هذا التطبيق نصًا محددًا. حدد نصًا ثم اضغط الاختصار."
+          : "This app did not expose selected text. Select text first, then press the hotkey.";
+    } else if (category === "app_blocked_copy") {
+      message =
+        lang === "ar"
+          ? "يبدو أن التطبيق منع نسخ التحديد. جرّب وضع الحافظة أولًا أو انسخ النص يدويًا."
+          : "The source app did not copy the selection. Try Clipboard first mode or copy the text manually.";
+    } else if (category === "clipboard_unavailable") {
+      message =
+        lang === "ar"
+          ? "الحافظة غير متاحة الآن."
+          : "Clipboard capture is unavailable right now.";
+    } else if (category === "large_selection") {
+      message =
+        lang === "ar"
+          ? "التحديد كبير جدًا. يرفض Nahou التحديدات الكبيرة افتراضيًا."
+          : "The selection is too large. Nahou refuses large selections by default.";
+    }
     setStatus("error");
     setError(message);
   }, [lang]);
@@ -428,8 +481,8 @@ function CompanionApp({
             <ShieldIcon />
             <p>
               {lang === "ar"
-                ? "ينسخ Nahou النص المحدد محليًا فقط بعد الاختصار. لا توجد خدمة مستضافة أو تتبع، وتُستعاد الحافظة عند الإمكان."
-                : "Nahou copies selected text locally only after the hotkey. There is no hosted service or telemetry, and the clipboard is restored when possible."}
+                ? "يعالج Nahou النص المحدد محليًا فقط بعد الاختصار أو الإجراء اليدوي. لا توجد خدمة مستضافة أو تتبع، ولا نخزن النص الملتقط افتراضيًا. تُستخدم الحافظة بعد الإجراء فقط وتُستعاد عند الإمكان. اقتراحات LLM تتطلب إعداد مشغل محلي منفصل."
+                : "Nahou processes selected text locally only after the hotkey or manual action. There is no hosted service or telemetry, and captured text is not stored by default. The clipboard is used only after the action and restored when possible. LLM suggestions require separate local runtime configuration."}
             </p>
             <button
               type="button"
@@ -490,6 +543,37 @@ function CompanionApp({
                 </label>
               ))}
             </div>
+          </fieldset>
+
+          <fieldset className="field">
+            <legend className="field__label">
+              {lang === "ar" ? "ترتيب الالتقاط" : "Capture order"}
+            </legend>
+            <div className="segmented">
+              {CAPTURE_PREFERENCES.map((option) => (
+                <label
+                  key={option.value}
+                  className={`segmented__option${
+                    settings.capture_preference === option.value ? " is-selected" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="capture-preference"
+                    checked={settings.capture_preference === option.value}
+                    onChange={() =>
+                      onUpdateSettings({ capture_preference: option.value })
+                    }
+                  />
+                  {option.label[lang]}
+                </label>
+              ))}
+            </div>
+            <p className="field__hint">
+              {lang === "ar"
+                ? "إذا كان الاختصار مستخدمًا في تطبيق آخر، افتح Nahou من النافذة أو علبة النظام ثم اختر فحص النص المحدد."
+                : "If another app already uses the hotkey, open Nahou from the window or tray and choose Check selected text."}
+            </p>
           </fieldset>
 
           <fieldset className="field companion-llm-settings">
