@@ -200,6 +200,59 @@ describe("desktop release packaging", () => {
     }
   });
 
+  it("defines the v1.0 release version sync dry run contract", async () => {
+    const source = await fs.readFile(
+      path.join(repoRoot, "scripts/Set-ReleaseVersion.ps1"),
+      "utf8",
+    );
+
+    expect(source).toMatch(/\[switch\]\$DryRun/u);
+    expect(source).toMatch(/ConvertTo-StoreVersion/u);
+    expect(source).toMatch(/StoreManifestVersion/u);
+    expect(source).toMatch(/Cargo\.toml/u);
+    expect(source).toMatch(/frontend\/package\.json/u);
+    expect(source).toMatch(/src-tauri\/tauri\.conf\.json/u);
+    expect(source).toMatch(/browser-extension\/manifest\.json/u);
+    expect(source).toMatch(/office-addins\/manifest\.xml/u);
+    expect(source).toMatch(/scripts\/package-windows\.ps1/u);
+    expect(source).toMatch(/capture-browser-extension-store-screenshots\.ps1/u);
+    expect(source).toMatch(/qa-browser-extension-production-editors-smoke\.ps1/u);
+    expect(source).toMatch(/ConvertTo-Json -Depth 4/u);
+  });
+
+  it("builds release artifacts with signing, checksums, and license reporting", async () => {
+    const workflow = await fs.readFile(
+      path.join(repoRoot, ".github/workflows/release.yml"),
+      "utf8",
+    );
+    const signingDoc = await fs.readFile(
+      path.join(repoRoot, "docs/release-signing.md"),
+      "utf8",
+    );
+
+    expect(workflow).toMatch(/Set-ReleaseVersion\.ps1 -Version/u);
+    expect(workflow).toMatch(/npm run desktop:build/u);
+    expect(workflow).toMatch(/WINDOWS_SIGNING_PFX_BASE64/u);
+    expect(workflow).toMatch(/signtool\.exe/u);
+    expect(workflow).toMatch(/check-desktop-installer-bundle\.ps1 -Version/u);
+    expect(workflow).toMatch(/package-windows\.ps1 .* -SkipFrontendInstall/u);
+    expect(workflow).toMatch(/package-browser-extension\.ps1/u);
+    expect(workflow).toMatch(/package-office-addins\.ps1/u);
+    expect(workflow).toMatch(/license-report\.json/u);
+    expect(workflow).toMatch(/checksums\.sha256/u);
+    expect(workflow).toMatch(/target\/release\/bundle\/nsis\/Nahou-\*-windows-x64-setup\.exe/u);
+    expect(workflow).toMatch(/dist\/browser-extension\/\*\.zip/u);
+    expect(workflow).toMatch(/dist\/office-addins\/\*\.zip/u);
+
+    expect(signingDoc).toMatch(/WINDOWS_SIGNING_PFX_BASE64/u);
+    expect(signingDoc).toMatch(/Unsigned builds are acceptable for local QA/u);
+    expect(signingDoc).toMatch(
+      /Tauri updater is deferred to v1\.1 because updater signing and update endpoint operations need a stable release channel/u,
+    );
+    expect(signingDoc).toMatch(/WebView2 Evergreen Runtime/u);
+    expect(signingDoc).toMatch(/SmartScreen approval unless/u);
+  });
+
   it("documents v0.9 UI Automation as a bounded capture-only desktop pilot", async () => {
     const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
     const architecture = await fs.readFile(

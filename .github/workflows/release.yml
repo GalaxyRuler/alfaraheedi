@@ -9,13 +9,13 @@ on:
       version:
         description: "Release version without leading v"
         required: true
-        default: "0.4.1"
+        default: "1.0.0-rc.1"
 
 permissions:
   contents: write
 
 jobs:
-  windows-package:
+  windows-release:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
@@ -38,12 +38,116 @@ jobs:
             "value=$version" >> $env:GITHUB_OUTPUT
           }
 
-      - name: Build Windows package
-        shell: pwsh
-        run: .\scripts\package-windows.ps1 -Version "${{ steps.version.outputs.value }}"
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
 
-      - name: Upload release asset
+      - name: Sync release versions in workspace
+        shell: pwsh
+        run: .\scripts\Set-ReleaseVersion.ps1 -Version "${{ steps.version.outputs.value }}"
+
+      - name: Build desktop installer
+        working-directory: frontend
+        run: npm run desktop:build
+
+      - name: Sign desktop installer when signing secrets are configured
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_PFX_BASE64 }}
+          WINDOWS_SIGNING_PFX_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PFX_PASSWORD }}
+          WINDOWS_SIGNING_SUBJECT: ${{ secrets.WINDOWS_SIGNING_SUBJECT }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = "${{ steps.version.outputs.value }}"
+          $installer = Get-Item -LiteralPath "target\release\bundle\nsis\Nahou-$version-windows-x64-setup.exe"
+
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_PFX_PASSWORD)) {
+            Write-Warning "Windows signing secrets are not configured; release artifact remains unsigned."
+            return
+          }
+
+          $signTool = Get-Command signtool.exe -ErrorAction Stop
+          $pfxPath = Join-Path $env:RUNNER_TEMP "nahou-signing.pfx"
+          try {
+            [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_SIGNING_PFX_BASE64))
+            if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_SUBJECT)) {
+              $cert = Get-PfxCertificate -FilePath $pfxPath
+              if ($cert.Subject -notlike "*$env:WINDOWS_SIGNING_SUBJECT*") {
+                throw "Signing certificate subject did not match WINDOWS_SIGNING_SUBJECT."
+              }
+            }
+            & $signTool.Source sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f $pfxPath /p $env:WINDOWS_SIGNING_PFX_PASSWORD $installer.FullName
+            & $signTool.Source verify /pa $installer.FullName
+          }
+          finally {
+            if (Test-Path -LiteralPath $pfxPath) {
+              Remove-Item -LiteralPath $pfxPath -Force
+            }
+          }
+
+      - name: Verify desktop installer bundle
+        shell: pwsh
+        run: .\scripts\check-desktop-installer-bundle.ps1 -Version "${{ steps.version.outputs.value }}"
+
+      - name: Build optional developer CLI zip
+        shell: pwsh
+        run: .\scripts\package-windows.ps1 -Version "${{ steps.version.outputs.value }}" -SkipFrontendInstall
+
+      - name: Build browser extension zip
+        shell: pwsh
+        run: .\scripts\package-browser-extension.ps1
+
+      - name: Build Office add-ins zip
+        shell: pwsh
+        run: .\scripts\package-office-addins.ps1
+
+      - name: Generate license report and checksums
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+
+          $cargoMetadata = cargo metadata --format-version 1 --no-deps | ConvertFrom-Json
+          $npmLock = Get-Content -LiteralPath "frontend\package-lock.json" -Raw | ConvertFrom-Json
+          $npmPackages = @(
+            $npmLock.packages.PSObject.Properties |
+              Where-Object { $_.Name -ne "" -and $_.Value.version } |
+              ForEach-Object {
+                [pscustomobject]@{
+                  path = $_.Name
+                  version = $_.Value.version
+                  license = $_.Value.license
+                }
+              }
+          )
+          [pscustomobject]@{
+            generated_at = (Get-Date).ToUniversalTime().ToString("o")
+            cargo = @($cargoMetadata.packages | Select-Object name, version, license, repository)
+            npm = $npmPackages
+          } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath "dist\license-report.json" -Encoding UTF8
+
+          $artifacts = @(
+            Get-Item -LiteralPath "target\release\bundle\nsis\Nahou-${{ steps.version.outputs.value }}-windows-x64-setup.exe"
+            Get-Item -LiteralPath "dist\nahou-v${{ steps.version.outputs.value }}-windows-x64.zip"
+            Get-ChildItem -LiteralPath "dist\browser-extension" -Filter "*.zip" -File
+            Get-ChildItem -LiteralPath "dist\office-addins" -Filter "*.zip" -File
+            Get-Item -LiteralPath "dist\license-report.json"
+          )
+          $artifacts |
+            ForEach-Object {
+              $hash = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
+              "$($hash.Hash.ToLowerInvariant())  $($_.Name)"
+            } |
+            Set-Content -LiteralPath "dist\checksums.sha256" -Encoding UTF8
+
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.zip
+          files: |
+            target/release/bundle/nsis/Nahou-*-windows-x64-setup.exe
+            dist/nahou-v*-windows-x64.zip
+            dist/browser-extension/*.zip
+            dist/office-addins/*.zip
+            dist/checksums.sha256
+            dist/license-report.json
           tag_name: v${{ steps.version.outputs.value }}
