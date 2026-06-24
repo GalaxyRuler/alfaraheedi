@@ -21,9 +21,10 @@ The standard local gate is:
 .\scripts\validate-office-addins-release.ps1
 ```
 
-This gate runs the Office add-ins package test, checks manifest host and HTTPS
-requirements, validates package and HTTPS host JavaScript syntax, parses release
-PowerShell scripts, rebuilds the add-in zip, and verifies the package entries.
+This gate runs the Office add-ins package test, checks generated/dev/prod
+manifest host and URL requirements, validates package and HTTPS host JavaScript
+syntax, parses release PowerShell scripts, rebuilds the add-in zip, and verifies
+the package entries.
 
 ## Manual Sideload Gates
 
@@ -53,9 +54,9 @@ record exactly `Decision: Sideload QA approved`.
 
 As of 2026-06-24 local time, source-controlled local gates cover the manifest,
 package shape, local HTTPS task-pane host syntax, dev-certificate script syntax,
-and package zip entries. Real Word and PowerPoint sideload behavior still needs
-manual evidence on the target Windows PC before v0.8 can claim Office sideload
-readiness.
+guarded selected-text replacement states, and package zip entries. Real Word
+and PowerPoint sideload behavior still needs manual evidence on the target
+Windows PC before v0.8 can claim Office sideload readiness.
 
 ## Claim Boundary
 
@@ -64,6 +65,8 @@ Before public release notes broaden Office claims:
 - Complete Word selected-text capture and replacement QA.
 - Complete PowerPoint selected text-box capture and replacement QA, or document
   the Office limitation clearly.
+- Confirm stale or unsupported selections show the copy-corrected-text fallback
+  instead of blind replacement.
 - Confirm no private Office text appears in logs, reports, screenshots, or
   copied artifacts.
 - Confirm task-pane keyboard and high-contrast usability.

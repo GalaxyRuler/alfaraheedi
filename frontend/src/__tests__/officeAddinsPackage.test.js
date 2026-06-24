@@ -13,12 +13,20 @@ const addinsRoot = path.join(repoRoot, "office-addins");
 describe("Office add-ins package metadata", () => {
   it("ships an add-in-only XML manifest for Word and PowerPoint", async () => {
     const manifest = await fs.readFile(path.join(addinsRoot, "manifest.xml"), "utf8");
+    const devManifest = await fs.readFile(
+      path.join(addinsRoot, "manifest.dev.xml"),
+      "utf8",
+    );
+    const prodManifest = await fs.readFile(
+      path.join(addinsRoot, "manifest.prod.xml"),
+      "utf8",
+    );
 
     expect(manifest).toMatch(/xsi:type="TaskPaneApp"/u);
-    expect(manifest).toMatch(/<Version>0\.8\.0<\/Version>/u);
+    expect(manifest).toMatch(/<Version>1\.0\.0<\/Version>/u);
     expect(manifest).toMatch(/<Host Name="Document"\/>/u);
     expect(manifest).toMatch(/<Host Name="Presentation"\/>/u);
-    expect(manifest).toMatch(/<Set Name="OfficeApi"\/>/u);
+    expect(manifest).not.toMatch(/<Requirements>/u);
     expect(manifest).toMatch(/<Permissions>ReadWriteDocument<\/Permissions>/u);
     expect(manifest).toMatch(
       /<SourceLocation DefaultValue="https:\/\/localhost:3443\/office-addins\/taskpane\.html"\/>/u,
@@ -27,6 +35,14 @@ describe("Office add-ins package metadata", () => {
     expect(manifest).toMatch(/http:\/\/localhost:3000/u);
     expect(manifest).toMatch(/browser-extension\/icons\/icon-32\.png/u);
     expect(manifest).toMatch(/browser-extension\/icons\/icon-128\.png/u);
+    expect(devManifest).toContain("https://localhost:3443/office-addins/taskpane.html");
+    expect(prodManifest).toContain(
+      "https://galaxyruler.github.io/alfaraheedi/office-addins/taskpane.html",
+    );
+    expect(prodManifest).toContain(
+      '<PrivacyUrl DefaultValue="https://galaxyruler.github.io/alfaraheedi/privacy.html"/>',
+    );
+    expect(prodManifest).not.toMatch(/localhost|127\.0\.0\.1/u);
   });
 
   it("keeps the task pane wired to Office.js and local API modules", async () => {
@@ -48,14 +64,19 @@ describe("Office add-ins package metadata", () => {
     expect(taskpane).toMatch(/src\/taskpane\.js/u);
     expect(taskpane).toMatch(/Check Selection/u);
     expect(taskpane).toMatch(/Apply Safe Fixes/u);
+    expect(taskpane).toMatch(/Copy Corrected Text/u);
     expect(taskpaneJs).toMatch(/Office\.onReady/u);
-    expect(taskpaneJs).toMatch(/getSelectedTextFromOffice/u);
+    expect(taskpaneJs).toMatch(/getCurrentOfficeSelection/u);
     expect(taskpaneJs).toMatch(/replaceSelectedTextInOffice/u);
     expect(taskpaneJs).toMatch(/analyzeTextWithLocalApi/u);
     expect(taskpaneJs).toMatch(/applySafeWithLocalApi/u);
+    expect(taskpaneJs).toMatch(/stale selection|Selection changed/iu);
+    expect(taskpaneJs).toMatch(/Nahou local API is unavailable/u);
     expect(officeApi).toMatch(/getSelectedDataAsync/u);
     expect(officeApi).toMatch(/setSelectedDataAsync/u);
     expect(officeApi).toMatch(/Office\.CoercionType\.Text/u);
+    expect(officeApi).toMatch(/STALE_SELECTION/u);
+    expect(officeApi).toMatch(/UNSUPPORTED_SELECTION/u);
     expect(localApi).toMatch(/http:\/\/127\.0\.0\.1:3000/u);
     expect(localApi).toMatch(/\/v1\/analyze/u);
     expect(localApi).toMatch(/\/v1\/apply/u);
@@ -120,6 +141,11 @@ describe("Office add-ins package metadata", () => {
     expect(packageScript).toMatch(/StagingRootRemoved/u);
     expect(validateScript).toMatch(/officeAddinsPackage\.test\.js/u);
     expect(validateScript).toMatch(/ReadWriteDocument/u);
+    expect(validateScript).toMatch(/manifest\.dev\.xml/u);
+    expect(validateScript).toMatch(/manifest\.prod\.xml/u);
+    expect(validateScript).toMatch(/ProductionManifest/u);
+    expect(validateScript).toMatch(/PrivacyUrl/u);
+    expect(validateScript).toMatch(/HostClaimsMatchDocs/u);
     expect(validateScript).toMatch(/Document/u);
     expect(validateScript).toMatch(/Presentation/u);
     expect(validateScript).toMatch(/https:\/\/localhost:/u);
@@ -156,6 +182,84 @@ describe("Office add-ins package metadata", () => {
     expect(checkManualQaScript).toMatch(/Sideload QA approved/u);
   });
 
+  it("guards Office replacement against stale or unsupported selections", async () => {
+    const previousOffice = globalThis.Office;
+    globalThis.Office = {
+      AsyncResultStatus: {
+        Succeeded: "succeeded",
+        Failed: "failed",
+      },
+      CoercionType: {
+        Text: "text",
+      },
+    };
+    const officeApi = await import(
+      "../../../office-addins/src/officeApi.js?guarded-replacement-test"
+    );
+
+    let writtenText = "";
+    const freshContext = {
+      document: {
+        getSelectedDataAsync: (_coercionType, callback) =>
+          callback({ status: "succeeded", value: "helo" }),
+        setSelectedDataAsync: (text, _options, callback) => {
+          writtenText = text;
+          callback({ status: "succeeded", value: undefined });
+        },
+      },
+    };
+    await expect(
+      officeApi.replaceSelectedTextInOffice(
+        { expectedText: "helo", replacementText: "hello" },
+        freshContext,
+      ),
+    ).resolves.toEqual({
+      state: officeApi.OFFICE_SELECTION_STATES.APPLIED,
+      text: "hello",
+    });
+    expect(writtenText).toBe("hello");
+
+    const staleContext = {
+      document: {
+        getSelectedDataAsync: (_coercionType, callback) =>
+          callback({ status: "succeeded", value: "changed" }),
+        setSelectedDataAsync: () => {
+          throw new Error("setSelectedDataAsync should not run");
+        },
+      },
+    };
+    await expect(
+      officeApi.replaceSelectedTextInOffice(
+        { expectedText: "helo", replacementText: "hello" },
+        staleContext,
+      ),
+    ).resolves.toEqual({
+      state: officeApi.OFFICE_SELECTION_STATES.STALE_SELECTION,
+      text: "changed",
+    });
+
+    const unsupportedContext = {
+      document: {
+        getSelectedDataAsync: (_coercionType, callback) =>
+          callback({
+            status: "failed",
+            error: { message: "Selection is unsupported." },
+          }),
+      },
+    };
+    await expect(
+      officeApi.getCurrentOfficeSelection(unsupportedContext),
+    ).resolves.toMatchObject({
+      state: officeApi.OFFICE_SELECTION_STATES.UNSUPPORTED_SELECTION,
+    });
+
+    if (previousOffice === undefined) {
+      delete globalThis.Office;
+    } else {
+      globalThis.Office = previousOffice;
+    }
+  });
+
   it("runs the Office add-ins foundation validator in CI", async () => {
     const workflow = await fs.readFile(
       path.join(repoRoot, ".github/workflows/ci.yml"),
@@ -168,8 +272,8 @@ describe("Office add-ins package metadata", () => {
     expect(workflow).toMatch(/cache-dependency-path:\s+frontend\/package-lock\.json/u);
     expect(workflow).toMatch(/validate-office-addins-release\.ps1/u);
     expect(workflow).toMatch(/actions\/upload-artifact@v6/u);
-    expect(workflow).toMatch(/nahou-office-addins-0\.8\.0-foundation/u);
-    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-0\.8\.0\.zip/u);
+    expect(workflow).toMatch(/nahou-office-addins-1\.0\.0-foundation/u);
+    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-1\.0\.0\.zip/u);
   });
 
   it("documents the v0.8 boundary without claiming live Office store readiness", async () => {

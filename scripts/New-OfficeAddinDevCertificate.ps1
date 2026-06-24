@@ -16,10 +16,10 @@ function Resolve-RepoPath {
 }
 
 function Assert-Windows {
-    $isWindows = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+    $runningOnWindows = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
         [System.Runtime.InteropServices.OSPlatform]::Windows
     )
-    if (-not $isWindows) {
+    if (-not $runningOnWindows) {
         throw "Office add-in dev certificates use the Windows certificate provider and must be created on Windows."
     }
 }
@@ -28,7 +28,7 @@ $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Assert-Windows
 
 if (-not $PfxPassword) {
-    $PfxPassword = ConvertTo-SecureString "" -AsPlainText -Force
+    $PfxPassword = ConvertTo-SecureString "nahou-local-dev" -AsPlainText -Force
 }
 
 $resolvedOutDir = Resolve-RepoPath $OutDir

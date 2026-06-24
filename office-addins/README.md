@@ -5,17 +5,23 @@ task-pane integration, not a live underline overlay.
 
 ## Scope
 
-- `manifest.xml` is an add-in-only XML manifest for Word and PowerPoint.
+- `manifest.dev.xml` is the localhost sideload manifest.
+- `manifest.prod.xml` is the production HTTPS manifest template with public
+  support and privacy URLs.
+- `manifest.xml` is the current generated target used by local packaging.
 - `taskpane.html` and `src/` provide a compact selected-text review pane.
 - The pane reads the current Office selection through Office.js, sends it to the
-  local Nahou API, and can replace the selected Office text with
+  local Nahou API, then re-reads the current selection before replacing it with
   deterministic safe fixes.
 - The pane only accepts loopback API URLs such as `http://127.0.0.1:3000`.
+- Unsupported selections, stale selections, disconnected local API state, and
+  no-selection state are shown explicitly. The corrected preview can be copied
+  when Office cannot safely replace the selection.
 
 ## Local Development Shape
 
 Office add-ins load their task pane from a web URL in the manifest. The
-foundation manifest points at:
+development manifest points at:
 
 ```text
 https://localhost:3443/office-addins/taskpane.html
@@ -42,8 +48,11 @@ https://localhost:3443/office-addins/taskpane.html
 The certificate script can import the public certificate into
 `Cert:\CurrentUser\Root` only when called with `-Trust`. Do not use `-Trust`
 unless you accept the user certificate store change on that Windows account.
-The normal release validator checks script syntax and package shape, but it
-does not create or trust certificates.
+If no PFX password is supplied, the scripts use the non-secret local development
+passphrase `nahou-local-dev` for the ignored certificate artifact.
+The normal release validator checks script syntax, package shape, localhost
+development manifest settings, and production manifest URLs. It does not create
+or trust certificates.
 
 ## Manual Sideload QA
 

@@ -33,7 +33,9 @@ Pass criteria:
 
 - Package tests pass.
 - Manifest targets Word and PowerPoint.
-- Manifest uses `https://localhost:3443/office-addins/taskpane.html`.
+- Development manifest uses `https://localhost:3443/office-addins/taskpane.html`.
+- Production manifest contains public HTTPS support, privacy, icon, and task-pane
+  URLs and no localhost URLs.
 - Package zip is rebuilt and zip entries match the expected runtime files.
 - Release PowerShell scripts parse successfully.
 - The HTTPS task-pane host script parses successfully.
@@ -74,7 +76,10 @@ Pass criteria:
 - Check Selection reads only the selected document text.
 - Suggestions or safe fixes are shown for the selected text when the local API
   returns them.
-- Apply Safe Fixes updates the selected Word text only.
+- Apply Safe Fixes re-reads the selection and updates the selected Word text only
+  when it still matches the checked text.
+- If the selection changed, the pane shows a stale-selection state and offers
+  the copy corrected text fallback.
 - No private document text appears in logs, reports, screenshots, or copied
   artifacts.
 - Unsupported or flaky behavior is recorded as a limitation.
@@ -88,8 +93,11 @@ Pass criteria:
 - PowerPoint loads the manifest and opens the Nahou task pane.
 - Check Selection reads selected text from a text box when Office exposes it as
   `Office.CoercionType.Text`.
-- Apply Safe Fixes updates the intended text box selection only, or the Office
-  limitation is documented clearly.
+- Apply Safe Fixes re-reads the selection and updates the intended text box
+  selection only when it still matches the checked text, or the Office limitation
+  is documented clearly.
+- If the selected PowerPoint content is unsupported, the pane shows the
+  unsupported-selection state and offers the copy corrected text fallback.
 - No private slide content appears in logs, reports, screenshots, or copied
   artifacts.
 
@@ -99,8 +107,9 @@ Pass criteria:
 
 - Task-pane controls are reachable with keyboard navigation.
 - The host label, API URL field, writing mode selector, Check Selection button,
-  Apply Safe Fixes button, corrected preview, suggestions list, and status
-  message have understandable names and reading order.
+  Apply Safe Fixes button, Copy Corrected Text button, corrected preview,
+  suggestions list, and status message have understandable names and reading
+  order.
 - Focus is not trapped in the task pane.
 - High contrast mode keeps text, focus indicators, borders, buttons, and status
   messages perceivable.
