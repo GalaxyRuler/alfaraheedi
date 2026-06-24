@@ -1,0 +1,5 @@
+{"id":"english-common-typo-001","mode":"english","text":"helo world","expected_sources":["english:common-typo"],"blocked_sources":[],"max_false_positives":0,"notes":"Small built-in typo correction."}
+{"id":"english-common-typo-002","mode":"english","text":"teh quick test","expected_sources":["english:common-typo"],"blocked_sources":[],"max_false_positives":0,"notes":"Small built-in typo correction."}
+{"id":"english-question-grammar-001","mode":"english","text":"you are do today","expected_sources":["english:you-are-do"],"blocked_sources":[],"max_false_positives":0,"notes":"Narrow question word-order fixture."}
+{"id":"english-false-positive-name-001","mode":"english","text":"Helo is a product codename.","expected_sources":[],"blocked_sources":[],"max_false_positives":0,"notes":"Capitalized product/name-like token should not be rewritten."}
+{"id":"english-false-positive-code-001","mode":"english","text":"Run `teh --help` before release.","expected_sources":[],"blocked_sources":[],"max_false_positives":0,"notes":"Inline code is protected."}

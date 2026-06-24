@@ -13,6 +13,7 @@ fn eval_report_includes_per_rule_precision() {
             expected_sources: vec!["arabic:tatweel".to_owned()],
             max_false_positives: 0,
             metadata: None,
+            ..EvalCase::default()
         },
         EvalCase {
             id: "known-correct".to_owned(),
@@ -20,6 +21,7 @@ fn eval_report_includes_per_rule_precision() {
             expected_sources: vec![],
             max_false_positives: 0,
             metadata: None,
+            ..EvalCase::default()
         },
     ];
 
@@ -40,15 +42,26 @@ fn eval_report_records_case_failures() {
         id: "unexpected-rule".to_owned(),
         text: "مرحبــا".to_owned(),
         expected_sources: vec![],
+        fixture_file: Some("datasets/eval/v1.0-arabic.jsonl".to_owned()),
         max_false_positives: 0,
         metadata: None,
+        ..EvalCase::default()
     }];
 
     let report = evaluate(&default_rule_set(), &cases);
 
     assert_eq!(report.false_positives, 1);
+    assert!(report.release_blocked);
+    assert_eq!(
+        report.false_positives_by_rule["arabic:tatweel"],
+        vec!["unexpected-rule".to_owned()]
+    );
     assert_eq!(report.failures.len(), 1);
     assert_eq!(report.failures[0].case_id, "unexpected-rule");
+    assert_eq!(
+        report.failures[0].fixture_file.as_deref(),
+        Some("datasets/eval/v1.0-arabic.jsonl")
+    );
     assert_eq!(report.failures[0].source, "arabic:tatweel");
     assert_eq!(report.failures[0].kind, EvalFailureKind::FalsePositive);
 }
@@ -61,6 +74,7 @@ fn eval_report_records_missing_expected_sources() {
         expected_sources: vec!["arabic:tatweel".to_owned()],
         max_false_positives: 0,
         metadata: None,
+        ..EvalCase::default()
     }];
 
     let report = evaluate(&default_rule_set(), &cases);
@@ -68,6 +82,11 @@ fn eval_report_records_missing_expected_sources() {
     assert_eq!(report.true_positives, 0);
     assert_eq!(report.false_positives, 0);
     assert_eq!(report.false_negatives, 1);
+    assert!(report.release_blocked);
+    assert_eq!(
+        report.false_negatives_by_rule["arabic:tatweel"],
+        vec!["missing-rule".to_owned()]
+    );
     assert_eq!(report.recall, 0.0);
     assert_eq!(report.failures.len(), 1);
     assert_eq!(report.failures[0].case_id, "missing-rule");
@@ -94,6 +113,7 @@ fn metadata_can_represent_reported_false_positive_fixture() {
             raw_text_user_provided: false,
             notes: Some("Reduced public-safe false-positive guard.".to_owned()),
         }),
+        ..EvalCase::default()
     }];
 
     validate_cases(&cases).expect("metadata should validate");
@@ -121,6 +141,7 @@ fn metadata_can_represent_reported_false_negative_fixture() {
             raw_text_user_provided: false,
             notes: Some("Reduced public-safe false-negative guard.".to_owned()),
         }),
+        ..EvalCase::default()
     }];
 
     validate_cases(&cases).expect("metadata should validate");
@@ -148,6 +169,7 @@ fn metadata_validation_rejects_mismatched_expected_behavior() {
             raw_text_user_provided: true,
             notes: None,
         }),
+        ..EvalCase::default()
     }];
 
     let error = validate_cases(&cases).expect_err("metadata should fail");
@@ -167,6 +189,7 @@ fn validation_rejects_false_positive_allowance() {
         expected_sources: vec![],
         max_false_positives: 1,
         metadata: None,
+        ..EvalCase::default()
     }];
 
     let error = validate_cases(&cases).expect_err("strict gate should fail");
@@ -175,5 +198,27 @@ fn validation_rejects_false_positive_allowance() {
         error
             .to_string()
             .contains("allows false positives; release eval is strict")
+    );
+}
+
+#[test]
+fn release_blocker_cases_can_block_without_suggestions() {
+    let cases = vec![EvalCase {
+        id: "manual-release-blocker".to_owned(),
+        text: "مرحبا بالعالم".to_owned(),
+        expected_sources: vec![],
+        blocked_sources: vec!["manual:qa-required".to_owned()],
+        max_false_positives: 0,
+        notes: Some("Manual QA evidence is required before release.".to_owned()),
+        ..EvalCase::default()
+    }];
+
+    validate_cases(&cases).expect("blocked source metadata should validate");
+    let report = evaluate(&default_rule_set(), &cases);
+
+    assert!(report.release_blocked);
+    assert_eq!(
+        report.release_blockers,
+        vec!["manual-release-blocker: manual:qa-required".to_owned()]
     );
 }

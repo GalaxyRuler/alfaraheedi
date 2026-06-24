@@ -485,3 +485,36 @@ fn push_tatweel_suggestion(
         ));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::default_rule_set;
+
+    fn sources_for(text: &str) -> Vec<String> {
+        default_rule_set()
+            .analyze(text)
+            .suggestions
+            .into_iter()
+            .map(|suggestion| suggestion.source)
+            .collect()
+    }
+
+    #[test]
+    fn v1_arabic_positive_fixtures_remain_narrow() {
+        let sources = sources_for("كيف حال  ما اخبار");
+
+        assert!(sources.contains(&"arabic:repeated-space".to_owned()));
+        assert!(sources.contains(&"arabic:conversational-greeting".to_owned()));
+    }
+
+    #[test]
+    fn v1_arabic_negative_fixtures_avoid_broad_morphology() {
+        for text in [
+            "شلونك اليوم؟",
+            "قابلت نورة في الدوحة.",
+            "إنما الأعمال بالنيات.",
+        ] {
+            assert_eq!(sources_for(text), Vec::<String>::new(), "{text}");
+        }
+    }
+}

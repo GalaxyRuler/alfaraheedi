@@ -62,6 +62,10 @@ fn common_typo_suggestions(document: &Document, tokens: &[WordToken]) -> Vec<Sug
     let mut suggestions = Vec::new();
 
     for token in tokens {
+        if token.text != token.lower {
+            continue;
+        }
+
         let Some(replacement) = common_typo_replacement(&token.lower) else {
             continue;
         };
@@ -219,5 +223,37 @@ fn match_case(original: &str, replacement: &str) -> String {
         format!("{}{}", first.to_ascii_uppercase(), characters.as_str())
     } else {
         replacement.to_owned()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::default_rule_set;
+
+    fn sources_for(text: &str) -> Vec<String> {
+        default_rule_set()
+            .analyze(text)
+            .suggestions
+            .into_iter()
+            .map(|suggestion| suggestion.source)
+            .collect()
+    }
+
+    #[test]
+    fn v1_english_positive_fixtures_cover_only_obvious_patterns() {
+        assert_eq!(sources_for("helo world"), vec!["english:common-typo"]);
+        assert_eq!(sources_for("you are do today"), vec!["english:you-are-do"]);
+    }
+
+    #[test]
+    fn v1_english_negative_fixtures_avoid_names_and_code() {
+        assert_eq!(
+            sources_for("Helo is a product codename."),
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            sources_for("Run `teh --help` before release."),
+            Vec::<String>::new()
+        );
     }
 }

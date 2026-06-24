@@ -1,0 +1,5 @@
+{"id":"mixed-url-001","mode":"mixed","text":"راجع https://example.com/wat ثم اكتب مرحبا","expected_sources":[],"blocked_sources":[],"max_false_positives":0,"notes":"URL text is protected and should not trigger English typo rules."}
+{"id":"mixed-email-001","mode":"mixed","text":"راسل teh@example.com الآن","expected_sources":[],"blocked_sources":[],"max_false_positives":0,"notes":"Email text is protected."}
+{"id":"mixed-code-001","mode":"mixed","text":"اكتب `helo world` ثم تابع","expected_sources":[],"blocked_sources":[],"max_false_positives":0,"notes":"Inline code spans are protected."}
+{"id":"mixed-number-001","mode":"mixed","text":"وصلت النسبة إلى 3.5% and the result is ok.","expected_sources":[],"blocked_sources":[],"max_false_positives":0,"notes":"Numbers and valid mixed text stay clean."}
+{"id":"mixed-positive-english-001","mode":"mixed","text":"مرحبا helo بالعالم","expected_sources":["english:common-typo"],"blocked_sources":[],"max_false_positives":0,"notes":"Mixed text can still catch an unprotected obvious English typo."}
