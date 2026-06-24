@@ -35,12 +35,25 @@ const HOTKEY_RELEASE_POLL_INTERVAL: Duration = Duration::from_millis(20);
 #[derive(Debug, Clone, Serialize)]
 pub struct CommandError {
     message: String,
+    category: ErrorCategory,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    diagnostic: Option<CaptureDiagnostic>,
 }
 
 impl CommandError {
     fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
+            category: ErrorCategory::OperationFailed,
+            diagnostic: None,
+        }
+    }
+
+    fn categorized(message: impl Into<String>, category: ErrorCategory) -> Self {
+        Self {
+            message: message.into(),
+            category,
+            diagnostic: None,
         }
     }
 }
@@ -59,6 +72,16 @@ impl From<write_core::PatchError> for CommandError {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ErrorCategory {
+    NoSelectedText,
+    ClipboardUnavailable,
+    AppBlockedCopy,
+    LargeSelection,
+    OperationFailed,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CompanionSettings {
     pub ui_language: String,
@@ -66,6 +89,8 @@ pub struct CompanionSettings {
     pub hotkey: String,
     pub restore_clipboard: bool,
     pub first_run_privacy_seen: bool,
+    #[serde(default)]
+    pub capture_preference: CapturePreference,
     #[serde(default)]
     pub llm_base_url: String,
     #[serde(default = "default_llm_model_id")]
@@ -82,6 +107,7 @@ impl Default for CompanionSettings {
             hotkey: DEFAULT_HOTKEY.to_owned(),
             restore_clipboard: true,
             first_run_privacy_seen: false,
+            capture_preference: CapturePreference::Auto,
             llm_base_url: String::new(),
             llm_model_id: default_llm_model_id(),
             llm_timeout_ms: default_llm_timeout_ms(),
@@ -112,6 +138,31 @@ pub enum CaptureMethod {
     ClipboardShortcut,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CapturePreference {
+    #[default]
+    Auto,
+    UiaFirst,
+    ClipboardFirst,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CaptureAttempt {
+    Uia,
+    Clipboard,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CaptureDiagnostic {
+    pub method: CaptureMethod,
+    pub source_app: Option<String>,
+    pub error_category: Option<ErrorCategory>,
+    pub no_selected_text: bool,
+    pub clipboard_unavailable: bool,
+    pub app_blocked_copy: bool,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct CaptureResult {
     pub captured_text: String,
@@ -122,6 +173,7 @@ pub struct CaptureResult {
     pub analysis: Analysis,
     pub safe_count: usize,
     pub restore_warning: Option<String>,
+    pub diagnostic: CaptureDiagnostic,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -133,6 +185,7 @@ pub struct SessionAnalysis {
     pub writing_mode: WritingMode,
     pub analysis: Analysis,
     pub safe_count: usize,
+    pub diagnostic: CaptureDiagnostic,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -385,39 +438,137 @@ fn capture_selected_text_impl(
     let source_hwnd = foreground_window_handle();
     let source_app = foreground_window_title();
 
-    if let Ok(captured) = uia_pilot::try_capture_selected_text()
-        && !captured.text.trim().is_empty()
-    {
-        let context = CapturedTextContext {
-            source_app,
-            source_hwnd,
-            capture_method: CaptureMethod::WindowsUiaTextPattern,
-            previous_clipboard_text,
-            restore_warning: None,
-        };
-        return build_capture_result(state, settings, captured.text, context);
+    let mut last_error = None;
+    for attempt in capture_attempt_order(settings.capture_preference) {
+        match attempt {
+            CaptureAttempt::Uia => {
+                if let Ok(captured) = uia_pilot::try_capture_selected_text()
+                    && !captured.text.trim().is_empty()
+                {
+                    let context = CapturedTextContext {
+                        source_app: source_app.clone(),
+                        source_hwnd,
+                        capture_method: CaptureMethod::WindowsUiaTextPattern,
+                        previous_clipboard_text: previous_clipboard_text.clone(),
+                        restore_warning: None,
+                        error_category: None,
+                    };
+                    return build_capture_result(state, settings, captured.text, context);
+                }
+                last_error = Some((ErrorCategory::NoSelectedText, CaptureAttempt::Uia));
+            }
+            CaptureAttempt::Clipboard => {
+                match capture_via_clipboard(app, &settings, previous_clipboard_text.as_deref()) {
+                    Ok((captured_text, restore_warning)) => {
+                        let context = CapturedTextContext {
+                            source_app: source_app.clone(),
+                            source_hwnd,
+                            capture_method: CaptureMethod::ClipboardShortcut,
+                            previous_clipboard_text: previous_clipboard_text.clone(),
+                            restore_warning,
+                            error_category: None,
+                        };
+                        return build_capture_result(state, settings, captured_text, context);
+                    }
+                    Err(category) => {
+                        last_error = Some((category, CaptureAttempt::Clipboard));
+                        if !should_try_next_capture_attempt(
+                            settings.capture_preference,
+                            attempt,
+                            category,
+                        ) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    let (category, attempt) =
+        last_error.unwrap_or((ErrorCategory::NoSelectedText, CaptureAttempt::Uia));
+    Err(capture_error(category, attempt.into(), source_app))
+}
+
+fn capture_via_clipboard(
+    app: &AppHandle,
+    settings: &CompanionSettings,
+    previous_clipboard_text: Option<&str>,
+) -> Result<(String, Option<String>), ErrorCategory> {
     let sequence_before = clipboard_sequence_number();
 
-    send_copy_shortcut()?;
-    let captured = wait_for_captured_text(app, previous_clipboard_text.as_deref(), sequence_before);
+    send_copy_shortcut().map_err(|_| ErrorCategory::ClipboardUnavailable)?;
+    let captured = wait_for_captured_text(app, previous_clipboard_text, sequence_before);
     let restore_warning = if settings.restore_clipboard {
-        restore_clipboard(app, previous_clipboard_text.as_deref())
+        restore_clipboard(app, previous_clipboard_text)
     } else {
         None
     };
-    let captured_text =
-        captured.ok_or_else(|| CommandError::new("Select text first, then press Ctrl+Alt+A."))?;
-
-    let context = CapturedTextContext {
-        source_app,
-        source_hwnd,
-        capture_method: CaptureMethod::ClipboardShortcut,
-        previous_clipboard_text,
-        restore_warning,
+    let Some(captured_text) = captured else {
+        return Err(
+            if sequence_before.is_some() && clipboard_sequence_number() == sequence_before {
+                ErrorCategory::AppBlockedCopy
+            } else {
+                ErrorCategory::NoSelectedText
+            },
+        );
     };
-    build_capture_result(state, settings, captured_text, context)
+
+    Ok((captured_text, restore_warning))
+}
+
+fn capture_attempt_order(preference: CapturePreference) -> [CaptureAttempt; 2] {
+    match preference {
+        CapturePreference::Auto | CapturePreference::UiaFirst => {
+            [CaptureAttempt::Uia, CaptureAttempt::Clipboard]
+        }
+        CapturePreference::ClipboardFirst => [CaptureAttempt::Clipboard, CaptureAttempt::Uia],
+    }
+}
+
+fn should_try_next_capture_attempt(
+    preference: CapturePreference,
+    attempt: CaptureAttempt,
+    category: ErrorCategory,
+) -> bool {
+    !matches!(
+        (preference, attempt, category),
+        (
+            CapturePreference::ClipboardFirst,
+            CaptureAttempt::Clipboard,
+            ErrorCategory::NoSelectedText
+        )
+    )
+}
+
+impl From<CaptureAttempt> for CaptureMethod {
+    fn from(attempt: CaptureAttempt) -> Self {
+        match attempt {
+            CaptureAttempt::Uia => CaptureMethod::WindowsUiaTextPattern,
+            CaptureAttempt::Clipboard => CaptureMethod::ClipboardShortcut,
+        }
+    }
+}
+
+fn capture_error(
+    category: ErrorCategory,
+    method: CaptureMethod,
+    source_app: Option<String>,
+) -> CommandError {
+    let message = match category {
+        ErrorCategory::NoSelectedText => {
+            "This app did not expose selected text. Select text first, then press Ctrl+Alt+A."
+        }
+        ErrorCategory::ClipboardUnavailable => "Clipboard capture is unavailable.",
+        ErrorCategory::AppBlockedCopy => "The source app did not copy selected text for Nahou.",
+        ErrorCategory::LargeSelection => {
+            "Selected text is too large. Nahou refuses large selections by default."
+        }
+        ErrorCategory::OperationFailed => "Could not capture selected text.",
+    };
+    let mut error = CommandError::categorized(message, category);
+    error.diagnostic = Some(capture_diagnostic(method, source_app, Some(category)));
+    error
 }
 
 struct CapturedTextContext {
@@ -426,6 +577,22 @@ struct CapturedTextContext {
     capture_method: CaptureMethod,
     previous_clipboard_text: Option<String>,
     restore_warning: Option<String>,
+    error_category: Option<ErrorCategory>,
+}
+
+fn capture_diagnostic(
+    method: CaptureMethod,
+    source_app: Option<String>,
+    error_category: Option<ErrorCategory>,
+) -> CaptureDiagnostic {
+    CaptureDiagnostic {
+        method,
+        source_app,
+        error_category,
+        no_selected_text: error_category == Some(ErrorCategory::NoSelectedText),
+        clipboard_unavailable: error_category == Some(ErrorCategory::ClipboardUnavailable),
+        app_blocked_copy: error_category == Some(ErrorCategory::AppBlockedCopy),
+    }
 }
 
 fn build_capture_result(
@@ -435,11 +602,14 @@ fn build_capture_result(
     context: CapturedTextContext,
 ) -> Result<CaptureResult, CommandError> {
     if captured_text.chars().count() > MAX_CAPTURE_CHARS {
-        return Err(CommandError::new(
-            "Selected text is too large for the companion review window.",
+        return Err(capture_error(
+            ErrorCategory::LargeSelection,
+            context.capture_method,
+            context.source_app,
         ));
     }
 
+    let source_app = context.source_app.clone();
     let analysis = write_service::analyze_text(AnalyzeInput {
         text: captured_text.clone(),
         writing_mode: settings.writing_mode,
@@ -448,12 +618,13 @@ fn build_capture_result(
     let result = CaptureResult {
         captured_text: captured_text.clone(),
         current_text: captured_text.clone(),
-        source_app: context.source_app,
+        source_app: source_app.clone(),
         capture_method: context.capture_method,
         writing_mode: settings.writing_mode,
         analysis,
         safe_count,
         restore_warning: context.restore_warning,
+        diagnostic: capture_diagnostic(context.capture_method, source_app, context.error_category),
     };
 
     let mut guard = state
@@ -550,14 +721,16 @@ fn analyze_session(session: SessionState) -> SessionAnalysis {
         writing_mode: session.writing_mode,
     });
     let safe_count = count_safe(&analysis.suggestions);
+    let source_app = session.source_app;
     SessionAnalysis {
         captured_text: session.captured_text,
         current_text: session.current_text,
-        source_app: session.source_app,
+        source_app: source_app.clone(),
         capture_method: session.capture_method,
         writing_mode: session.writing_mode,
         analysis,
         safe_count,
+        diagnostic: capture_diagnostic(session.capture_method, source_app, None),
     }
 }
 
@@ -975,6 +1148,7 @@ mod tests {
         assert_eq!(settings.hotkey, DEFAULT_HOTKEY);
         assert!(settings.restore_clipboard);
         assert!(!settings.first_run_privacy_seen);
+        assert_eq!(settings.capture_preference, CapturePreference::Auto);
     }
 
     #[test]
@@ -1007,6 +1181,59 @@ mod tests {
         assert_eq!(settings.llm_base_url, "");
         assert_eq!(settings.llm_model_id, write_llm::DEFAULT_MODEL_ID);
         assert_eq!(settings.llm_timeout_ms, write_llm::DEFAULT_TIMEOUT_MS);
+        assert_eq!(settings.capture_preference, CapturePreference::Auto);
+    }
+
+    #[test]
+    fn capture_preference_controls_capture_attempt_order() {
+        assert_eq!(
+            capture_attempt_order(CapturePreference::Auto),
+            [CaptureAttempt::Uia, CaptureAttempt::Clipboard]
+        );
+        assert_eq!(
+            capture_attempt_order(CapturePreference::UiaFirst),
+            [CaptureAttempt::Uia, CaptureAttempt::Clipboard]
+        );
+        assert_eq!(
+            capture_attempt_order(CapturePreference::ClipboardFirst),
+            [CaptureAttempt::Clipboard, CaptureAttempt::Uia]
+        );
+    }
+
+    #[test]
+    fn clipboard_first_stops_after_clipboard_mutation_risk() {
+        assert!(!should_try_next_capture_attempt(
+            CapturePreference::ClipboardFirst,
+            CaptureAttempt::Clipboard,
+            ErrorCategory::NoSelectedText,
+        ));
+        assert!(should_try_next_capture_attempt(
+            CapturePreference::ClipboardFirst,
+            CaptureAttempt::Clipboard,
+            ErrorCategory::AppBlockedCopy,
+        ));
+    }
+
+    #[test]
+    fn capture_errors_are_categorized_without_raw_text() {
+        let error = capture_error(
+            ErrorCategory::LargeSelection,
+            CaptureMethod::ClipboardShortcut,
+            Some("Notepad".to_owned()),
+        );
+
+        assert_eq!(error.category, ErrorCategory::LargeSelection);
+        let diagnostic = error
+            .diagnostic
+            .as_ref()
+            .expect("capture errors include diagnostics");
+        assert_eq!(diagnostic.source_app, Some("Notepad".to_owned()));
+        assert_eq!(
+            diagnostic.error_category,
+            Some(ErrorCategory::LargeSelection)
+        );
+        assert!(error.to_string().contains("refuses large selections"));
+        assert!(!error.to_string().contains("مرحب"));
     }
 
     #[test]

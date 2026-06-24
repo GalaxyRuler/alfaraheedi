@@ -9,6 +9,7 @@ import type {
 } from "./types";
 
 export type WritingMode = "auto" | "arabic" | "english" | "mixed";
+export type CapturePreference = "auto" | "uia_first" | "clipboard_first";
 
 export interface CompanionSettings {
   ui_language: "ar" | "en";
@@ -16,6 +17,7 @@ export interface CompanionSettings {
   hotkey: string;
   restore_clipboard: boolean;
   first_run_privacy_seen: boolean;
+  capture_preference: CapturePreference;
   llm_base_url: string;
   llm_model_id: string;
   llm_timeout_ms: number;
@@ -29,6 +31,21 @@ export interface CompanionStatus {
 }
 
 export type CaptureMethod = "windows_uia_text_pattern" | "clipboard_shortcut";
+export type ErrorCategory =
+  | "no_selected_text"
+  | "clipboard_unavailable"
+  | "app_blocked_copy"
+  | "large_selection"
+  | "operation_failed";
+
+export interface CaptureDiagnostic {
+  method: CaptureMethod;
+  source_app: string | null;
+  error_category: ErrorCategory | null;
+  no_selected_text: boolean;
+  clipboard_unavailable: boolean;
+  app_blocked_copy: boolean;
+}
 
 export interface UiaPilotStatus {
   available: boolean;
@@ -48,6 +65,7 @@ export interface CaptureResult {
   analysis: Analysis;
   safe_count: number;
   restore_warning: string | null;
+  diagnostic: CaptureDiagnostic;
 }
 
 export interface SessionAnalysis {
@@ -58,6 +76,7 @@ export interface SessionAnalysis {
   writing_mode: WritingMode;
   analysis: Analysis;
   safe_count: number;
+  diagnostic: CaptureDiagnostic;
 }
 
 export interface ReplacementResult {
@@ -67,6 +86,8 @@ export interface ReplacementResult {
 
 export interface CommandError {
   message: string;
+  category?: ErrorCategory;
+  diagnostic?: CaptureDiagnostic | null;
 }
 
 export function isTauriRuntime(): boolean {
@@ -82,6 +103,7 @@ export const DEFAULT_COMPANION_SETTINGS: CompanionSettings = {
   hotkey: "Ctrl+Alt+A",
   restore_clipboard: true,
   first_run_privacy_seen: false,
+  capture_preference: "auto",
   llm_base_url: "",
   llm_model_id: "qwen3-1.7b-q4_k_m",
   llm_timeout_ms: 30_000,

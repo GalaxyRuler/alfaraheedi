@@ -7,6 +7,24 @@ import { SAMPLE_LLM, SAMPLE_LLM_SUGGESTION } from "../test/mockApi";
 
 const invokeMock = vi.hoisted(() => vi.fn());
 
+const UIA_DIAGNOSTIC = {
+  method: "windows_uia_text_pattern",
+  source_app: "Notepad",
+  error_category: null,
+  no_selected_text: false,
+  clipboard_unavailable: false,
+  app_blocked_copy: false,
+};
+
+const CLIPBOARD_DIAGNOSTIC = {
+  method: "clipboard_shortcut",
+  source_app: "Notepad",
+  error_category: null,
+  no_selected_text: false,
+  clipboard_unavailable: false,
+  app_blocked_copy: false,
+};
+
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: invokeMock,
 }));
@@ -47,6 +65,7 @@ describe("companion local LLM setup", () => {
           },
           safe_count: 0,
           restore_warning: null,
+          diagnostic: UIA_DIAGNOSTIC,
         });
       }
       if (command === "suggest_with_local_llm_for_session") {
@@ -107,6 +126,38 @@ describe("companion local LLM setup", () => {
         }),
       );
     });
+  });
+
+  it("persists capture order settings from the companion surface", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByLabelText("Clipboard first"));
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith(
+        "save_companion_settings",
+        expect.objectContaining({
+          settings: expect.objectContaining({
+            capture_preference: "clipboard_first",
+          }),
+        }),
+      );
+    });
+    expect(
+      screen.getByText(/open Nahou from the window or tray/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the first-run privacy facts without claiming hosted LLM use", async () => {
+    render(<App />);
+
+    expect(
+      await screen.findByText(/processes selected text locally/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/There is no hosted service or telemetry/)).toBeInTheDocument();
+    expect(screen.getByText(/LLM suggestions require separate local runtime configuration/))
+      .toBeInTheDocument();
   });
 
   it("checks local LLM runtime status from the companion surface", async () => {
@@ -191,6 +242,7 @@ describe("companion local LLM setup", () => {
           },
           safe_count: 0,
           restore_warning: null,
+          diagnostic: CLIPBOARD_DIAGNOSTIC,
         });
       }
       if (command === "suggest_with_local_llm_for_session") {
@@ -228,5 +280,41 @@ describe("companion local LLM setup", () => {
     await waitFor(() => {
       expect(screen.queryByText("late stale suggestion")).not.toBeInTheDocument();
     });
+  });
+
+  it("maps unsupported capture errors to user-facing messages without raw text", async () => {
+    const user = userEvent.setup();
+    invokeMock.mockImplementation((command: string, args?: unknown) => {
+      if (command === "get_companion_settings") {
+        return Promise.resolve({
+          ...DEFAULT_COMPANION_SETTINGS,
+          ui_language: "en",
+        });
+      }
+      if (command === "save_companion_settings") {
+        return Promise.resolve((args as { settings: unknown }).settings);
+      }
+      if (command === "capture_selected_text") {
+        return Promise.reject({
+          message: "raw text should not show: helo wat",
+          category: "app_blocked_copy",
+          diagnostic: {
+            ...CLIPBOARD_DIAGNOSTIC,
+            error_category: "app_blocked_copy",
+            app_blocked_copy: true,
+          },
+        });
+      }
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
+
+    expect(
+      await screen.findByText(/The source app did not copy the selection/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/helo wat/)).not.toBeInTheDocument();
   });
 });
