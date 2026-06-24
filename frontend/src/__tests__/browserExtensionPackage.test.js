@@ -855,8 +855,9 @@ describe("browser extension package metadata", () => {
     );
 
     expect(source).toMatch(/Nahou Browser Extension Privacy Policy/u);
-    expect(source).toMatch(/Last updated: 2026-06-22/u);
+    expect(source).toMatch(/Last updated: 2026-06-25/u);
     expect(source).toMatch(/local loopback Nahou API/u);
+    expect(source).toMatch(/best-effort sensitive-field exclusion/u);
     expect(source).toMatch(/does not send text to Nahou-hosted services/u);
     expect(source).toMatch(/does not store captured editor text/u);
     expect(source).toMatch(/Content-script messages cannot override the stored API URL or\s+writing mode/u);

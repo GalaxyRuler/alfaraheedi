@@ -12,6 +12,10 @@
 - [ ] `cargo test --workspace`
 - [ ] `cargo run -p write-eval`
 - [ ] `cargo deny check licenses bans sources`
+- [ ] `npm audit --omit=dev` in `frontend/` for release context; classify any issues as runtime/dev, exploitable/not exploitable, patched/deferred
+- [ ] Staged secret scan after `git add` and before release PR commits
+- [ ] `docs/security/v1.0-threat-model.md` reviewed against desktop hotkey, clipboard, UIA, browser content scripts, Office add-ins, local API, local LLM runtime, release artifacts, and update/signing path
+- [ ] `docs/security/v1.0-privacy-review.md` reviewed for data processed, storage, retention, logs, reports, screenshots, extension permissions, and Office permissions
 - [ ] `npm ci` in `frontend/`
 - [ ] `npm run lint` in `frontend/`
 - [ ] `npm run test` in `frontend/`
@@ -20,6 +24,7 @@
 - [ ] `npm run desktop:build` in `frontend/`
 - [ ] For browser-extension changes: `.\scripts\validate-browser-extension-release.ps1`
 - [ ] For public release hygiene: `.\scripts\check-public-release-hygiene.ps1 -RequireClean`
+- [ ] Manual log and screenshot review confirms no raw selected text in public artifacts or source-controlled reports
 - [ ] For browser-extension pull requests: confirm the CI artifact `nahou-browser-extension-0.7.0-release-artifacts` contains the upload zip, `RELEASE_MANIFEST.json`, reviewer docs, and selected screenshots
 - [ ] For browser-extension release candidates: `.\scripts\prepare-browser-extension-release-candidate.ps1` and confirm `LocalReady: true` and `ScreenshotRootsMatch: true`
 - [ ] For browser-extension release handoff: `.\scripts\export-browser-extension-release-handoff.ps1` and review the generated Markdown/JSON under `dist\browser-extension-release-handoff\`

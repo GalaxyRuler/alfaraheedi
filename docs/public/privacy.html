@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nahou Privacy</title>
+    <meta
+      name="description"
+      content="Privacy policy for Nahou desktop, browser extension, and Office add-ins."
+    >
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        color: #1d2421;
+        background: #ffffff;
+      }
+
+      body {
+        margin: 0;
+        background: #ffffff;
+      }
+
+      main {
+        box-sizing: border-box;
+        width: min(100%, 860px);
+        margin: 0 auto;
+        padding: 48px 24px 72px;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      h2 {
+        margin: 32px 0 10px;
+        font-size: 1.25rem;
+      }
+
+      p,
+      li {
+        line-height: 1.65;
+      }
+
+      p {
+        margin: 0 0 14px;
+      }
+
+      ul {
+        margin: 0 0 16px;
+        padding-inline-start: 1.4rem;
+      }
+
+      code {
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.95em;
+        color: #0f6b5c;
+      }
+
+      .updated {
+        color: #52605a;
+        margin-bottom: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Nahou Privacy</h1>
+      <p class="updated">Last updated: 2026-06-25</p>
+
+      <p>
+        Nahou is a local-first writing companion. The desktop app, browser
+        extension, Office add-ins, CLI, and local API are designed to process
+        writing on your own machine. Nahou v1.0 does not provide a hosted
+        writing service, hosted telemetry, hosted analytics, account sync, or
+        remote human review.
+      </p>
+
+      <h2>What Nahou Processes</h2>
+      <p>
+        Depending on what you use, Nahou may process text you select in another
+        app, active editable-field text in the browser extension, selected Word
+        or PowerPoint text in Office add-ins, clipboard text during capture and
+        restore, and local settings such as writing mode or local API URL.
+      </p>
+
+      <h2>What Nahou Stores</h2>
+      <p>
+        Nahou stores settings needed to run the product. Nahou does not store
+        captured selected text, source documents, browser page contents,
+        suggestions, browsing history, credentials, raw API responses,
+        screenshots, or telemetry by default.
+      </p>
+
+      <h2>Local API And Local LLM Runtime</h2>
+      <p>
+        Browser and Office integrations send text only to the configured local
+        Nahou API on your machine. If you enable optional local LLM suggestions,
+        Nahou sends the selected text to the loopback local model runtime you
+        configured. Do not enable local LLM suggestions unless that runtime is
+        controlled by you.
+      </p>
+
+      <h2>Sensitive Fields</h2>
+      <p>
+        Nahou uses best-effort sensitive-field exclusion in browser and Office
+        integrations. It avoids password, payment, token, one-time-code,
+        API-key, read-only, disabled, hidden, and sensitive-looking fields where
+        the host surface exposes enough information to identify them. This is a
+        best-effort exclusion, not a guarantee that every sensitive field in
+        every app, website, editor, or document is technically inaccessible.
+      </p>
+
+      <h2>Sharing</h2>
+      <p>
+        Nahou does not sell user data. Nahou does not share text with
+        advertisers, analytics providers, hosted writing services, or other
+        third parties in v1.0.
+      </p>
+      <p>
+        If Nahou later adds hosted services, telemetry, account sync, or text
+        retention, this privacy page and store disclosures must be updated
+        before that release.
+      </p>
+    </main>
+  </body>
+</html>

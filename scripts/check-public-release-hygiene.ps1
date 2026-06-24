@@ -79,6 +79,51 @@ function Find-PublicDocLocalReference {
     return $hits
 }
 
+function Find-ReportRawTextSample {
+    $samplePatterns = [string[]]@(
+        "hello what are you doing",
+        "helo wat you are do",
+        "مرحبــا  بالعالم",
+        "كيف حال  ما اخبار",
+        "sample private selected text",
+        "raw selected text sample"
+    )
+    $artifactRoots = [string[]]@(
+        "docs/testing/reports",
+        "dist",
+        "frontend/playwright-report",
+        "frontend/test-results"
+    )
+    $trackedPaths = @()
+    foreach ($root in $artifactRoots) {
+        $trackedPaths += Invoke-GitLines @("ls-files", "--", $root)
+    }
+    $trackedPaths += Invoke-GitLines @("ls-files", "--", "*.log")
+    $trackedPaths += Invoke-GitLines @("ls-files", "--", "*report*.md", "*report*.json", "*report*.html", "*report*.txt")
+
+    $candidatePaths = @($trackedPaths |
+        Where-Object { $_ -and (Test-Path -LiteralPath $_) } |
+        Where-Object { $_ -match "([\\/](reports?|test-results|playwright-report)[\\/])|(^dist[\\/])|(\.log$)" } |
+        Sort-Object -Unique)
+
+    $hits = @()
+    foreach ($path in $candidatePaths) {
+        foreach ($pattern in $samplePatterns) {
+            $matches = Select-String -LiteralPath $path -Pattern $pattern -SimpleMatch
+            foreach ($match in $matches) {
+                $hits += [pscustomobject]@{
+                    Path = $path.Replace("\", "/")
+                    LineNumber = $match.LineNumber
+                    Pattern = $pattern
+                    Text = $match.Line.Trim()
+                }
+            }
+        }
+    }
+
+    return $hits
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Push-Location $repoRoot
 try {
@@ -141,7 +186,9 @@ try {
     $publicDocPaths = Get-PublicReleaseDocPaths
     $publicDocLocalReferences = @(Find-PublicDocLocalReference $publicDocPaths)
     $noPublicDocLocalReferences = $publicDocLocalReferences.Count -eq 0
-    $publicReleaseHygieneReady = [bool]($ignoredPathsReady -and $gitignoreReady -and $noRestrictedTrackedFiles -and $noPublicDocLocalReferences)
+    $reportRawTextSampleHits = @(Find-ReportRawTextSample)
+    $noReportRawTextSamples = $reportRawTextSampleHits.Count -eq 0
+    $publicReleaseHygieneReady = [bool]($ignoredPathsReady -and $gitignoreReady -and $noRestrictedTrackedFiles -and $noPublicDocLocalReferences -and $noReportRawTextSamples)
 
     $result = [pscustomobject]@{
         RepoRoot = $repoRoot
@@ -150,6 +197,7 @@ try {
         TrackedRestrictedFiles = $existingTrackedRestricted
         DeletedRestrictedFiles = $deletedTrackedRestricted
         PublicDocLocalReferences = $publicDocLocalReferences
+        ReportRawTextSampleHits = $reportRawTextSampleHits
         PublicReleaseHygieneReady = $publicReleaseHygieneReady
     }
 

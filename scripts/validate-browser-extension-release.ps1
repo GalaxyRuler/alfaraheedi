@@ -120,8 +120,9 @@ function Assert-PublicPrivacyPage {
     $publicPrivacyPage = Get-Content -LiteralPath $publicPrivacyPath -Raw
     foreach ($requiredText in @(
         "Nahou Browser Extension Privacy Policy",
-        "Last updated: 2026-06-22",
+        "Last updated: 2026-06-25",
         "local loopback Nahou API",
+        "best-effort sensitive-field exclusion",
         "does not send text to Nahou-hosted services",
         "does not store captured editor text",
         "does not use telemetry",
