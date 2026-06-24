@@ -1,6 +1,12 @@
 # Release Checklist
 
 - [ ] Clean git status
+- [ ] Public v1.0 claims match `docs/public/v1.0-product-contract.md`
+- [ ] `docs/testing/v1.0-acceptance-matrix.md` has public-safe evidence files for each supported surface
+- [ ] No public page claims universal live desktop overlays, hosted processing, bundled model weights, complete Arabic morphology, full English grammar, or store approval that has not happened
+- [ ] Desktop installer remains the primary v1.0 user artifact
+- [ ] Supported v1.0 surfaces reviewed: Notepad, browser textarea/input, WhatsApp Web text box, Word selected text, PowerPoint selected text
+- [ ] Quality thresholds reviewed: zero known supported-surface crashes, no raw text in logs/reports/screenshots/public artifacts, zero known false positives in release-blocking safe-fix fixtures, installer launches without PowerShell, clipboard restore works in normal text-clipboard cases
 - [ ] `cargo fmt --all --check`
 - [ ] `cargo clippy --workspace -- -D warnings`
 - [ ] `cargo test --workspace`

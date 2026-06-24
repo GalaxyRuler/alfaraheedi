@@ -10,6 +10,21 @@ const repoRoot = path.resolve(
 );
 
 describe("desktop release packaging", () => {
+  it("documents the v1.0 product contract without overclaiming universal writing assistance", async () => {
+    const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+    const contract = await fs.readFile(
+      path.join(repoRoot, "docs/public/v1.0-product-contract.md"),
+      "utf8",
+    );
+
+    expect(contract).toMatch(/Windows-first, local-first writing companion/u);
+    expect(contract).toMatch(/No hosted text processing/u);
+    expect(contract).toMatch(/No telemetry/u);
+    expect(contract).toMatch(/No universal live underline overlay/u);
+    expect(readme).not.toMatch(/works everywhere/u);
+    expect(readme).not.toMatch(/complete grammar checker/u);
+  });
+
   it("defaults the optional Windows developer zip to the current v0.5 release", async () => {
     const source = await fs.readFile(
       path.join(repoRoot, "scripts/package-windows.ps1"),
