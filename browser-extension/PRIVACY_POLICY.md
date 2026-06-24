@@ -1,6 +1,6 @@
 # Nahou Browser Extension Privacy Policy
 
-Last updated: 2026-06-22
+Last updated: 2026-06-25
 
 Nahou is a local-first writing companion for editable web fields. This
 policy covers the Nahou browser extension only.
@@ -20,7 +20,7 @@ writing suggestions. Supported fields include normal textareas, safe text-like
 inputs, compatible contenteditable editors, matching iframe-hosted fields, and
 open Shadow DOM text fields.
 
-The extension skips:
+The extension uses best-effort sensitive-field exclusion and skips:
 
 - password fields;
 - read-only or disabled fields;
@@ -29,6 +29,10 @@ The extension skips:
 - editable fields inside sensitive-looking ancestor containers;
 - non-editable islands inside rich editors;
 - hidden decoration nodes and known invisible rich-editor sentinel nodes.
+
+This is a best-effort exclusion based on browser and editor metadata. It is not
+a guarantee that every sensitive field on every website or editor is technically
+inaccessible.
 
 ## Data Sent
 
