@@ -10,20 +10,19 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Nahou"/>
   <Description DefaultValue="Local-first writing suggestions for selected Word and PowerPoint text."/>
-  <IconUrl DefaultValue="https://localhost:3443/browser-extension/icons/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:3443/browser-extension/icons/icon-128.png"/>
+  <IconUrl DefaultValue="https://galaxyruler.github.io/alfaraheedi/browser-extension/icons/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://galaxyruler.github.io/alfaraheedi/browser-extension/icons/icon-128.png"/>
   <SupportUrl DefaultValue="https://github.com/GalaxyRuler/alfaraheedi"/>
   <AppDomains>
-    <AppDomain>https://localhost:3443</AppDomain>
-    <AppDomain>http://127.0.0.1:3000</AppDomain>
-    <AppDomain>http://localhost:3000</AppDomain>
+    <AppDomain>https://galaxyruler.github.io</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Document"/>
     <Host Name="Presentation"/>
   </Hosts>
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://localhost:3443/office-addins/taskpane.html"/>
+    <SourceLocation DefaultValue="https://galaxyruler.github.io/alfaraheedi/office-addins/taskpane.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
+  <PrivacyUrl DefaultValue="https://galaxyruler.github.io/alfaraheedi/privacy.html"/>
 </OfficeApp>

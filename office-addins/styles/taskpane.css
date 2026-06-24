@@ -85,6 +85,14 @@ textarea {
   color: #172033;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #172033;
+  outline-offset: 2px;
+}
+
 textarea {
   min-height: 116px;
   resize: vertical;
@@ -92,7 +100,7 @@ textarea {
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 8px;
 }
 
@@ -139,4 +147,38 @@ button:disabled {
   border: 1px solid #d7ddea;
   border-radius: 6px;
   background: #ffffff;
+}
+
+@media (forced-colors: active) {
+  :root {
+    color: CanvasText;
+    background: Canvas;
+  }
+
+  .host-badge,
+  input,
+  select,
+  textarea,
+  #suggestions-list li {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  button {
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  button:disabled {
+    border-color: GrayText;
+    color: GrayText;
+  }
+
+  .status-panel {
+    border-left-color: Highlight;
+    background: Canvas;
+    color: CanvasText;
+  }
 }

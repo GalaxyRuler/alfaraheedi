@@ -1,6 +1,7 @@
 param(
     [string]$OfficeAddinsRoot = "office-addins",
     [string]$FrontendRoot = "frontend",
+    [string]$ReleaseVersion = "",
     [switch]$SkipPackageTests
 )
 
@@ -53,16 +54,64 @@ function Assert-PowerShellScriptSyntax {
     }
 }
 
+function Get-ManifestHosts {
+    param([Parameter(Mandatory = $true)] [xml]$ManifestXml)
+    return @($ManifestXml.OfficeApp.Hosts.Host | ForEach-Object { $_.Name })
+}
+
+function Assert-ManifestHosts {
+    param(
+        [Parameter(Mandatory = $true)] [xml]$ManifestXml,
+        [Parameter(Mandatory = $true)] [string]$Description
+    )
+
+    $hostNames = Get-ManifestHosts $ManifestXml
+    foreach ($requiredHost in @("Document", "Presentation")) {
+        if ($hostNames -notcontains $requiredHost) {
+            throw "$Description manifest missing host: $requiredHost"
+        }
+    }
+}
+
+function Assert-HttpsUrl {
+    param(
+        [Parameter(Mandatory = $true)] [string]$Value,
+        [Parameter(Mandatory = $true)] [string]$Description,
+        [switch]$AllowGitHub
+    )
+
+    try {
+        $uri = [System.Uri]$Value
+    } catch {
+        throw "$Description must be a valid HTTPS URL: $Value"
+    }
+
+    if ($uri.Scheme -ne "https") {
+        throw "$Description must use HTTPS: $Value"
+    }
+    if ($uri.Host -match '^(localhost|127\.0\.0\.1)$') {
+        throw "$Description must not use localhost in the production manifest: $Value"
+    }
+}
+
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $addinPath = Resolve-RepoPath $OfficeAddinsRoot
 $frontendPath = Resolve-RepoPath $FrontendRoot
 $manifestPath = Join-Path $addinPath "manifest.xml"
+$devManifestPath = Join-Path $addinPath "manifest.dev.xml"
+$prodManifestPath = Join-Path $addinPath "manifest.prod.xml"
 $manualGatePath = Join-Path $addinPath "MANUAL_RELEASE_GATES.md"
 $packageTool = Join-Path $addinPath "tools\package-office-addin.mjs"
 $serveTool = Join-Path $addinPath "tools\serve-office-addin.mjs"
 
 if (-not (Test-Path -LiteralPath $manifestPath)) {
     throw "Office add-in manifest not found: $manifestPath"
+}
+if (-not (Test-Path -LiteralPath $devManifestPath)) {
+    throw "Office add-in development manifest not found: $devManifestPath"
+}
+if (-not (Test-Path -LiteralPath $prodManifestPath)) {
+    throw "Office add-in production manifest not found: $prodManifestPath"
 }
 if (-not (Test-Path -LiteralPath $manualGatePath)) {
     throw "Office add-ins manual release gate document not found: $manualGatePath"
@@ -75,22 +124,58 @@ if (-not (Test-Path -LiteralPath $serveTool)) {
 }
 
 $manifestXml = [xml](Get-Content -LiteralPath $manifestPath -Raw)
+$devManifestXml = [xml](Get-Content -LiteralPath $devManifestPath -Raw)
+$prodManifestText = Get-Content -LiteralPath $prodManifestPath -Raw
+$prodManifestXml = [xml]$prodManifestText
 $results = [ordered]@{}
 $results.Version = [string]$manifestXml.OfficeApp.Version
+$results.ReleaseVersion = if ($ReleaseVersion) { $ReleaseVersion } else { $results.Version }
+
+foreach ($manifestInfo in @(
+    @{ Description = "generated"; Xml = $manifestXml },
+    @{ Description = "development"; Xml = $devManifestXml },
+    @{ Description = "production"; Xml = $prodManifestXml }
+)) {
+    $manifestVersion = [string]$manifestInfo.Xml.OfficeApp.Version
+    if ($manifestVersion -ne $results.ReleaseVersion) {
+        throw "$($manifestInfo.Description) manifest version must equal release version $($results.ReleaseVersion): $manifestVersion"
+    }
+    if ($manifestInfo.Xml.OfficeApp.Requirements) {
+        throw "$($manifestInfo.Description) manifest must not declare a broad Requirements block; it prevents Word and PowerPoint shared-folder sideload discovery."
+    }
+    Assert-ManifestHosts $manifestInfo.Xml $manifestInfo.Description
+}
 
 if ($manifestXml.OfficeApp.Permissions -ne "ReadWriteDocument") {
     throw "Office add-in manifest must request ReadWriteDocument for selected-text replacement."
-}
-$hostNames = @($manifestXml.OfficeApp.Hosts.Host | ForEach-Object { $_.Name })
-foreach ($requiredHost in @("Document", "Presentation")) {
-    if ($hostNames -notcontains $requiredHost) {
-        throw "Office add-in manifest missing host: $requiredHost"
-    }
 }
 $sourceLocation = [string]$manifestXml.OfficeApp.DefaultSettings.SourceLocation.DefaultValue
 if (-not $sourceLocation.StartsWith("https://localhost:", [StringComparison]::OrdinalIgnoreCase)) {
     throw "Office add-in SourceLocation must use localhost HTTPS for sideload foundation."
 }
+if ($prodManifestText -match '(?i)(localhost|127\.0\.0\.1)') {
+    throw "Office add-in production manifest must not contain localhost or 127.0.0.1."
+}
+$prodSourceLocation = [string]$prodManifestXml.OfficeApp.DefaultSettings.SourceLocation.DefaultValue
+$prodSupportUrl = [string]$prodManifestXml.OfficeApp.SupportUrl.DefaultValue
+$prodPrivacyUrl = [string]$prodManifestXml.OfficeApp.PrivacyUrl.DefaultValue
+$prodIconUrl = [string]$prodManifestXml.OfficeApp.IconUrl.DefaultValue
+$prodHighIconUrl = [string]$prodManifestXml.OfficeApp.HighResolutionIconUrl.DefaultValue
+Assert-HttpsUrl $prodSourceLocation "Production SourceLocation"
+Assert-HttpsUrl $prodSupportUrl "Production SupportUrl"
+Assert-HttpsUrl $prodPrivacyUrl "Production PrivacyUrl"
+Assert-HttpsUrl $prodIconUrl "Production IconUrl"
+Assert-HttpsUrl $prodHighIconUrl "Production HighResolutionIconUrl"
+$results.ProductionManifest = "passed"
+
+$readmeText = Get-Content -LiteralPath (Join-Path $addinPath "README.md") -Raw
+$validationText = Get-Content -LiteralPath (Join-Path $RepoRoot "docs\testing\office-addins-v0.8-validation.md") -Raw
+foreach ($hostClaim in @("Word", "PowerPoint")) {
+    if (-not $readmeText.Contains($hostClaim) -or -not $validationText.Contains($hostClaim)) {
+        throw "Office add-ins package docs must mention claimed host: $hostClaim"
+    }
+}
+$results.HostClaimsMatchDocs = "passed"
 $manualGateText = Get-Content -LiteralPath $manualGatePath -Raw
 foreach ($requiredGateText in @(
     "Gate 1: Fresh Local Preflight",

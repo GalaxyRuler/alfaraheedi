@@ -5,7 +5,8 @@ import {
 } from "./localApi.js";
 import {
   getOfficeHostLabel,
-  getSelectedTextFromOffice,
+  getCurrentOfficeSelection,
+  OFFICE_SELECTION_STATES,
   replaceSelectedTextInOffice,
 } from "./officeApi.js";
 
@@ -20,6 +21,22 @@ function byId(id) {
 
 function setStatus(message) {
   byId("status-text").textContent = message;
+}
+
+function setApplyEnabled(enabled) {
+  byId("apply-safe").disabled = !enabled;
+}
+
+function setCopyEnabled(enabled) {
+  byId("copy-corrected").disabled = !enabled;
+}
+
+function resetSelectionState() {
+  state.selectedText = "";
+  state.correctedText = "";
+  byId("corrected-preview").value = "";
+  setApplyEnabled(false);
+  setCopyEnabled(false);
 }
 
 function getSettings() {
@@ -57,26 +74,38 @@ function renderSuggestions(analysis) {
 async function checkSelection() {
   const settings = getSettings();
   setStatus("Reading selected Office text...");
-  const selectedText = await getSelectedTextFromOffice();
-  if (!selectedText || !selectedText.trim()) {
-    state.selectedText = "";
-    state.correctedText = "";
-    byId("corrected-preview").value = "";
-    byId("apply-safe").disabled = true;
+  const selection = await getCurrentOfficeSelection();
+  if (selection.state === OFFICE_SELECTION_STATES.NO_SELECTION) {
+    resetSelectionState();
     setStatus("Select text in Word or PowerPoint first.");
     return;
   }
+  if (selection.state === OFFICE_SELECTION_STATES.UNSUPPORTED_SELECTION) {
+    resetSelectionState();
+    setStatus("This Office selection is not supported. Copy the selected text manually and use the desktop app.");
+    return;
+  }
 
+  const selectedText = selection.text;
   state.selectedText = selectedText;
-  const analysis = await analyzeTextWithLocalApi({
-    ...settings,
-    text: selectedText,
-  });
+  let analysis;
+  try {
+    analysis = await analyzeTextWithLocalApi({
+      ...settings,
+      text: selectedText,
+    });
+  } catch {
+    resetSelectionState();
+    setStatus("Nahou local API is unavailable. Start the local API and try again.");
+    return;
+  }
+
   renderSuggestions(analysis);
   state.correctedText = selectedText;
   byId("corrected-preview").value = selectedText;
-  byId("apply-safe").disabled = false;
-  setStatus(`Checked ${selectedText.length} characters locally.`);
+  setApplyEnabled(true);
+  setCopyEnabled(true);
+  setStatus(`Suggestions available for ${selectedText.length} selected characters.`);
 }
 
 async function applySafeFixes() {
@@ -87,15 +116,56 @@ async function applySafeFixes() {
 
   const settings = getSettings();
   setStatus("Applying safe fixes locally...");
-  const outcome = await applySafeWithLocalApi({
-    ...settings,
-    text: state.selectedText,
-  });
+  let outcome;
+  try {
+    outcome = await applySafeWithLocalApi({
+      ...settings,
+      text: state.selectedText,
+    });
+  } catch {
+    setStatus("Nahou local API is unavailable. Copy the current preview or try again after starting the local API.");
+    setCopyEnabled(Boolean(state.correctedText));
+    return;
+  }
+
   const corrected = outcome.corrected_text || outcome.text || state.selectedText;
   state.correctedText = corrected;
   byId("corrected-preview").value = corrected;
-  await replaceSelectedTextInOffice(corrected);
-  setStatus("Safe fixes replaced the current Office selection.");
+  setCopyEnabled(true);
+
+  const replacement = await replaceSelectedTextInOffice({
+    expectedText: state.selectedText,
+    replacementText: corrected,
+  });
+  if (replacement.state === OFFICE_SELECTION_STATES.STALE_SELECTION) {
+    setApplyEnabled(false);
+    setStatus("Selection changed before replacement. Re-check the current selection or copy the corrected text.");
+    return;
+  }
+  if (replacement.state === OFFICE_SELECTION_STATES.NO_SELECTION) {
+    setApplyEnabled(false);
+    setStatus("No Office selection is active. Re-select the text or copy the corrected text.");
+    return;
+  }
+  if (replacement.state === OFFICE_SELECTION_STATES.UNSUPPORTED_SELECTION) {
+    setApplyEnabled(false);
+    setStatus("This Office selection cannot be replaced safely. Copy the corrected text instead.");
+    return;
+  }
+
+  setApplyEnabled(false);
+  setStatus("Replacement applied to the current Office selection.");
+}
+
+async function copyCorrectedText() {
+  const text = byId("corrected-preview").value;
+  if (!text) {
+    setStatus("No corrected text is available to copy.");
+    return;
+  }
+
+  await navigator.clipboard.writeText(text);
+  setStatus("Corrected text copied.");
 }
 
 function wireEvents() {
@@ -104,6 +174,9 @@ function wireEvents() {
   });
   byId("apply-safe").addEventListener("click", () => {
     applySafeFixes().catch((error) => setStatus(error.message));
+  });
+  byId("copy-corrected").addEventListener("click", () => {
+    copyCorrectedText().catch(() => setStatus("Could not copy corrected text."));
   });
 }
 

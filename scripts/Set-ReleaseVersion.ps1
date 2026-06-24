@@ -94,18 +94,24 @@ Update-TextFile -Changes $changes -RelativePath "browser-extension/manifest.json
     ($json | ConvertTo-Json -Depth 20) + "`n"
 }
 
-Update-TextFile -Changes $changes -RelativePath "office-addins/manifest.xml" -Description "Office-compatible add-in version" -Transform {
-    param([string]$Content)
-    $xml = [xml]$Content
-    $xml.OfficeApp.Version = $storeVersion
-    $stringWriter = [System.IO.StringWriter]::new()
-    $settings = [System.Xml.XmlWriterSettings]::new()
-    $settings.Indent = $true
-    $settings.OmitXmlDeclaration = $false
-    $writer = [System.Xml.XmlWriter]::Create($stringWriter, $settings)
-    $xml.Save($writer)
-    $writer.Close()
-    $stringWriter.ToString()
+foreach ($officeManifestPath in @(
+    "office-addins/manifest.xml",
+    "office-addins/manifest.dev.xml",
+    "office-addins/manifest.prod.xml"
+)) {
+    Update-TextFile -Changes $changes -RelativePath $officeManifestPath -Description "Office-compatible add-in version" -Transform {
+        param([string]$Content)
+        $xml = [xml]$Content
+        $xml.OfficeApp.Version = $storeVersion
+        $stringWriter = [System.IO.StringWriter]::new()
+        $settings = [System.Xml.XmlWriterSettings]::new()
+        $settings.Indent = $true
+        $settings.OmitXmlDeclaration = $false
+        $writer = [System.Xml.XmlWriter]::Create($stringWriter, $settings)
+        $xml.Save($writer)
+        $writer.Close()
+        $stringWriter.ToString()
+    }
 }
 
 $artifactReplacements = @{

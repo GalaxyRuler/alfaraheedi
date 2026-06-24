@@ -54,7 +54,11 @@ if (-not (Test-Path -LiteralPath $serverScript)) {
 }
 
 $previousPassword = $env:NAHOU_OFFICE_ADDIN_PFX_PASSWORD
-$plainPassword = Convert-SecureStringForChildProcess $PfxPassword
+$plainPassword = if ($PfxPassword) {
+    Convert-SecureStringForChildProcess $PfxPassword
+} else {
+    "nahou-local-dev"
+}
 
 try {
     if ($null -ne $plainPassword) {

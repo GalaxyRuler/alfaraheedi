@@ -94,8 +94,8 @@ jobs:
       - name: Upload Office add-ins foundation artifact
         uses: actions/upload-artifact@v6
         with:
-          name: nahou-office-addins-0.8.0-foundation
-          path: dist/office-addins/nahou-office-addins-0.8.0.zip
+          name: nahou-office-addins-1.0.0-foundation
+          path: dist/office-addins/nahou-office-addins-1.0.0.zip
           if-no-files-found: error
           retention-days: 14
 

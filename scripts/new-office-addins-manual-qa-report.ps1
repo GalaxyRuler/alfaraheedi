@@ -119,6 +119,7 @@ Disposable document only. Suggested public-safe sample:
 | Check Selection reads selected text only | TODO | TODO | TODO |
 | Suggestions or safe fixes appear | TODO | TODO | TODO |
 | Apply Safe Fixes updates intended selection only | TODO | TODO | TODO |
+| Stale selection blocks replacement and offers copy fallback | TODO | TODO | TODO |
 | No private text captured in report/logs/screenshots | TODO | TODO | TODO |
 
 ## Gate 4: PowerPoint Sideload Flow
@@ -132,6 +133,7 @@ Disposable presentation only.
 | Check Selection reads selected text box text | TODO | TODO | TODO |
 | Suggestions or safe fixes appear | TODO | TODO | TODO |
 | Apply Safe Fixes updates intended text box selection only | TODO | TODO | TODO |
+| Unsupported selection offers copy corrected text fallback | TODO | TODO | TODO |
 | No private slide content captured in report/logs/screenshots | TODO | TODO | TODO |
 
 ## Gate 5: Accessibility And Keyboard Smoke
@@ -140,7 +142,7 @@ Reader/browser used, if any: TODO
 
 | Surface | Result | Evidence summary | Limitation or follow-up |
 | --- | --- | --- | --- |
-| Keyboard reaches all task-pane controls | TODO | TODO | TODO |
+| Keyboard reaches all task-pane controls including Copy Corrected Text | TODO | TODO | TODO |
 | Focus order matches task order | TODO | TODO | TODO |
 | Status message is readable or announced | TODO | TODO | TODO |
 | No keyboard trap | TODO | TODO | TODO |
