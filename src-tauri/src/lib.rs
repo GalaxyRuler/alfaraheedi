@@ -92,6 +92,8 @@ pub struct CompanionSettings {
     #[serde(default)]
     pub capture_preference: CapturePreference,
     #[serde(default)]
+    pub llm_runtime_preset: LlmRuntimePreset,
+    #[serde(default)]
     pub llm_base_url: String,
     #[serde(default = "default_llm_model_id")]
     pub llm_model_id: String,
@@ -108,6 +110,7 @@ impl Default for CompanionSettings {
             restore_clipboard: true,
             first_run_privacy_seen: false,
             capture_preference: CapturePreference::Auto,
+            llm_runtime_preset: LlmRuntimePreset::default(),
             llm_base_url: String::new(),
             llm_model_id: default_llm_model_id(),
             llm_timeout_ms: default_llm_timeout_ms(),
@@ -145,6 +148,15 @@ pub enum CapturePreference {
     Auto,
     UiaFirst,
     ClipboardFirst,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LlmRuntimePreset {
+    #[default]
+    LlamaCppServer,
+    LlamaCppPythonServer,
+    OnnxRuntimeGenaiFuture,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1149,6 +1161,10 @@ mod tests {
         assert!(settings.restore_clipboard);
         assert!(!settings.first_run_privacy_seen);
         assert_eq!(settings.capture_preference, CapturePreference::Auto);
+        assert_eq!(
+            settings.llm_runtime_preset,
+            LlmRuntimePreset::LlamaCppServer
+        );
     }
 
     #[test]
@@ -1182,6 +1198,10 @@ mod tests {
         assert_eq!(settings.llm_model_id, write_llm::DEFAULT_MODEL_ID);
         assert_eq!(settings.llm_timeout_ms, write_llm::DEFAULT_TIMEOUT_MS);
         assert_eq!(settings.capture_preference, CapturePreference::Auto);
+        assert_eq!(
+            settings.llm_runtime_preset,
+            LlmRuntimePreset::LlamaCppServer
+        );
     }
 
     #[test]

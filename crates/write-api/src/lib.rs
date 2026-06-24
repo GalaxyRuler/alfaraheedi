@@ -215,7 +215,9 @@ fn llm_error_response(error: write_llm::LlmError) -> (StatusCode, String) {
         | write_llm::LlmError::InvalidStatusResponse
         | write_llm::LlmError::EmptyResponse
         | write_llm::LlmError::InvalidResponse
-        | write_llm::LlmError::EmptyReplacement => StatusCode::BAD_GATEWAY,
+        | write_llm::LlmError::EmptyReplacement
+        | write_llm::LlmError::OutputTooLarge
+        | write_llm::LlmError::UnchangedReplacement => StatusCode::BAD_GATEWAY,
     };
 
     (status, error.to_string())

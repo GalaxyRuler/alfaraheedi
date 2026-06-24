@@ -127,6 +127,7 @@ export interface LlmSuggestion {
   model_id: string;
   replacement: string;
   explanation: string;
+  category: "grammar" | "clarity" | "style" | "translation" | "other";
   confidence: number;
   safe_auto_apply: boolean;
 }

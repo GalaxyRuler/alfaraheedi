@@ -48,7 +48,9 @@ describe("local LLM status panel", () => {
       expect(screen.getByTestId("llm-suggestion")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("llm:local · qwen3-1.7b-q4_k_m")).toBeInTheDocument();
+    expect(
+      screen.getByText("llm:local · qwen3-1.7b-q4_k_m · grammar"),
+    ).toBeInTheDocument();
     expect(screen.getByText(SAMPLE_LLM_SUGGESTION.replacement)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /تطبيق يدوي/ }));

@@ -10,6 +10,10 @@ import type {
 
 export type WritingMode = "auto" | "arabic" | "english" | "mixed";
 export type CapturePreference = "auto" | "uia_first" | "clipboard_first";
+export type LlmRuntimePreset =
+  | "llama_cpp_server"
+  | "llama_cpp_python_server"
+  | "onnx_runtime_genai_future";
 
 export interface CompanionSettings {
   ui_language: "ar" | "en";
@@ -18,6 +22,7 @@ export interface CompanionSettings {
   restore_clipboard: boolean;
   first_run_privacy_seen: boolean;
   capture_preference: CapturePreference;
+  llm_runtime_preset: LlmRuntimePreset;
   llm_base_url: string;
   llm_model_id: string;
   llm_timeout_ms: number;
@@ -104,6 +109,7 @@ export const DEFAULT_COMPANION_SETTINGS: CompanionSettings = {
   restore_clipboard: true,
   first_run_privacy_seen: false,
   capture_preference: "auto",
+  llm_runtime_preset: "llama_cpp_server",
   llm_base_url: "",
   llm_model_id: "qwen3-1.7b-q4_k_m",
   llm_timeout_ms: 30_000,

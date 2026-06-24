@@ -26,13 +26,19 @@ $env:ALFARAHEEDI_LLM_TIMEOUT_MS = "30000"
 
 ## Desktop Companion
 
-The desktop companion does not require `writecheck serve` for local LLM suggestions. Open Settings, set a local runtime URL such as `http://127.0.0.1:8000`, confirm the model id and timeout, then use "Check runtime" or "Run doctor" to verify the server before requesting an "LLM suggestion" from the review window.
+The desktop companion does not require `writecheck serve` for local LLM suggestions. Open Settings, choose a runtime preset, set a local runtime URL such as `http://127.0.0.1:8000`, confirm the model id and timeout, accept the selected-text consent language, then use "Run doctor" to verify the server before requesting an "LLM suggestion" from the review window.
 
 Desktop runtime settings are stored in the app config directory, not the repository. The URL must point at loopback (`127.0.0.1`, `localhost`, or `::1`); remote hosts are rejected. Existing settings files from older companion versions keep local LLM disabled by default until the user configures a runtime.
 
-The companion doctor uses the same policy checks as the CLI doctor. With no runtime configured, it reports a successful skipped state. With a runtime configured, it validates the loopback URL, model id, timeout range, OpenAI-compatible `/v1/models` response, and a small suggestion-only probe.
+The companion doctor uses the same policy checks as the CLI doctor. With no runtime configured, it reports a successful skipped state. With a runtime configured, it validates the loopback URL, model id, timeout range, OpenAI-compatible `/v1/models` response, and a small suggestion-only probe. The LLM action remains disabled until the consent checkbox is accepted and the current setup passes doctor.
 
 LLM suggestions in the companion are full-text suggestions for the currently captured selection. The review window shows progress while the local runtime is working, and the request can be cancelled without applying a stale late result. Suggestions are never safe auto-applied; accepting one only updates the review preview so the user can copy it or replace the original selection intentionally.
+
+Before first LLM use the companion shows this consent language:
+
+```text
+Nahou will send the selected text to your configured local runtime at 127.0.0.1 or localhost. Do not use this if that runtime is not controlled by you.
+```
 
 ## Doctor
 
@@ -54,7 +60,11 @@ When a runtime is configured, the doctor checks:
 - A small built-in sample produces a non-empty `POST /v1/chat/completions` suggestion.
 - The policy remains suggestion-only with `safe_auto_apply = false`, no bundled weights, no automatic downloads, and no hosted fallback.
 
-## llama.cpp Example
+## Runtime Presets
+
+### llama.cpp server
+
+This is the default supported v1.0 path. It exposes an OpenAI-compatible local HTTP server and can run quantized GGUF models on CPU-only machines.
 
 If `llama-server` is installed and you already have a GGUF model file, start the local runtime with:
 
@@ -66,8 +76,17 @@ CPU-only guidance:
 
 - Start with `Qwen3-1.7B-Q4_K_M.gguf` on machines with at least 4 GB available RAM.
 - Use `Qwen3-0.6B-Q4_0.gguf` for lower-memory tests.
+- Expect CPU-only suggestions to take seconds rather than keystroke-time completion, especially on larger models.
 - Keep downloaded GGUF files outside the repository and release package, for example under `C:\Models`.
 - Do not commit model weights or download them automatically from Nahou scripts.
+
+### llama-cpp-python server
+
+This is an advanced path for users who already run `llama-cpp-python` with an OpenAI-compatible server. Keep the same loopback URL and model-id rules as the `llama.cpp server` preset. Nahou does not install Python packages or download weights for this path.
+
+### ONNX Runtime GenAI
+
+ONNX Runtime GenAI is an investigated future embedded-runtime path, not the v1.0 runtime. Do not treat it as enabled until it has packaging, model, benchmark, and privacy validation in a later release plan.
 
 Then start Nahou:
 
@@ -102,12 +121,26 @@ Response:
   "model_id": "qwen3-1.7b-q4_k_m",
   "replacement": "مرحبا بالعالم",
   "explanation": "Local LLM suggestion.",
+  "category": "grammar",
   "confidence": 0.5,
   "safe_auto_apply": false
 }
 ```
 
 LLM suggestions are full-text rewrites. They are never merged into `writecheck fix --safe`.
+
+Local runtimes must return assistant content as strict JSON with this shape:
+
+```json
+{
+  "replacement": "string",
+  "explanation": "string",
+  "confidence": "low|medium|high",
+  "category": "grammar|clarity|style|translation|other"
+}
+```
+
+Nahou rejects missing fields, empty replacements, invalid categories, oversized output, and unchanged replacements unless the explanation says no change is needed.
 
 ## Smoke Tests
 

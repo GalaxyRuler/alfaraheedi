@@ -82,7 +82,8 @@ export function SuggestionsPanel({
               <div>
                 <h3>{t("llmSuggestionTitle")}</h3>
                 <p className="muted" dir="ltr">
-                  {llmSuggestion.source} · {llmSuggestion.model_id}
+                  {llmSuggestion.source} · {llmSuggestion.model_id} ·{" "}
+                  {llmSuggestion.category}
                 </p>
               </div>
               <span className="badge badge--suggest">{t("badgeSuggest")}</span>
