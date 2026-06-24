@@ -8,6 +8,8 @@ pub const ENV_LLM_MODEL: &str = "ALFARAHEEDI_LLM_MODEL";
 pub const ENV_LLM_TIMEOUT_MS: &str = "ALFARAHEEDI_LLM_TIMEOUT_MS";
 pub const DEFAULT_TIMEOUT_MS: u64 = 30_000;
 pub const MAX_LLM_INPUT_CHARS: usize = 6_000;
+pub const MAX_LLM_OUTPUT_CHARS: usize = 8_000;
+pub const MAX_LLM_EXPLANATION_CHARS: usize = 1_000;
 pub const DOCTOR_SAMPLE_TEXT: &str = "مرحبــا بالعالم";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -172,8 +174,19 @@ pub struct LlmSuggestion {
     pub model_id: String,
     pub replacement: String,
     pub explanation: String,
+    pub category: LlmSuggestionCategory,
     pub confidence: f32,
     pub safe_auto_apply: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LlmSuggestionCategory {
+    Grammar,
+    Clarity,
+    Style,
+    Translation,
+    Other,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -222,6 +235,12 @@ pub enum LlmError {
     InvalidResponse,
     #[error("local LLM suggestion replacement was empty")]
     EmptyReplacement,
+    #[error("local LLM suggestion output was too large")]
+    OutputTooLarge,
+    #[error(
+        "local LLM suggestion replacement matched the input without explaining that no change is needed"
+    )]
+    UnchangedReplacement,
 }
 
 #[derive(Debug, Serialize)]
@@ -256,8 +275,27 @@ struct ChatChoiceMessage {
 #[derive(Debug, Deserialize)]
 struct SuggestionPayload {
     replacement: String,
-    explanation: Option<String>,
-    confidence: Option<f32>,
+    explanation: String,
+    confidence: LlmSuggestionConfidence,
+    category: LlmSuggestionCategory,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum LlmSuggestionConfidence {
+    Low,
+    Medium,
+    High,
+}
+
+impl LlmSuggestionConfidence {
+    fn score(self) -> f32 {
+        match self {
+            Self::Low => 0.35,
+            Self::Medium => 0.65,
+            Self::High => 0.9,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -585,6 +623,12 @@ fn doctor_error_message(error: &LlmError) -> String {
         LlmError::EmptyReplacement => {
             "local LLM suggestion replacement was empty; choose a model/prompt that returns a non-empty replacement".to_owned()
         }
+        LlmError::OutputTooLarge => {
+            "local LLM suggestion output was too large; choose a shorter prompt or lower max_tokens".to_owned()
+        }
+        LlmError::UnchangedReplacement => {
+            "local LLM suggestion matched the input without explaining that no change is needed".to_owned()
+        }
         LlmError::NotConfigured | LlmError::InputTooLong { .. } => error.to_string(),
     }
 }
@@ -632,7 +676,7 @@ pub async fn suggest(config: &LlmRuntimeConfig, text: &str) -> Result<LlmSuggest
         .filter(|content| !content.is_empty())
         .ok_or(LlmError::EmptyResponse)?;
 
-    parse_suggestion_content(content, &config.model_id)
+    parse_suggestion_content(content, &config.model_id, text)
 }
 
 async fn fetch_model_ids(config: &LlmRuntimeConfig) -> Result<Vec<String>, LlmError> {
@@ -685,13 +729,23 @@ fn ensure_input_bounds(text: &str) -> Result<(), LlmError> {
 
 fn system_prompt() -> &'static str {
     "You are Nahou's local Arabic writing assistant. Return JSON only. \
-Use this exact shape: {\"replacement\":\"...\",\"explanation\":\"...\",\"confidence\":0.0}. \
+Use this exact shape: {\"replacement\":\"...\",\"explanation\":\"...\",\"confidence\":\"low|medium|high\",\"category\":\"grammar|clarity|style|translation|other\"}. \
 The replacement is a full revised version of the user's text. \
+Use category grammar, clarity, style, translation, or other. \
+If no change is needed, return the original text as replacement and explain that no change is needed. \
 Do not invent facts. Do not explain outside JSON. \
 Your output is suggestion-only and must never be described as safe auto-apply."
 }
 
-fn parse_suggestion_content(content: &str, model_id: &str) -> Result<LlmSuggestion, LlmError> {
+fn parse_suggestion_content(
+    content: &str,
+    model_id: &str,
+    original_text: &str,
+) -> Result<LlmSuggestion, LlmError> {
+    if content.chars().count() > MAX_LLM_OUTPUT_CHARS {
+        return Err(LlmError::OutputTooLarge);
+    }
+
     let payload = serde_json::from_str::<SuggestionPayload>(content)
         .or_else(|_| extract_json_object(content).and_then(serde_json::from_str))
         .map_err(|_| LlmError::InvalidResponse)?;
@@ -700,19 +754,35 @@ fn parse_suggestion_content(content: &str, model_id: &str) -> Result<LlmSuggesti
     if replacement.is_empty() {
         return Err(LlmError::EmptyReplacement);
     }
+    if replacement.chars().count() > MAX_LLM_OUTPUT_CHARS {
+        return Err(LlmError::OutputTooLarge);
+    }
+
+    let explanation = payload.explanation.trim().to_owned();
+    if explanation.is_empty() || explanation.chars().count() > MAX_LLM_EXPLANATION_CHARS {
+        return Err(LlmError::InvalidResponse);
+    }
+    if replacement == original_text.trim() && !explains_no_change(&explanation) {
+        return Err(LlmError::UnchangedReplacement);
+    }
 
     Ok(LlmSuggestion {
         source: "llm:local".to_owned(),
         model_id: model_id.to_owned(),
         replacement,
-        explanation: payload
-            .explanation
-            .map(|value| value.trim().to_owned())
-            .filter(|value| !value.is_empty())
-            .unwrap_or_else(|| "Local LLM suggestion.".to_owned()),
-        confidence: payload.confidence.unwrap_or(0.5).clamp(0.0, 1.0),
+        explanation,
+        category: payload.category,
+        confidence: payload.confidence.score(),
         safe_auto_apply: false,
     })
+}
+
+fn explains_no_change(explanation: &str) -> bool {
+    let normalized = explanation.to_lowercase();
+    normalized.contains("no change")
+        || normalized.contains("no changes")
+        || normalized.contains("لا تغيير")
+        || normalized.contains("لا يحتاج")
 }
 
 fn extract_json_object(content: &str) -> Result<&str, serde_json::Error> {
@@ -828,37 +898,94 @@ mod tests {
     #[test]
     fn parses_clean_json_suggestion() {
         let suggestion = parse_suggestion_content(
-            r#"{"replacement":"مرحبا بالعالم","explanation":"أزيل التطويل.","confidence":0.82}"#,
+            r#"{"replacement":"مرحبا بالعالم","explanation":"أزيل التطويل.","confidence":"high","category":"grammar"}"#,
             DEFAULT_MODEL_ID,
+            "مرحبــا بالعالم",
         )
         .expect("suggestion");
 
         assert_eq!(suggestion.replacement, "مرحبا بالعالم");
         assert_eq!(suggestion.explanation, "أزيل التطويل.");
-        assert_eq!(suggestion.confidence, 0.82);
+        assert_eq!(suggestion.category, LlmSuggestionCategory::Grammar);
+        assert_eq!(suggestion.confidence, 0.9);
         assert!(!suggestion.safe_auto_apply);
     }
 
     #[test]
     fn extracts_json_from_chatty_model_output_without_retaining_raw_text() {
         let suggestion = parse_suggestion_content(
-            "Here is the JSON:\n{\"replacement\":\"نص مصحح\",\"confidence\":1.7}",
+            "Here is the JSON:\n{\"replacement\":\"نص مصحح\",\"explanation\":\"تحسين الوضوح.\",\"confidence\":\"medium\",\"category\":\"clarity\"}",
             "local-model",
+            "نص غير مصحح",
         )
         .expect("suggestion");
 
         assert_eq!(suggestion.model_id, "local-model");
         assert_eq!(suggestion.replacement, "نص مصحح");
-        assert_eq!(suggestion.confidence, 1.0);
-        assert_eq!(suggestion.explanation, "Local LLM suggestion.");
+        assert_eq!(suggestion.category, LlmSuggestionCategory::Clarity);
+        assert_eq!(suggestion.confidence, 0.65);
+        assert_eq!(suggestion.explanation, "تحسين الوضوح.");
     }
 
     #[test]
     fn rejects_empty_replacement() {
-        let error = parse_suggestion_content(r#"{"replacement":"   "}"#, DEFAULT_MODEL_ID)
-            .expect_err("empty replacement");
+        let error = parse_suggestion_content(
+            r#"{"replacement":"   ","explanation":"empty","confidence":"low","category":"other"}"#,
+            DEFAULT_MODEL_ID,
+            "input",
+        )
+        .expect_err("empty replacement");
 
         assert!(matches!(error, LlmError::EmptyReplacement));
+    }
+
+    #[test]
+    fn rejects_missing_schema_fields() {
+        let error = parse_suggestion_content(
+            r#"{"replacement":"مرحبا بالعالم","confidence":0.82}"#,
+            DEFAULT_MODEL_ID,
+            "مرحبــا بالعالم",
+        )
+        .expect_err("missing schema fields");
+
+        assert!(matches!(error, LlmError::InvalidResponse));
+    }
+
+    #[test]
+    fn rejects_invalid_category() {
+        let error = parse_suggestion_content(
+            r#"{"replacement":"مرحبا بالعالم","explanation":"أزيل التطويل.","confidence":"high","category":"safety"}"#,
+            DEFAULT_MODEL_ID,
+            "مرحبــا بالعالم",
+        )
+        .expect_err("invalid category");
+
+        assert!(matches!(error, LlmError::InvalidResponse));
+    }
+
+    #[test]
+    fn rejects_unchanged_replacement_without_no_change_explanation() {
+        let error = parse_suggestion_content(
+            r#"{"replacement":"مرحبا بالعالم","explanation":"اقتراح محلي.","confidence":"low","category":"other"}"#,
+            DEFAULT_MODEL_ID,
+            "مرحبا بالعالم",
+        )
+        .expect_err("unchanged replacement");
+
+        assert!(matches!(error, LlmError::UnchangedReplacement));
+    }
+
+    #[test]
+    fn allows_unchanged_replacement_when_no_change_is_explained() {
+        let suggestion = parse_suggestion_content(
+            r#"{"replacement":"مرحبا بالعالم","explanation":"No change is needed.","confidence":"low","category":"other"}"#,
+            DEFAULT_MODEL_ID,
+            "مرحبا بالعالم",
+        )
+        .expect("no-change suggestion");
+
+        assert_eq!(suggestion.replacement, "مرحبا بالعالم");
+        assert_eq!(suggestion.category, LlmSuggestionCategory::Other);
     }
 
     #[test]

@@ -39,7 +39,8 @@ const server = http.createServer((request, response) => {
               content: JSON.stringify({
                 replacement: "مرحبا بالعالم",
                 explanation: "Mock local runtime suggestion.",
-                confidence: 0.64,
+                confidence: "medium",
+                category: "grammar",
               }),
             },
             finish_reason: "stop",

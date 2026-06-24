@@ -111,6 +111,7 @@ describe("companion local LLM setup", () => {
 
     const runtimeUrl = await screen.findByLabelText("Local runtime URL");
     expect(runtimeUrl).toHaveValue("");
+    expect(screen.getByLabelText("Runtime preset")).toHaveValue("llama_cpp_server");
     expect(screen.getByLabelText("Model id")).toHaveValue("qwen3-1.7b-q4_k_m");
     expect(screen.getByLabelText("Timeout milliseconds")).toHaveValue(30_000);
 
@@ -158,6 +159,9 @@ describe("companion local LLM setup", () => {
     expect(screen.getByText(/There is no hosted service or telemetry/)).toBeInTheDocument();
     expect(screen.getByText(/LLM suggestions require separate local runtime configuration/))
       .toBeInTheDocument();
+    expect(
+      screen.getByText(/Nahou will send the selected text to your configured local runtime/),
+    ).toBeInTheDocument();
   });
 
   it("checks local LLM runtime status from the companion surface", async () => {
@@ -190,11 +194,78 @@ describe("companion local LLM setup", () => {
 
   it("requests a selected-text local LLM suggestion and applies it manually", async () => {
     const user = userEvent.setup();
+    invokeMock.mockImplementation((command: string, args?: unknown) => {
+      if (command === "get_companion_settings") {
+        return Promise.resolve({
+          ...DEFAULT_COMPANION_SETTINGS,
+          ui_language: "en",
+        });
+      }
+      if (command === "save_companion_settings") {
+        return Promise.resolve((args as { settings: unknown }).settings);
+      }
+      if (command === "capture_selected_text") {
+        return Promise.resolve({
+          captured_text: "helo wat you are do?",
+          current_text: "helo wat you are do?",
+          source_app: "Notepad",
+          capture_method: "windows_uia_text_pattern",
+          writing_mode: "english",
+          analysis: {
+            text_len_bytes: 20,
+            text_len_utf16: 20,
+            text_len_graphemes: 20,
+            suggestions: [],
+          },
+          safe_count: 0,
+          restore_warning: null,
+          diagnostic: UIA_DIAGNOSTIC,
+        });
+      }
+      if (command === "run_companion_llm_doctor") {
+        return Promise.resolve({
+          ok: true,
+          available: true,
+          summary: "local LLM runtime passed doctor checks",
+          runtime: {
+            base_url: "http://127.0.0.1:8000",
+            model_id: "qwen3-1.7b-q4_k_m",
+            timeout_ms: 30_000,
+          },
+          catalog: SAMPLE_LLM.catalog,
+          checks: [
+            {
+              name: "suggestion_policy",
+              outcome: "pass",
+              message: "local LLM returned a non-empty suggestion",
+            },
+          ],
+        });
+      }
+      if (command === "suggest_with_local_llm_for_session") {
+        return Promise.resolve({
+          ...SAMPLE_LLM_SUGGESTION,
+          replacement: "hello what are you doing?",
+          explanation: "Rewrites the selected text as a clear English question.",
+        });
+      }
+      return Promise.resolve(null);
+    });
     render(<App />);
 
     await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
     await screen.findByText(/Review selection/);
     expect(screen.getByText(/Windows UI Automation capture/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /LLM suggestion/ })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Local runtime URL"), "http://127.0.0.1:8000");
+    await user.click(
+      screen.getByLabelText(
+        /Nahou will send the selected text to your configured local runtime/,
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: /Run doctor/ }));
+    await screen.findByText(/local LLM runtime passed doctor checks/);
 
     await user.click(screen.getByRole("button", { name: /LLM suggestion/ }));
 
@@ -250,6 +321,26 @@ describe("companion local LLM setup", () => {
           resolveSuggestion = resolve;
         });
       }
+      if (command === "run_companion_llm_doctor") {
+        return Promise.resolve({
+          ok: true,
+          available: true,
+          summary: "local LLM runtime passed doctor checks",
+          runtime: {
+            base_url: "http://127.0.0.1:8000",
+            model_id: "qwen3-1.7b-q4_k_m",
+            timeout_ms: 30_000,
+          },
+          catalog: SAMPLE_LLM.catalog,
+          checks: [
+            {
+              name: "suggestion_policy",
+              outcome: "pass",
+              message: "local LLM returned a non-empty suggestion",
+            },
+          ],
+        });
+      }
       if (command === "cancel_companion_llm_suggestion") {
         return Promise.resolve(true);
       }
@@ -257,6 +348,15 @@ describe("companion local LLM setup", () => {
     });
 
     render(<App />);
+
+    await user.type(await screen.findByLabelText("Local runtime URL"), "http://127.0.0.1:8000");
+    await user.click(
+      screen.getByLabelText(
+        /Nahou will send the selected text to your configured local runtime/,
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: /Run doctor/ }));
+    await screen.findByText(/local LLM runtime passed doctor checks/);
 
     await user.click(await screen.findByRole("button", { name: /Check selected text/ }));
     await screen.findByText(/Review selection/);

@@ -5,7 +5,9 @@ param(
     [string]$HostName = "127.0.0.1",
     [int]$Port = 8000,
     [int]$ContextSize = 4096,
-    [int]$Threads = 0
+    [int]$Threads = 0,
+    [ValidateRange(1000, 120000)]
+    [int]$TimeoutMs = 30000
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,10 +22,12 @@ if (-not (Get-Command $LlamaServerPath -ErrorAction SilentlyContinue)) {
 $baseUrl = "http://$HostName`:$Port"
 $env:ALFARAHEEDI_LLM_BASE_URL = $baseUrl
 $env:ALFARAHEEDI_LLM_MODEL = [System.IO.Path]::GetFileNameWithoutExtension($resolvedModel)
+$env:ALFARAHEEDI_LLM_TIMEOUT_MS = "$TimeoutMs"
 
 Write-Host "Starting local LLM runtime at $baseUrl"
 Write-Host "Set ALFARAHEEDI_LLM_BASE_URL=$baseUrl for writecheck/API processes."
 Write-Host "Set ALFARAHEEDI_LLM_MODEL=$env:ALFARAHEEDI_LLM_MODEL for writecheck/API processes."
+Write-Host "Set ALFARAHEEDI_LLM_TIMEOUT_MS=$env:ALFARAHEEDI_LLM_TIMEOUT_MS for writecheck/API processes."
 
 $args = @(
     "--model", $resolvedModel,

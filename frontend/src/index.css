@@ -1030,7 +1030,7 @@ button {
 
 .companion-llm-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr minmax(140px, 0.55fr);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
 }
 
@@ -1043,6 +1043,18 @@ button {
   align-items: center;
   gap: 12px;
   margin-top: 12px;
+}
+
+.companion-llm-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.companion-llm-consent input {
+  margin-top: 3px;
+  flex: 0 0 auto;
 }
 
 .companion-llm-status {

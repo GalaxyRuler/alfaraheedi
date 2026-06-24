@@ -138,6 +138,9 @@ try {
     }
 
     cargo build -p write-api -p write-cli
+    if ($LASTEXITCODE -ne 0) {
+        throw "cargo build failed for LLM smoke prerequisites"
+    }
 
     $doctorJson = & $cliExe llm doctor --format json
     if ($LASTEXITCODE -ne 0) {
@@ -191,6 +194,9 @@ try {
     }
     if ([string]::IsNullOrWhiteSpace($suggestion.replacement)) {
         throw "LLM suggestion replacement was empty"
+    }
+    if (@("grammar", "clarity", "style", "translation", "other") -notcontains $suggestion.category) {
+        throw "Unexpected LLM suggestion category: $($suggestion.category)"
     }
     if ($suggestion.safe_auto_apply -ne $false) {
         throw "LLM suggestion unexpectedly safe-auto-applies"

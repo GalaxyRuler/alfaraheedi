@@ -156,6 +156,7 @@ export const SAMPLE_LLM_SUGGESTION: LlmSuggestion = {
   model_id: "qwen3-1.7b-q4_k_m",
   replacement: "مرحبا بالعالم، كيف حالك؟ أنا بخير، شكرًا؛",
   explanation: "اقتراح لغوي كامل للنص.",
+  category: "grammar",
   confidence: 0.74,
   safe_auto_apply: false,
 };

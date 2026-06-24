@@ -17,6 +17,7 @@ import {
   type CaptureResult,
   type CommandError,
   type CompanionSettings,
+  type LlmRuntimePreset,
   type WritingMode,
 } from "../api/companion";
 import { countSafe, groupByCategory, renderReplacement } from "../lib/format";
@@ -39,6 +40,40 @@ const CAPTURE_PREFERENCES: {
   { value: "clipboard_first", label: { ar: "الحافظة أولًا", en: "Clipboard first" } },
   { value: "uia_first", label: { ar: "UIA أولًا", en: "UIA first" } },
 ];
+
+const LLM_RUNTIME_PRESETS: {
+  value: LlmRuntimePreset;
+  label: { ar: string; en: string };
+  hint: { ar: string; en: string };
+}[] = [
+  {
+    value: "llama_cpp_server",
+    label: { ar: "llama.cpp server", en: "llama.cpp server" },
+    hint: {
+      ar: "المسار المدعوم افتراضيًا عبر خادم محلي متوافق مع OpenAI.",
+      en: "Default supported path through a local OpenAI-compatible server.",
+    },
+  },
+  {
+    value: "llama_cpp_python_server",
+    label: { ar: "llama-cpp-python", en: "llama-cpp-python" },
+    hint: {
+      ar: "خيار متقدم عندما يكون خادم Python متوافقًا مع واجهة OpenAI.",
+      en: "Advanced option when the Python server exposes the OpenAI-compatible API.",
+    },
+  },
+  {
+    value: "onnx_runtime_genai_future",
+    label: { ar: "ONNX Runtime GenAI", en: "ONNX Runtime GenAI" },
+    hint: {
+      ar: "مسار مدمج قيد الدراسة بعد v1.0، وليس مسار التشغيل الحالي.",
+      en: "Investigated future embedded path after v1.0, not the current runtime path.",
+    },
+  },
+];
+
+const LOCAL_LLM_CONSENT =
+  "Nahou will send the selected text to your configured local runtime at 127.0.0.1 or localhost. Do not use this if that runtime is not controlled by you.";
 
 function captureMethodLabel(method: CaptureMethod | undefined, lang: "ar" | "en") {
   if (method === "windows_uia_text_pattern") {
@@ -128,6 +163,8 @@ function CompanionApp({
     null,
   );
   const [llmDoctorError, setLlmDoctorError] = useState<string | null>(null);
+  const [llmConsentAccepted, setLlmConsentAccepted] = useState(false);
+  const [llmValidatedSetup, setLlmValidatedSetup] = useState<string | null>(null);
   const llmRequestSeq = useRef(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +178,18 @@ function CompanionApp({
     [activeSuggestions],
   );
   const safeCount = countSafe(activeSuggestions);
+  const llmSetupSignature = [
+    settings.llm_runtime_preset,
+    settings.llm_base_url.trim(),
+    settings.llm_model_id.trim(),
+    settings.llm_timeout_ms,
+  ].join("|");
+  const selectedLlmPreset =
+    LLM_RUNTIME_PRESETS.find(
+      (preset) => preset.value === settings.llm_runtime_preset,
+    ) ?? LLM_RUNTIME_PRESETS[0];
+  const llmSetupReady =
+    llmConsentAccepted && llmValidatedSetup === llmSetupSignature;
 
   const loadCapture = useCallback((result: CaptureResult) => {
     setCapture(result);
@@ -321,8 +370,10 @@ function CompanionApp({
     try {
       const report = await companionClient.runLlmDoctor();
       setLlmDoctorReport(report);
+      setLlmValidatedSetup(report.ok && report.available ? llmSetupSignature : null);
       setLlmDoctorStatus("done");
     } catch (caught) {
+      setLlmValidatedSetup(null);
       const message =
         typeof caught === "object" &&
         caught !== null &&
@@ -335,10 +386,18 @@ function CompanionApp({
       setLlmDoctorError(message);
       setLlmDoctorStatus("error");
     }
-  }, [lang]);
+  }, [lang, llmSetupSignature]);
 
   const requestLlmSuggestion = useCallback(async () => {
     if (!capture || !currentText.trim()) return;
+    if (!llmSetupReady) {
+      setNotice(
+        lang === "ar"
+          ? "أكمل إعداد النموذج المحلي وشغّل التشخيص قبل طلب اقتراح LLM."
+          : "Complete local LLM setup and run doctor before requesting an LLM suggestion.",
+      );
+      return;
+    }
     const requestId = llmRequestSeq.current + 1;
     llmRequestSeq.current = requestId;
     setLlmSuggestStatus("loading");
@@ -369,7 +428,7 @@ function CompanionApp({
       setLlmError(message);
       setLlmSuggestStatus("error");
     }
-  }, [capture, currentText, lang, t]);
+  }, [capture, currentText, lang, llmSetupReady, t]);
 
   const cancelLlmSuggestion = useCallback(async () => {
     if (llmSuggestStatus !== "loading") return;
@@ -583,6 +642,26 @@ function CompanionApp({
             <div className="companion-llm-grid">
               <label className="field companion-field">
                 <span className="field__label">
+                  {lang === "ar" ? "مسار التشغيل" : "Runtime preset"}
+                </span>
+                <select
+                  className="field__input"
+                  value={settings.llm_runtime_preset}
+                  onChange={(event) =>
+                    onUpdateSettings({
+                      llm_runtime_preset: event.target.value as LlmRuntimePreset,
+                    })
+                  }
+                >
+                  {LLM_RUNTIME_PRESETS.map((preset) => (
+                    <option key={preset.value} value={preset.value}>
+                      {preset.label[lang]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field companion-field">
+                <span className="field__label">
                   {lang === "ar" ? "عنوان الخادم المحلي" : "Local runtime URL"}
                 </span>
                 <input
@@ -633,6 +712,15 @@ function CompanionApp({
                 />
               </label>
             </div>
+            <p className="field__hint">{selectedLlmPreset.hint[lang]}</p>
+            <label className="field companion-field companion-llm-consent">
+              <input
+                type="checkbox"
+                checked={llmConsentAccepted}
+                onChange={(event) => setLlmConsentAccepted(event.target.checked)}
+              />
+              <span>{LOCAL_LLM_CONSENT}</span>
+            </label>
             <div className="companion-llm-actions">
               <button
                 type="button"
@@ -670,6 +758,13 @@ function CompanionApp({
                   role={llmRuntimeStatus === "error" ? "alert" : "status"}
                 >
                   {llmRuntimeReason}
+                </p>
+              )}
+              {!llmSetupReady && (
+                <p className="policy-note companion-llm-status" role="status">
+                  {lang === "ar"
+                    ? "يبقى زر LLM خلف الإعداد حتى تقبل إرسال النص المحدد إلى خادمك المحلي ويجتاز التشخيص."
+                    : "The LLM action stays behind setup until you consent to sending selected text to your local runtime and the doctor passes."}
                 </p>
               )}
             </div>
@@ -787,7 +882,11 @@ function CompanionApp({
                   type="button"
                   className="btn"
                   onClick={() => void requestLlmSuggestion()}
-                  disabled={llmSuggestStatus === "loading" || !currentText.trim()}
+                  disabled={
+                    llmSuggestStatus === "loading" ||
+                    !currentText.trim() ||
+                    !llmSetupReady
+                  }
                 >
                   {llmSuggestStatus === "loading"
                     ? t("llmSuggesting")
@@ -845,7 +944,8 @@ function CompanionApp({
                   <div>
                     <h3>{t("llmSuggestionTitle")}</h3>
                     <p className="muted" dir="ltr">
-                      {llmSuggestion.source} · {llmSuggestion.model_id}
+                      {llmSuggestion.source} · {llmSuggestion.model_id} ·{" "}
+                      {llmSuggestion.category}
                     </p>
                   </div>
                   <span className="badge badge--suggest">{t("badgeSuggest")}</span>
