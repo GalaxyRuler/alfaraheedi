@@ -10,11 +10,32 @@ Nahou is an early Rust-native, local-first writing checker focused on high-preci
 
 The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. The v0.7 browser-extension foundation adds local-first editable web-field checking with accessibility guardrails for panel semantics, text direction, contrast, and Windows forced-colors mode. It is designed to keep user text on the user's machine by default.
 
+## v1.0 Product Contract
+
+Nahou v1.0 is a Windows-first, local-first writing companion. The primary user
+path is: install the Windows desktop setup installer, select text in another
+app, press the configured hotkey, review local deterministic suggestions, then
+replace the original selection or copy corrected text.
+
+The supported v1.0 surface targets are Notepad, browser textarea/input fields,
+WhatsApp Web text boxes, Word selected text, and PowerPoint selected text.
+Support is bounded by the active capture path and the target application's text
+APIs. Browser extension and Office add-in packages are optional integrations
+that require their own release gates and store-review readiness.
+
+Public v1.0 claims are defined in
+`docs/public/v1.0-product-contract.md`, and release evidence is tracked in
+`docs/testing/v1.0-acceptance-matrix.md`.
+
 ![Nahou local web workbench](docs/assets/workbench.png)
 
 ## What It Is Not
 
-Nahou is not a hosted writing service, an LSP server, a spell checker, an Arabic morphology engine, or an English grammar checker. The desktop companion does not provide live underlines in every app yet, and the browser-extension work is still an unpacked v0.7 foundation rather than a store-ready extension. It does not bundle corpora, dictionaries, model weights, or non-commercial datasets.
+Nahou is not a hosted writing service, an LSP server, a spell checker, an Arabic
+morphology engine, or an English grammar checker. The desktop companion does not
+provide live underlines in every app, universal UI Automation replacement, or a
+complete grammar-perfection guarantee. It does not bundle corpora,
+dictionaries, model weights, or non-commercial datasets.
 
 ## Current Rules
 
@@ -330,3 +351,6 @@ Near-term work after the public MVP:
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.
+- v1.0 supported surfaces remain limited to the product contract and manual QA
+  evidence for Notepad, browser textarea/input fields, WhatsApp Web text boxes,
+  Word selected text, and PowerPoint selected text.

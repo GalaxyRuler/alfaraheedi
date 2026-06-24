@@ -33,6 +33,29 @@ The MVP spine is:
 - In v0.9, try Windows UI Automation TextPattern capture before clipboard capture for supported focused native text controls. This is a best-effort capture pilot only; replacement still uses clipboard paste fallback.
 - Treat raw selected text as session-only state in the desktop companion. It must not be logged, retained by default, or included in feedback reports unless the user explicitly supplies a reduced public example.
 
+## v1.0 Product Boundary
+
+The v1.0 product path is the packaged Windows desktop companion. A normal user
+installs Nahou, selects text in another app, presses the configured hotkey,
+reviews local deterministic suggestions, and then replaces the selection or
+copies corrected text.
+
+The supported v1.0 surface targets are Notepad, browser textarea/input fields,
+WhatsApp Web text boxes, Word selected text, and PowerPoint selected text.
+Support is limited by target application APIs, UI Automation provider behavior,
+and guarded replacement checks.
+
+Browser extension and Office add-in packages share the same local engine and
+privacy boundary, but they are optional integrations with separate manual QA,
+store documentation, and external review gates. Local LLM suggestions remain a
+manual second-pass option behind explicit local runtime configuration and are
+not part of deterministic safe auto-apply.
+
+Non-goals for v1.0 are universal live desktop overlays, hosted text processing,
+telemetry, bundled model weights, complete Arabic morphology, full English
+grammar, and UI Automation replacement before a separate real-app pilot proves
+it safe.
+
 ## v0.5 Companion Scope
 
 The v0.5 desktop companion is the primary product surface for cross-app writing help:
