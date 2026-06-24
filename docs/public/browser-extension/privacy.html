@@ -132,7 +132,8 @@
       <ul>
         <li>local API URL;</li>
         <li>writing mode;</li>
-        <li>enabled or paused state.</li>
+        <li>enabled or paused state;</li>
+        <li>disabled-site hostnames chosen by the user.</li>
       </ul>
       <p>
         The background service worker uses these stored settings for analysis
@@ -163,6 +164,11 @@
         When paused, it does not send active-field text for analysis.
       </p>
       <p>
+        The extension can also be disabled for the current site from the toolbar
+        popup and re-enabled for that site later. Disabled-site hostnames can be
+        reviewed or edited from the options page.
+      </p>
+      <p>
         Users can change the local API URL and writing mode from the options
         page. Non-loopback API URLs are rejected.
       </p>
@@ -172,6 +178,12 @@
         Nahou does not sell browser extension data and does not share
         extension data with advertisers, analytics providers, hosted writing
         services, or other third parties.
+      </p>
+      <p>
+        Chrome limited-use disclosure: Nahou does not sell extension data, does
+        not use extension data for telemetry or advertising, processes editor
+        text locally through the configured loopback Nahou API only, and does
+        not transfer editor text to Nahou-hosted services.
       </p>
 
       <h2>Human Review</h2>

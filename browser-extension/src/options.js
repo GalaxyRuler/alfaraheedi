@@ -7,7 +7,9 @@ const form = document.querySelector("#settings-form");
 const apiBaseUrl = document.querySelector("#api-base-url");
 const writingMode = document.querySelector("#writing-mode");
 const enabled = document.querySelector("#enabled");
+const disabledHosts = document.querySelector("#disabled-hosts");
 const status = document.querySelector("#status");
+let currentSettings = null;
 
 loadSettings();
 
@@ -20,6 +22,9 @@ form.addEventListener("submit", async (event) => {
       apiBaseUrl: apiBaseUrl.value,
       writingMode: writingMode.value,
       enabled: enabled.checked,
+      disabledHosts: disabledHosts
+        ? disabledHosts.value.split(/\r?\n/u)
+        : currentSettings?.disabledHosts,
     });
     renderSettings(saved);
     status.textContent = "Saved.";
@@ -39,7 +44,11 @@ async function loadSettings() {
 }
 
 function renderSettings(settings) {
+  currentSettings = settings;
   apiBaseUrl.value = settings.apiBaseUrl;
   writingMode.value = settings.writingMode;
   enabled.checked = settings.enabled;
+  if (disabledHosts) {
+    disabledHosts.value = settings.disabledHosts.join("\n");
+  }
 }

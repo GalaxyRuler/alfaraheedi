@@ -6,8 +6,9 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 
 - Chrome Manifest V3 unpacked extension.
 - Manifest-declared PNG icons for install and extension-management surfaces.
-- Toolbar action popup that shows the saved local API URL, writing mode, enabled/paused state, and `/v1/health` reachability, with a direct settings button.
+- Toolbar action popup that shows the saved local API URL, writing mode, enabled/paused state, current-site state, and `/v1/health` reachability, with a direct settings button.
 - Pause/resume control from the toolbar popup and options page.
+- Disable/re-enable control for the current site from the toolbar popup.
 - Content script detects focused editable `textarea`, safe text-like `input` types (`text`, `search`, `email`, `url`, and `tel`), and contenteditable fields using `true`, empty, or `plaintext-only` tokens.
 - Read-only/disabled native controls and ARIA read-only/disabled editable controls are ignored before text is analyzed.
 - Read-only, disabled, password, sensitive-hinted, and other non-text-like textarea/input controls are ignored, sensitive-hinted contenteditable roots are ignored, and editors inside sensitive-hinted forms, fieldsets, groups, or regions are ignored.
@@ -63,6 +64,7 @@ Open the extension options page to set:
 - Local API URL, for example `http://127.0.0.1:3000` or `http://127.0.0.1:3402`.
 - Writing mode: Auto, Arabic, English, or Mixed.
 - Check editable fields: on or paused.
+- Disabled sites: hostnames where checking is off until re-enabled.
 
 Remote API URLs and local URLs outside the manifest host permissions are
 rejected on save and are not persisted. If invalid stored settings are

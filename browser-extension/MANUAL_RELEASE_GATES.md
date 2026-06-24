@@ -72,11 +72,16 @@ Required minimum matrix:
 
 | Surface | Minimum check | Public claim allowed after pass |
 | --- | --- | --- |
-| Normal browser textarea | Suggestions appear, Apply updates the intended text, pause stops checks. | Generic editable web fields. |
-| Gmail compose | Panel appears only for the editable compose text, quoted/signature/private surrounding text is not analyzed, Apply updates the intended compose text. | Gmail compatibility only if current evidence passes. |
+| Simple browser textarea | Suggestions appear, Apply updates the intended text, pause stops checks, disconnected local API shows the safe unavailable message without leaking editor text. | Generic editable web fields. |
+| Gmail compose / Gmail-like contenteditable composer | Panel appears only for the editable compose text, quoted/signature/private surrounding text is not analyzed, Apply updates the intended compose text. | Gmail compatibility only if current evidence passes. |
 | WhatsApp Web composer | Panel appears for the composed message, paragraph/newline mapping is correct, Apply updates the intended message without sending it. | WhatsApp Web compatibility only if current evidence passes. |
 | Google Docs | Either supported behavior is verified, or limitation is documented without claims. | Google Docs compatibility only if current evidence passes. |
 | At least one browser field inside an iframe, when available | Suggestions and Apply work in the iframe editor, or limitation is documented. | Iframe-hosted editor compatibility if current evidence passes. |
+| Open Shadow DOM editor fixture | Suggestions and Apply work through composed browser events, or limitation is documented. | Shadow DOM editable-field compatibility if current evidence passes. |
+| RTL Arabic text | Suggestions preserve readable direction, anchoring, and caret behavior for Arabic text. | Arabic RTL web-field behavior if current evidence passes. |
+| Mixed Arabic/English text | Suggestions preserve readable direction, anchoring, and caret behavior for mixed text. | Mixed Arabic/English web-field behavior if current evidence passes. |
+| Sensitive fields | Password, one-time-code, credit-card, token, API-key, secret, read-only, disabled, aria-readonly, and hidden rich-editor sentinel fields are skipped. | Sensitive-field exclusion claim if current evidence passes. |
+| Paused and site-disabled modes | Global pause stops analysis requests, current-site disable stops analysis only for that host, and re-enable resumes checks. | User control claim if current evidence passes. |
 
 Pass criteria:
 

@@ -34,6 +34,9 @@ Latest full VM release preflight screenshot candidates:
 dist\browser-extension-store-assets\v0.7-extension-store-screenshots-20260623-030207
 ```
 
+Selected screenshot root:
+dist\browser-extension-store-assets\v0.7-extension-store-screenshots-20260623-030207
+
 Selected screenshots:
 
 | File | Required size | Store-facing purpose | Alt text |

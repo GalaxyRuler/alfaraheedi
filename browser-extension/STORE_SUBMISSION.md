@@ -50,7 +50,8 @@ The extension connects only to a loopback Nahou API configured in
 settings. It does not use a hosted writing service, telemetry, analytics, or
 raw text logging. It skips password fields, read-only or disabled fields,
 sensitive-looking fields, and sensitive-looking ancestor containers. Checking
-can be paused from the toolbar popup or options page.
+can be paused from the toolbar popup or options page, and users can disable or
+re-enable checking for the current site from the toolbar popup.
 
 This v0.7 foundation does not yet provide site-specific Gmail, WhatsApp Web, or
 Google Docs integrations. Those editors may work when their editable field is
@@ -61,7 +62,7 @@ still needs separate QA before store release claims are broadened.
 ## Permission Justifications
 
 - `storage`: stores extension settings only, including the local API URL,
-  writing mode, and enabled/paused state.
+  writing mode, enabled/paused state, and user-selected disabled-site hostnames.
 - `host_permissions`: limited to `http://127.0.0.1/*` and
   `http://localhost/*` so the service worker can call the user's local API.
 - `content_scripts`: run on `http://*/*` and `https://*/*` pages at
@@ -72,7 +73,7 @@ Chrome permission field text:
 
 ```text
 storage: Used only to save Nahou extension settings, including the local
-API URL, writing mode, and enabled/paused state.
+API URL, writing mode, enabled/paused state, and disabled-site hostnames.
 
 http://127.0.0.1/* and http://localhost/*: Used only by the extension service
 worker to call the user's local Nahou API. The extension does not call a
@@ -80,7 +81,8 @@ hosted writing API.
 
 http://*/* and https://*/* content scripts: Required to detect and assist
 editable text fields on web pages. The content script checks only the active
-editable field, skips sensitive-looking fields, and can be paused by the user.
+editable field, skips sensitive-looking fields, and can be paused globally or
+disabled for the current site by the user.
 ```
 
 ## Privacy Claims
@@ -93,6 +95,8 @@ editable field, skips sensitive-looking fields, and can be paused by the user.
   `importScripts`.
 - Text is sent only to the configured local API loopback URL.
 - The extension can be paused from the toolbar popup or options page.
+- The extension can be disabled and re-enabled for the current site from the
+  toolbar popup.
 - The service worker rejects blank, malformed, and oversized analysis messages
   before calling the local API.
 - Sensitive-looking fields and sensitive ancestor containers are skipped before
@@ -116,6 +120,9 @@ Chrome privacy-practices answers:
   The linked policy must state that the extension sends active-field text only
   to the configured local loopback API, does not log raw editor text, does not
   use telemetry, and does not transfer text to Nahou-hosted services.
+- Chrome limited-use disclosure: no sale of extension data, no telemetry or
+  advertising use, local processing through the configured loopback Nahou API
+  only, and no transfer of editor text to Nahou-hosted services.
 
 Microsoft Edge Partner Center notes:
 
@@ -139,8 +146,9 @@ Nahou is local-first. The extension sends active editable-field text only
 to a loopback API configured by the user, defaulting to localhost/127.0.0.1.
 There is no hosted writing API, telemetry, analytics, remote code execution, or
 raw text logging. The extension can be paused from the toolbar popup or options
-page. Password fields, read-only/disabled fields, sensitive-looking fields, and
-sensitive-looking ancestor containers are skipped before analysis.
+page and disabled for the current site from the toolbar popup. Password fields,
+read-only/disabled fields, sensitive-looking fields, and sensitive-looking
+ancestor containers are skipped before analysis.
 
 To test manually, run the local Nahou API, configure the extension API URL
 to the loopback address, type "helo wat you are do?" in a normal textarea, wait

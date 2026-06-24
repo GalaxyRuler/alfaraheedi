@@ -79,10 +79,12 @@ describe("browser extension settings", () => {
         apiBaseUrl: "https://example.com",
         writingMode: "unsupported",
         enabled: false,
+        disabledHosts: ["Example.COM", "bad host", "example.com"],
       }),
     ).toEqual({
       ...DEFAULT_EXTENSION_SETTINGS,
       enabled: false,
+      disabledHosts: ["example.com"],
     });
 
     expect(
@@ -90,11 +92,13 @@ describe("browser extension settings", () => {
         apiBaseUrl: "http://localhost:3402/",
         writingMode: "mixed",
         enabled: false,
+        disabledHosts: ["mail.example.com"],
       }),
     ).toEqual({
       apiBaseUrl: "http://localhost:3402",
       writingMode: "mixed",
       enabled: false,
+      disabledHosts: ["mail.example.com"],
     });
   });
 
@@ -114,6 +118,7 @@ describe("browser extension settings", () => {
         apiBaseUrl: "http://127.0.0.1:3402/",
         writingMode: "english",
         enabled: false,
+        disabledHosts: ["Example.com"],
       },
       chromeApi,
     );
@@ -122,12 +127,14 @@ describe("browser extension settings", () => {
       apiBaseUrl: "http://127.0.0.1:3402",
       writingMode: "english",
       enabled: false,
+      disabledHosts: ["example.com"],
     });
     expect(chromeApi.storage.local.set).toHaveBeenCalledWith({
       alfaraheediSettings: {
         apiBaseUrl: "http://127.0.0.1:3402",
         writingMode: "english",
         enabled: false,
+        disabledHosts: ["example.com"],
       },
     });
   });
@@ -442,6 +449,55 @@ describe("browser extension settings", () => {
     delete globalThis.chrome;
   });
 
+  it("skips background analysis without calling the API when the site is disabled", async () => {
+    const listeners = [];
+    globalThis.chrome = {
+      runtime: {
+        onMessage: {
+          addListener: vi.fn((listener) => listeners.push(listener)),
+        },
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "english",
+              enabled: true,
+              disabledHosts: ["mail.example.com"],
+            },
+          })),
+        },
+      },
+    };
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await import("../../../browser-extension/src/background.js?site-disabled-test");
+
+    const sendResponse = vi.fn();
+    const keepsChannelOpen = listeners[0](
+      {
+        type: "ALFARAHEEDI_ANALYZE_TEXT",
+        text: "helo wat you are do?",
+      },
+      { url: "https://mail.example.com/compose" },
+      sendResponse,
+    );
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled());
+
+    expect(keepsChannelOpen).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sendResponse).toHaveBeenCalledWith({
+      ok: false,
+      skipped: true,
+      error: "Nahou checking is disabled on this site.",
+    });
+
+    vi.unstubAllGlobals();
+    delete globalThis.chrome;
+  });
+
   it("lets background settings choose writing mode for content script messages", async () => {
     vi.useFakeTimers();
     document.body.innerHTML = `<textarea id="draft"></textarea>`;
@@ -469,6 +525,35 @@ describe("browser extension settings", () => {
     });
 
     vi.useRealTimers();
+    delete globalThis.chrome;
+  });
+
+  it("lets the popup read the current page URL from the content script", async () => {
+    const listeners = [];
+    globalThis.chrome = {
+      runtime: {
+        onMessage: {
+          addListener: vi.fn((listener) => listeners.push(listener)),
+        },
+        sendMessage: vi.fn(async () => ({
+          ok: true,
+          analysis: { suggestions: [] },
+        })),
+      },
+    };
+
+    await import("../../../browser-extension/src/content.js?page-location-test");
+
+    const sendResponse = vi.fn();
+    const keepsChannelOpen = listeners[0](
+      { type: "ALFARAHEEDI_PAGE_LOCATION" },
+      {},
+      sendResponse,
+    );
+
+    expect(keepsChannelOpen).toBe(false);
+    expect(sendResponse).toHaveBeenCalledWith({ url: window.location.href });
+
     delete globalThis.chrome;
   });
 
@@ -601,6 +686,7 @@ describe("browser extension settings", () => {
         apiBaseUrl: "http://127.0.0.1:3402",
         writingMode: "mixed",
         enabled: false,
+        disabledHosts: [],
       },
     });
     expect(document.querySelector("#toggle-enabled").textContent).toBe(
@@ -611,7 +697,107 @@ describe("browser extension settings", () => {
     delete globalThis.chrome;
   });
 
-  it("saves the enabled setting from the extension options page", async () => {
+  it("lets the toolbar popup disable and re-enable checking on the current site", async () => {
+    document.body.innerHTML = `
+      <main>
+        <h1>Nahou</h1>
+        <dl>
+          <dt>Local API</dt>
+          <dd id="api-base-url">Loading...</dd>
+          <dt>Writing mode</dt>
+          <dd id="writing-mode">Loading...</dd>
+          <dt>API status</dt>
+          <dd id="api-status">Checking...</dd>
+          <dt>Checking</dt>
+          <dd id="checking-status">Loading...</dd>
+          <dt>Current site</dt>
+          <dd id="site-status">Loading...</dd>
+        </dl>
+        <button id="toggle-enabled" type="button">Loading...</button>
+        <button id="toggle-site" type="button">Loading...</button>
+        <button id="open-options" type="button">Open settings</button>
+        <p id="status" role="status"></p>
+      </main>
+    `;
+    const store = {
+      alfaraheediSettings: {
+        apiBaseUrl: "http://127.0.0.1:3402",
+        writingMode: "mixed",
+        enabled: true,
+      },
+    };
+    globalThis.chrome = {
+      runtime: {
+        openOptionsPage: vi.fn(async () => undefined),
+      },
+      tabs: {
+        query: vi.fn(async () => [{ id: 7 }]),
+        sendMessage: vi.fn(async () => ({
+          url: "https://mail.example.com/compose",
+        })),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => store),
+          set: vi.fn(async (value) => Object.assign(store, value)),
+        },
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ status: "ok", service: "write-api" }),
+      })),
+    );
+
+    await import("../../../browser-extension/src/popup.js?toggle-site-test");
+    await vi.waitFor(() =>
+      expect(document.querySelector("#toggle-site").textContent).toBe(
+        "Disable on this site",
+      ),
+    );
+
+    document.querySelector("#toggle-site").click();
+    await vi.waitFor(() =>
+      expect(document.querySelector("#site-status").textContent).toBe(
+        "mail.example.com disabled",
+      ),
+    );
+
+    expect(chrome.storage.local.set).toHaveBeenLastCalledWith({
+      alfaraheediSettings: {
+        apiBaseUrl: "http://127.0.0.1:3402",
+        writingMode: "mixed",
+        enabled: true,
+        disabledHosts: ["mail.example.com"],
+      },
+    });
+    expect(document.querySelector("#toggle-site").textContent).toBe(
+      "Re-enable on this site",
+    );
+
+    document.querySelector("#toggle-site").click();
+    await vi.waitFor(() =>
+      expect(document.querySelector("#site-status").textContent).toBe(
+        "mail.example.com enabled",
+      ),
+    );
+
+    expect(chrome.storage.local.set).toHaveBeenLastCalledWith({
+      alfaraheediSettings: {
+        apiBaseUrl: "http://127.0.0.1:3402",
+        writingMode: "mixed",
+        enabled: true,
+        disabledHosts: [],
+      },
+    });
+
+    vi.unstubAllGlobals();
+    delete globalThis.chrome;
+  });
+
+  it("saves the enabled setting and disabled sites from the extension options page", async () => {
     document.body.innerHTML = `
       <form id="settings-form">
         <input id="api-base-url" name="apiBaseUrl" type="url">
@@ -620,6 +806,7 @@ describe("browser extension settings", () => {
           <option value="mixed">Mixed</option>
         </select>
         <input id="enabled" name="enabled" type="checkbox">
+        <textarea id="disabled-hosts" name="disabledHosts"></textarea>
         <button type="submit">Save</button>
       </form>
       <p id="status" role="status"></p>
@@ -648,6 +835,8 @@ describe("browser extension settings", () => {
     );
 
     document.querySelector("#enabled").checked = false;
+    document.querySelector("#disabled-hosts").value =
+      "mail.example.com\nExample.com\ninvalid host";
     document.querySelector("#settings-form").dispatchEvent(
       new SubmitEvent("submit", { bubbles: true, cancelable: true }),
     );
@@ -660,6 +849,7 @@ describe("browser extension settings", () => {
         apiBaseUrl: "http://127.0.0.1:3402",
         writingMode: "mixed",
         enabled: false,
+        disabledHosts: ["example.com", "mail.example.com"],
       },
     });
 

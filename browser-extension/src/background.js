@@ -1,5 +1,5 @@
 import { analyzeTextWithLocalApi } from "./localApi.js";
-import { getExtensionSettings } from "./settings.js";
+import { getExtensionSettings, isSiteDisabled } from "./settings.js";
 
 const ANALYZE_MESSAGE = "ALFARAHEEDI_ANALYZE_TEXT";
 const MAX_TEXT_CHARS = 6_000;
@@ -33,6 +33,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return {
           skipped: true,
           error: "Nahou checking is paused.",
+        };
+      }
+
+      if (isSiteDisabled(settings, _sender?.url)) {
+        return {
+          skipped: true,
+          error: "Nahou checking is disabled on this site.",
         };
       }
 

@@ -24,7 +24,8 @@
       }
 
       input,
-      select {
+      select,
+      textarea {
         box-sizing: border-box;
         font: inherit;
         min-height: 40px;
@@ -89,6 +90,9 @@
           <input id="enabled" name="enabled" type="checkbox">
           Check editable fields
         </label>
+
+        <label for="disabled-hosts">Disabled sites</label>
+        <textarea id="disabled-hosts" name="disabledHosts" rows="4" placeholder="example.com"></textarea>
 
         <button type="submit">Save</button>
       </form>
