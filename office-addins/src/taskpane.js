@@ -60,13 +60,14 @@ function renderSuggestions(analysis) {
 
   for (const suggestion of suggestions) {
     const item = document.createElement("li");
+    item.dir = "auto";
     item.textContent = suggestionText(suggestion);
     list.append(item);
   }
 
   if (suggestions.length === 0) {
     const item = document.createElement("li");
-    item.textContent = "No suggestions returned.";
+    item.textContent = "No active suggestions.";
     list.append(item);
   }
 }
@@ -96,7 +97,7 @@ async function checkSelection() {
     });
   } catch {
     resetSelectionState();
-    setStatus("Nahou local API is unavailable. Start the local API and try again.");
+    setStatus("Disconnected local API. Start Nahou, then check the selection again.");
     return;
   }
 
@@ -123,7 +124,7 @@ async function applySafeFixes() {
       text: state.selectedText,
     });
   } catch {
-    setStatus("Nahou local API is unavailable. Copy the current preview or try again after starting the local API.");
+    setStatus("Disconnected local API. Copy the current preview or try again after starting Nahou.");
     setCopyEnabled(Boolean(state.correctedText));
     return;
   }

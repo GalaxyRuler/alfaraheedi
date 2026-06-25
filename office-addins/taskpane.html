@@ -40,13 +40,13 @@
         <button id="copy-corrected" type="button" disabled>Copy Corrected Text</button>
       </section>
 
-      <section class="status-panel" aria-live="polite">
+      <section class="status-panel" aria-live="polite" aria-atomic="true">
         <p id="status-text">Select text in Word or PowerPoint, then check it here.</p>
       </section>
 
       <section class="preview-panel" aria-label="Corrected preview">
         <label for="corrected-preview">Corrected preview</label>
-        <textarea id="corrected-preview" readonly></textarea>
+        <textarea id="corrected-preview" readonly dir="auto"></textarea>
       </section>
 
       <section class="suggestions-panel" aria-label="Suggestions">

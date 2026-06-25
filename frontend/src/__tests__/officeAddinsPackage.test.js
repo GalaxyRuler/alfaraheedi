@@ -65,13 +65,17 @@ describe("Office add-ins package metadata", () => {
     expect(taskpane).toMatch(/Check Selection/u);
     expect(taskpane).toMatch(/Apply Safe Fixes/u);
     expect(taskpane).toMatch(/Copy Corrected Text/u);
+    expect(taskpane).toMatch(/aria-atomic="true"/u);
+    expect(taskpane).toMatch(/id="corrected-preview" readonly dir="auto"/u);
     expect(taskpaneJs).toMatch(/Office\.onReady/u);
     expect(taskpaneJs).toMatch(/getCurrentOfficeSelection/u);
     expect(taskpaneJs).toMatch(/replaceSelectedTextInOffice/u);
     expect(taskpaneJs).toMatch(/analyzeTextWithLocalApi/u);
     expect(taskpaneJs).toMatch(/applySafeWithLocalApi/u);
     expect(taskpaneJs).toMatch(/stale selection|Selection changed/iu);
-    expect(taskpaneJs).toMatch(/Nahou local API is unavailable/u);
+    expect(taskpaneJs).toMatch(/Disconnected local API/u);
+    expect(taskpaneJs).toMatch(/No active suggestions/u);
+    expect(taskpaneJs).toMatch(/item\.dir = "auto"/u);
     expect(officeApi).toMatch(/getSelectedDataAsync/u);
     expect(officeApi).toMatch(/setSelectedDataAsync/u);
     expect(officeApi).toMatch(/Office\.CoercionType\.Text/u);
