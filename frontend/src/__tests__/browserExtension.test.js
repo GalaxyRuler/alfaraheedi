@@ -1,5 +1,5 @@
 import { fireEvent, screen } from "@testing-library/dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   applySuggestionToEditor,
@@ -106,6 +106,43 @@ function openRuntimeSuggestionCardFromBadge() {
   fireEvent.click(badge);
   return screen.getByRole("dialog", { name: "Nahou suggestions" });
 }
+
+function defaultEnabledContentStorage() {
+  return {
+    local: {
+      get: vi.fn(async () => ({
+        alfaraheediSettings: {
+          enabled: true,
+          disabledHosts: [],
+        },
+      })),
+    },
+    onChanged: {
+      addListener: vi.fn(),
+    },
+  };
+}
+
+let chromeValue;
+
+beforeEach(() => {
+  chromeValue = undefined;
+  Object.defineProperty(globalThis, "chrome", {
+    configurable: true,
+    get: () => chromeValue,
+    set: (value) => {
+      if (value?.runtime?.sendMessage && !value.storage) {
+        value.storage = defaultEnabledContentStorage();
+      }
+      chromeValue = value;
+    },
+  });
+});
+
+afterEach(() => {
+  delete globalThis.chrome;
+  chromeValue = undefined;
+});
 
 describe("browser extension editor surface", () => {
   it("discovers textarea and contenteditable writing surfaces", () => {

@@ -1,5 +1,7 @@
 import {
+  DEFAULT_EXTENSION_SETTINGS,
   getExtensionSettings,
+  LOOPBACK_API_URL_ERROR,
   saveExtensionSettings,
 } from "./settings.js";
 
@@ -8,6 +10,7 @@ const apiBaseUrl = document.querySelector("#api-base-url");
 const writingMode = document.querySelector("#writing-mode");
 const enabled = document.querySelector("#enabled");
 const disabledHosts = document.querySelector("#disabled-hosts");
+const resetSettings = document.querySelector("#reset-settings");
 const status = document.querySelector("#status");
 let currentSettings = null;
 
@@ -29,17 +32,29 @@ form.addEventListener("submit", async (event) => {
     renderSettings(saved);
     status.textContent = "Saved.";
   } catch (error) {
-    status.textContent =
-      error instanceof Error ? error.message : "Could not save settings.";
+    status.textContent = safeOptionsError(error, "Could not save settings.");
   }
 });
+
+if (resetSettings) {
+  resetSettings.addEventListener("click", async () => {
+    status.textContent = "";
+
+    try {
+      const saved = await saveExtensionSettings(DEFAULT_EXTENSION_SETTINGS);
+      renderSettings(saved);
+      status.textContent = "Reset to defaults.";
+    } catch (error) {
+      status.textContent = safeOptionsError(error, "Could not reset settings.");
+    }
+  });
+}
 
 async function loadSettings() {
   try {
     renderSettings(await getExtensionSettings());
   } catch (error) {
-    status.textContent =
-      error instanceof Error ? error.message : "Could not load settings.";
+    status.textContent = safeOptionsError(error, "Could not load settings.");
   }
 }
 
@@ -51,4 +66,11 @@ function renderSettings(settings) {
   if (disabledHosts) {
     disabledHosts.value = settings.disabledHosts.join("\n");
   }
+}
+
+function safeOptionsError(error, fallback) {
+  if (error instanceof Error && error.message === LOOPBACK_API_URL_ERROR) {
+    return error.message;
+  }
+  return fallback;
 }

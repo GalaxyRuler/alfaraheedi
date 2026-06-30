@@ -15,8 +15,8 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - The content script is injected into matching frames so iframe-hosted editable fields can be handled.
 - Editable fields inside open shadow roots are detected through composed browser event paths.
 - Closed shadow roots and composed-path boundaries that do not expose an editable target are classified as unsupported.
-- Text is debounced and sent through the extension service worker to the configured local Nahou HTTP API.
-- Extension options store the loopback API URL and default writing mode in `chrome.storage.local`.
+- Text is debounced and sent through the extension service worker to the configured local Nahou HTTP API only when checking is enabled for the current site.
+- Extension options store the loopback API URL, default writing mode, enabled state, and disabled-site hosts in `chrome.storage.local`, with a reset control for packaged defaults.
 - The service worker uses the stored loopback API URL and writing mode for analysis requests; content-script messages cannot override those settings.
 - The service worker rejects blank, malformed, and oversized analysis messages before reading settings or calling the local API.
 - Suggestions render in a small page-local panel near the editor, clamped inside the viewport for right-edge, bottom-edge, or narrow-window editors.
@@ -68,12 +68,16 @@ Open the extension options page to set:
 - Writing mode: Auto, Arabic, English, or Mixed.
 - Check editable fields: on or paused.
 - Disabled sites: hostnames where checking is off until re-enabled.
+- Reset: restore the packaged default loopback URL, writing mode, enabled state, and empty disabled-site list.
 
 Remote API URLs and local URLs outside the manifest host permissions are
 rejected on save and are not persisted. If invalid stored settings are
 encountered, they normalize back to the default loopback API URL. The extension
-package requests only the `storage` permission plus HTTP loopback host
-permissions for the local API bridge.
+content script checks the saved enabled state and disabled-site list before
+sending editor text to the extension runtime, while the service worker repeats
+the same checks before calling the local API. The package requests only the
+`storage` permission plus HTTP loopback host permissions for the local API
+bridge.
 
 ## Package
 
