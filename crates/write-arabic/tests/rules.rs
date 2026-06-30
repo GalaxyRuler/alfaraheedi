@@ -109,6 +109,42 @@ fn arabic_rules_suggest_adding_space_after_latin_question_mark_in_arabic_context
 }
 
 #[test]
+fn arabic_rules_normalize_browser_nbsp_between_arabic_words() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("مرحبا\u{00A0}بالعالم");
+
+    let suggestion = analysis
+        .suggestions
+        .iter()
+        .find(|suggestion| suggestion.source == "arabic:browser-nbsp")
+        .expect("browser NBSP suggestion");
+
+    assert_eq!(suggestion.category, Category::Spacing);
+    assert_eq!(suggestion.original, "\u{00A0}");
+    assert_eq!(suggestion.replacements, vec![" "]);
+    assert!(suggestion.safe_auto_apply);
+}
+
+#[test]
+fn arabic_rules_skip_browser_nbsp_in_technical_and_protected_text() {
+    for text in [
+        "اضغط Ctrl\u{00A0}+\u{00A0}S للحفظ.",
+        "راجع `مرحبا\u{00A0}بالعالم` قبل النشر.",
+    ] {
+        let analysis = Engine::new().with_rule(ArabicRuleSet).analyze(text);
+
+        assert!(
+            analysis
+                .suggestions
+                .iter()
+                .all(|suggestion| suggestion.source != "arabic:browser-nbsp"),
+            "{text}"
+        );
+    }
+}
+
+#[test]
 fn arabic_rules_collapse_repeated_spaces_in_arabic_context() {
     let analysis = Engine::new()
         .with_rule(ArabicRuleSet::default())
@@ -120,6 +156,105 @@ fn arabic_rules_collapse_repeated_spaces_in_arabic_context() {
     assert_eq!(suggestion.original, "  ");
     assert_eq!(suggestion.replacements, vec![" "]);
     assert!(suggestion.safe_auto_apply);
+}
+
+#[test]
+fn arabic_rules_suggest_exact_common_phrase_orthography() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("ان شاء الله نراجع الخطة.");
+
+    let suggestions = analysis
+        .suggestions
+        .iter()
+        .filter(|suggestion| suggestion.source == "arabic:common-phrase-orthography")
+        .collect::<Vec<_>>();
+
+    assert_eq!(suggestions.len(), 1);
+    assert_eq!(suggestions[0].original, "ان شاء الله");
+    assert_eq!(suggestions[0].replacements, vec!["إن شاء الله"]);
+    assert!(
+        suggestions
+            .iter()
+            .all(|suggestion| !suggestion.safe_auto_apply)
+    );
+}
+
+#[test]
+fn arabic_rules_keep_exact_common_phrase_orthography_narrow() {
+    for text in [
+        "قابلت رحمه في الدوحة.",
+        "ان شاء الفريق صفحة الاختبار.",
+        "غفر له ورحمه الله.",
+        "اكتب `ان شاء الله` كما هو في المثال.",
+    ] {
+        let analysis = Engine::new().with_rule(ArabicRuleSet).analyze(text);
+
+        assert!(
+            analysis
+                .suggestions
+                .iter()
+                .all(|suggestion| suggestion.source != "arabic:common-phrase-orthography"),
+            "{text}"
+        );
+    }
+}
+
+#[test]
+fn arabic_rules_replace_mixed_latin_comma_when_arabic_sentence_resumes() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("راجع API,ثم احفظ الملف.");
+
+    let comma = analysis
+        .suggestions
+        .iter()
+        .find(|suggestion| suggestion.source == "arabic:latin-comma")
+        .expect("mixed comma suggestion");
+    let spacing = analysis
+        .suggestions
+        .iter()
+        .find(|suggestion| suggestion.source == "arabic:space-after-punctuation")
+        .expect("mixed comma spacing suggestion");
+
+    assert_eq!(comma.original, ",");
+    assert_eq!(comma.replacements, vec!["،"]);
+    assert!(!comma.safe_auto_apply);
+    assert_eq!(spacing.original, "");
+    assert_eq!(spacing.replacements, vec![" "]);
+    assert!(!spacing.safe_auto_apply);
+}
+
+#[test]
+fn arabic_rules_add_spacing_after_accepted_mixed_arabic_comma() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("راجع API،ثم احفظ الملف.");
+
+    let suggestion = analysis
+        .suggestions
+        .iter()
+        .find(|suggestion| suggestion.source == "arabic:space-after-punctuation")
+        .expect("mixed Arabic comma spacing suggestion");
+
+    assert_eq!(suggestion.original, "");
+    assert_eq!(suggestion.replacements, vec![" "]);
+    assert!(!suggestion.safe_auto_apply);
+}
+
+#[test]
+fn arabic_rules_leave_technical_latin_comma_lists_clean() {
+    for text in ["راجع API, CLI قبل النشر.", "شغل npm, cargo test محليا."] {
+        let analysis = Engine::new().with_rule(ArabicRuleSet).analyze(text);
+
+        assert!(
+            analysis
+                .suggestions
+                .iter()
+                .all(|suggestion| suggestion.source != "arabic:latin-comma"),
+            "{text}"
+        );
+    }
 }
 
 #[test]
