@@ -19,7 +19,7 @@ dependencies = [
 
 [[package]]
 name = "alfaraheedi-desktop"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -5099,7 +5099,7 @@ dependencies = [
 
 [[package]]
 name = "write-api"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -5118,14 +5118,14 @@ dependencies = [
 
 [[package]]
 name = "write-arabic"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "write-core",
 ]
 
 [[package]]
 name = "write-cli"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -5138,7 +5138,7 @@ dependencies = [
 
 [[package]]
 name = "write-core"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "serde",
  "thiserror 2.0.18",
@@ -5147,14 +5147,14 @@ dependencies = [
 
 [[package]]
 name = "write-english"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "write-core",
 ]
 
 [[package]]
 name = "write-eval"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "anyhow",
  "serde",
@@ -5166,7 +5166,7 @@ dependencies = [
 
 [[package]]
 name = "write-llm"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "reqwest 0.12.28",
  "serde",
@@ -5177,7 +5177,7 @@ dependencies = [
 
 [[package]]
 name = "write-mixed"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "serde",
  "write-core",
@@ -5185,7 +5185,7 @@ dependencies = [
 
 [[package]]
 name = "write-service"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "serde",
  "tokio",
@@ -5197,7 +5197,7 @@ dependencies = [
 
 [[package]]
 name = "write-spell"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "serde",
  "thiserror 2.0.18",
@@ -5206,7 +5206,7 @@ dependencies = [
 
 [[package]]
 name = "write-wasm"
-version = "1.0.0-rc.1"
+version = "2.0.0-rc.1"
 dependencies = [
  "write-core",
 ]

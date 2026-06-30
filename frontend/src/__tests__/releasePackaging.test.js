@@ -51,11 +51,11 @@ describe("desktop release packaging", () => {
     expect(contract).toMatch(
       /Nahou checks supported browser text fields as you type, shows local-first suggestions directly in the field, and applies accepted deterministic suggestions in place when the original text still matches\./u,
     );
-    expect(readme).toMatch(/planned browser-first development lane, not a current public release\s+claim/u);
+    expect(readme).toMatch(/browser-first local-ready release-candidate lane/u);
     expect(readme).toMatch(/V2A browser-extension foundation/u);
     expect(readme).not.toMatch(/The v0\.7 browser-extension foundation lives in `browser-extension\/`/u);
-    expect(contract).toMatch(/does not replace the v1\.0 desktop selected-text product contract/u);
-    expect(contract).toMatch(/not a shipped public release claim/u);
+    expect(contract).toMatch(/does not replace the v1\.0\s+desktop selected-text product contract for desktop workflows/u);
+    expect(contract).toMatch(/Store\s+readiness and site-specific production-editor claims require the separate manual\s+and account-side gates/u);
     expect(contract).toMatch(/content-side settings gate/u);
     expect(contract).toMatch(/before editor text leaves the page context/u);
     expect(contract).toMatch(/background settings gate/u);
@@ -99,15 +99,30 @@ describe("desktop release packaging", () => {
       "utf8",
     );
 
-    expect(source).toMatch(/\[string\]\$Version = "1\.0\.0-rc\.1"/u);
+    expect(source).toMatch(/\[string\]\$Version = "2\.0\.0-rc\.1"/u);
     expect(source).not.toMatch(/\[string\]\$Version = "0\.4\.1"/u);
   });
 
-  it("does not describe the old v0.4 zip as the current public package", async () => {
+  it("keeps frontend package and lockfile release metadata in sync", async () => {
+    const packageJson = JSON.parse(
+      await fs.readFile(path.join(repoRoot, "frontend/package.json"), "utf8"),
+    );
+    const packageLock = JSON.parse(
+      await fs.readFile(path.join(repoRoot, "frontend/package-lock.json"), "utf8"),
+    );
+
+    expect(packageJson.version).toBe("2.0.0-rc.1");
+    expect(packageLock.version).toBe(packageJson.version);
+    expect(packageLock.packages[""].version).toBe(packageJson.version);
+  });
+
+  it("does not describe old Windows zip packages as the current V2A package", async () => {
     const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
 
-    expect(readme).toMatch(/current recommended Windows package/u);
-    expect(readme).toMatch(/Nahou-0\.5\.0-windows-x64-setup\.exe/u);
+    expect(readme).toMatch(/package-windows\.ps1 -Version 2\.0\.0-rc\.1/u);
+    expect(readme).toMatch(/browser-extension upload package/u);
+    expect(readme).toMatch(/nahou-browser-extension-2\.0\.0\.1\.zip/u);
+    expect(readme).toMatch(/Windows desktop installer remains the recommended package for the v1 desktop selected-text path/u);
     expect(readme).not.toMatch(/current v0\.4 Windows package/u);
   });
 

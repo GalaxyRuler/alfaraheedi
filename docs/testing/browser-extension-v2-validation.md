@@ -1,7 +1,8 @@
 # Browser Extension V2 Validation Summary
 
 This is the public-safe validation summary for the Nahou V2A browser-first
-evidence lane. Detailed logs, screenshots, account-side notes, and foreground
+local-ready release-candidate evidence lane (`2.0.0-rc.1`, browser extension
+`2.0.0.1`). Detailed logs, screenshots, account-side notes, and foreground
 browser artifacts must stay in ignored private locations such as
 `docs/testing/reports/` or `dist/browser-extension-manual-qa/`.
 
@@ -64,7 +65,7 @@ artifact check.
   public privacy URL readiness, store-dashboard review, and account-side
   Chrome Web Store and Edge Add-ons completion.
 
-## Current Phase 9 Status
+## Current Release-Candidate Status
 
 Local-ready automated browser-extension evidence is represented by
 `validate-browser-extension-release.ps1`, package/runtime tests, the keyboard

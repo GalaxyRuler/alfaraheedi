@@ -88,7 +88,7 @@ Build a clean extension zip from the repository root:
 .\scripts\package-browser-extension.ps1
 ```
 
-The package is written to `dist\browser-extension\nahou-browser-extension-1.0.0.1.zip`.
+The package is written to `dist\browser-extension\nahou-browser-extension-2.0.0.1.zip`.
 The packaging helper validates the MV3 manifest, keeps API host permissions loopback-only, rejects optional permissions, rejects external-connection or web-accessible-resource expansion, requires matching-frame injection for iframe editors, verifies the manifest-declared PNG icons and toolbar action, and includes only runtime extension files, icons, and required static imports.
 `src/editorSurface.js` is a source/test helper for focused DOM behavior coverage; it is intentionally excluded from the upload zip because the packaged content script is self-contained.
 Store-submission notes live in `STORE_SUBMISSION.md`; they document the single purpose, permission justifications, privacy claims, and still-manual review items.

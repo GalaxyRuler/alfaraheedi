@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CredentialPath,
 
-    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-1.0.0.1.zip",
+    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-2.0.0.1.zip",
 
     [string]$QaRoot = ""
 )

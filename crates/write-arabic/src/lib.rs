@@ -403,12 +403,10 @@ struct ExactPhraseCorrection {
     replacement: &'static str,
 }
 
-const EXACT_PHRASE_CORRECTIONS: &[ExactPhraseCorrection] = &[
-    ExactPhraseCorrection {
-        original: "ان شاء الله",
-        replacement: "إن شاء الله",
-    },
-];
+const EXACT_PHRASE_CORRECTIONS: &[ExactPhraseCorrection] = &[ExactPhraseCorrection {
+    original: "ان شاء الله",
+    replacement: "إن شاء الله",
+}];
 
 fn common_phrase_orthography_suggestions(document: &Document) -> Vec<Suggestion> {
     let text = document.text();

@@ -142,6 +142,7 @@ $manualGatePath = Join-Path $extensionPath "MANUAL_RELEASE_GATES.md"
 $privacyPolicyPath = Join-Path $extensionPath "PRIVACY_POLICY.md"
 $publicPrivacyPagePath = Join-Path $RepoRoot "docs\public\browser-extension\privacy.html"
 $validationSummaryPath = Join-Path $RepoRoot "docs\testing\browser-extension-v0.7-validation.md"
+$v2ValidationSummaryPath = Join-Path $RepoRoot "docs\testing\browser-extension-v2-validation.md"
 
 if (-not (Test-Path -LiteralPath $extensionPath)) {
     throw "Extension root not found: $extensionPath"
@@ -193,6 +194,7 @@ $reviewerDocPaths = @(
     (Join-Path $docsRoot "STORE_ASSETS.md"),
     (Join-Path $docsRoot "MANUAL_RELEASE_GATES.md"),
     (Join-Path $docsRoot "browser-extension-v0.7-validation.md"),
+    (Join-Path $docsRoot "browser-extension-v2-validation.md"),
     (Join-Path $docsRoot "PRIVACY_POLICY.md"),
     (Join-Path $docsRoot "privacy.html")
 )
@@ -201,8 +203,9 @@ Copy-RequiredFile $submissionNotesPath $reviewerDocPaths[1]
 Copy-RequiredFile $assetManifestPath $reviewerDocPaths[2]
 Copy-RequiredFile $manualGatePath $reviewerDocPaths[3]
 Copy-RequiredFile $validationSummaryPath $reviewerDocPaths[4]
-Copy-RequiredFile $privacyPolicyPath $reviewerDocPaths[5]
-Copy-RequiredFile $publicPrivacyPagePath $reviewerDocPaths[6]
+Copy-RequiredFile $v2ValidationSummaryPath $reviewerDocPaths[5]
+Copy-RequiredFile $privacyPolicyPath $reviewerDocPaths[6]
+Copy-RequiredFile $publicPrivacyPagePath $reviewerDocPaths[7]
 
 $readmePath = Join-Path $submissionRoot "README.md"
 @"

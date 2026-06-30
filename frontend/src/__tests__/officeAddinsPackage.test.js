@@ -27,7 +27,7 @@ describe("Office add-ins package metadata", () => {
     expect(devManifest).toMatch(/^<\?xml version="1\.0" encoding="utf-8"/u);
     expect(prodManifest).toMatch(/^<\?xml version="1\.0" encoding="utf-8"/u);
     expect(`${manifest}\n${devManifest}\n${prodManifest}`).not.toMatch(/encoding="utf-16"/u);
-    expect(manifest).toMatch(/<Version>1\.0\.0\.1<\/Version>/u);
+    expect(manifest).toMatch(/<Version>2\.0\.0\.1<\/Version>/u);
     expect(manifest).toMatch(/<Host Name="Document"\s*\/>/u);
     expect(manifest).toMatch(/<Host Name="Presentation"\s*\/>/u);
     expect(manifest).not.toMatch(/<Requirements>/u);
@@ -315,8 +315,8 @@ describe("Office add-ins package metadata", () => {
     expect(workflow).toMatch(/cache-dependency-path:\s+frontend\/package-lock\.json/u);
     expect(workflow).toMatch(/validate-office-addins-release\.ps1/u);
     expect(workflow).toMatch(/actions\/upload-artifact@v6/u);
-    expect(workflow).toMatch(/nahou-office-addins-1\.0\.0\.1-foundation/u);
-    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-1\.0\.0\.1\.zip/u);
+    expect(workflow).toMatch(/nahou-office-addins-2\.0\.0\.1-foundation/u);
+    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-2\.0\.0\.1\.zip/u);
   });
 
   it("documents the v0.8 boundary without claiming live Office store readiness", async () => {

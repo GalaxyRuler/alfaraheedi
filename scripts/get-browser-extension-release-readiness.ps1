@@ -197,6 +197,7 @@ $requiredReviewerDocs = @(
     "STORE_ASSETS.md",
     "MANUAL_RELEASE_GATES.md",
     "browser-extension-v0.7-validation.md",
+    "browser-extension-v2-validation.md",
     "PRIVACY_POLICY.md",
     "privacy.html"
 )

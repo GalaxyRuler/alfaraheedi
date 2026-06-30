@@ -194,6 +194,7 @@ $localCheckTable
 - Store asset notes: 02-reviewer-docs/STORE_ASSETS.md
 - Manual release gates: 02-reviewer-docs/MANUAL_RELEASE_GATES.md
 - Public validation summary: 02-reviewer-docs/browser-extension-v0.7-validation.md
+- V2 validation summary: 02-reviewer-docs/browser-extension-v2-validation.md
 - Privacy policy: 02-reviewer-docs/PRIVACY_POLICY.md
 - Public privacy page source: 02-reviewer-docs/privacy.html
 

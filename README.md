@@ -8,7 +8,7 @@
 
 Nahou is an early Rust-native, local-first writing checker focused on high-precision safe corrections and correct Unicode offsets. The current rule set focuses on Arabic writing support, and it is not yet a full grammar checker.
 
-The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. The v0.7 browser-extension foundation adds local-first editable web-field checking with accessibility guardrails for panel semantics, text direction, contrast, and Windows forced-colors mode. It is designed to keep user text on the user's machine by default.
+The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a local web workbench, opt-in local LLM suggestions, Docker runtime support, Windows packaging, and a small release eval gate. The v0.5 release adds a packaged Windows companion that checks text selected in other apps through an explicit hotkey flow. The v2.0.0-rc.1 browser-extension release candidate adds local-first editable web-field checking with in-field suggestions, guarded apply, and accessibility guardrails for panel semantics, text direction, contrast, and Windows forced-colors mode. It is designed to keep user text on the user's machine by default.
 
 ## v1.0 Product Contract
 
@@ -29,17 +29,19 @@ Public v1.0 claims are defined in
 `docs/public/v1.0-product-contract.md`, and release evidence is tracked in
 `docs/testing/v1.0-acceptance-matrix.md`.
 
-## V2A Browser-First Development Lane
+## V2A Browser-First Release Candidate
 
-V2A is a planned browser-first development lane, not a current public release
-claim. Its target claim is: Nahou checks supported browser text fields as you
-type, shows local-first suggestions directly in the field, and applies accepted
-deterministic suggestions in place when the original text still matches.
+V2A is a browser-first local-ready release-candidate lane. Its bounded claim is:
+Nahou checks supported browser text fields as you type, shows local-first
+suggestions directly in the field, and applies accepted deterministic
+suggestions in place when the original text still matches.
 
 V2A remains limited to supported browser text fields, local loopback processing,
-and deterministic guarded apply. V2B desktop overlay work is deferred until
-browser behavior is proven by evidence, and Office inline behavior remains a
-separately gated track unless explicitly rescoped.
+and deterministic guarded apply. Public store readiness remains gated by live
+production-editor QA, manual screen-reader review, and account-side Chrome Web
+Store / Edge Add-ons submission. V2B desktop overlay work is deferred until
+browser behavior is release-candidate stable, and Office inline behavior remains
+a separately gated track unless explicitly rescoped.
 
 The V2A claim gates are defined in
 `docs/public/v2-product-contract.md` and
@@ -333,17 +335,17 @@ With a real OpenAI-compatible local runtime already running, set `ALFARAHEEDI_LL
 
 ## Download
 
-Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). The current recommended Windows package is the desktop installer `Nahou-0.5.0-windows-x64-setup.exe`. The CLI/web zip remains available as an optional developer artifact.
+Public release builds are published on the [GitHub Releases page](https://github.com/GalaxyRuler/alfaraheedi/releases). For V2A, the browser-extension upload package is `dist\browser-extension\nahou-browser-extension-2.0.0.1.zip` after running the release validation scripts. The Windows desktop installer remains the recommended package for the v1 desktop selected-text path, and the CLI/web zip remains an optional developer artifact.
 
 ## Packaging
 
 Build the optional Windows x64 developer zip:
 
 ```powershell
-.\scripts\package-windows.ps1 -Version 0.5.0
+.\scripts\package-windows.ps1 -Version 2.0.0-rc.1
 ```
 
-This legacy package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Nahou.ps1`. For v0.5 user releases, prefer the desktop installer produced by `npm run desktop:build`.
+This developer package includes `writecheck.exe`, `write-api.exe`, the built web app, docs, licenses, and `Start-Nahou.ps1`. For the v1 desktop selected-text path, prefer the desktop installer produced by `npm run desktop:build`; for V2A, the browser-extension upload package is built by `.\scripts\package-browser-extension.ps1`.
 
 ## Roadmap
 
@@ -353,7 +355,8 @@ Near-term work after the public MVP:
 - Add normalization checks only when reversible offset maps are proven.
 - Keep dictionary and morphology work behind clear licensing and accuracy gates.
 - v0.6: in-app local LLM setup and selected-text LLM suggestions.
-- v0.7: browser extension for live web editor underlines.
+- v2.0.0-rc.1: V2A browser-first local-ready extension for supported browser
+  text fields.
 - v0.8: Word and PowerPoint Office add-ins foundation, then sideload QA.
 - v0.9: UI Automation TextPattern capture pilot for supported Windows native text controls.
 - V2A: browser-first in-text assistance for supported browser text fields,
@@ -373,7 +376,8 @@ Near-term work after the public MVP:
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.
-- v1.0 release-blocking support remains limited to the product contract and
-  manual QA evidence for the desktop-foundation selected-text flow. Browser,
-  live web editor, Word, and PowerPoint support remain deferred integration
-  gates until their separate QA evidence is complete.
+- V2A release-candidate support remains limited to the product contract and
+  public-safe local-ready evidence for supported browser text fields. Live
+  production-editor claims, browser-store approval, Word, PowerPoint, and
+  desktop-wide overlay support remain separate gates until their own QA evidence
+  is complete.

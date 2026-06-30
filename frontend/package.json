@@ -1,7 +1,7 @@
 {
   "name": "alfaraheedi-frontend",
   "private": true,
-  "version": "1.0.0-rc.1",
+  "version": "2.0.0-rc.1",
   "type": "module",
   "description": "Local-first writing workbench for the Nahou engine.",
   "scripts": {
