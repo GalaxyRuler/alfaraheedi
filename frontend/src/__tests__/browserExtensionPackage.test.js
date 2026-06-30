@@ -372,7 +372,10 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/local API URL/iu);
     expect(source).toMatch(/writing mode/iu);
     expect(source).toMatch(/enabled or paused state/iu);
-    expect(source).toMatch(/Content-script messages cannot override the stored API URL or writing mode/u);
+    expect(source).toMatch(/content script checks the enabled and disabled-site settings before\s+sending\s+active-field text to the extension runtime/iu);
+    expect(source).toMatch(/service worker\s+repeats the same\s+settings gate before\s+calling\s+the local API/iu);
+    expect(source).toMatch(/health and status checks do not include editor text/iu);
+    expect(source).toMatch(/Content-script messages cannot\s+override the stored API URL\s+or\s+writing mode/u);
     expect(source).toMatch(/does not store captured editor text/iu);
     expect(source).toMatch(/does not use telemetry/iu);
     expect(source).toMatch(/does not load or execute remote code/iu);
@@ -403,6 +406,8 @@ describe("browser extension package metadata", () => {
     );
     expect(source).toMatch(/Chrome single-purpose field/iu);
     expect(source).toMatch(/Chrome permission field text/iu);
+    expect(source).toMatch(/V2A browser-first local-ready build/iu);
+    expect(source).not.toMatch(/This v0\.7 foundation/u);
     expect(source).toMatch(/No, I am not using remote code\./u);
     expect(source).toMatch(/rejects blank, malformed, and oversized analysis messages/iu);
     expect(source).toMatch(/Visibility:\s+keep `Hidden`/iu);
@@ -478,9 +483,11 @@ describe("browser extension package metadata", () => {
       "ManualQaReportCompleted",
       "Decision: Public release approved",
       "no TODO",
+      "V2A browser-first build",
     ]) {
       expect(gateSource).toContain(requiredText);
     }
+    expect(gateSource).not.toMatch(/extension v0\.7/u);
 
     expect(reportScript).toMatch(/browser-extension\\MANUAL_RELEASE_GATES\.md/u);
     expect(reportScript).toMatch(/dist\\browser-extension-manual-qa/u);
@@ -505,6 +512,27 @@ describe("browser extension package metadata", () => {
     expect(reportCheckScript).toMatch(/\\bTODO\\b/u);
     expect(reportCheckScript).not.toMatch(/\b(?:POST|PATCH|PUT|DELETE|Remove-Item|Copy-Item|Set-Content|New-Item)\b/u);
     expect(gateSource).toMatch(/get-browser-extension-release-readiness\.ps1/u);
+  });
+
+  it("keeps V2 browser-extension security docs aligned with implemented privacy gates", async () => {
+    const threatModel = await fs.readFile(
+      path.join(repoRoot, "docs/security/v2-browser-extension-threat-model.md"),
+      "utf8",
+    );
+    const privacyReview = await fs.readFile(
+      path.join(repoRoot, "docs/security/v2-browser-extension-privacy-review.md"),
+      "utf8",
+    );
+    const combinedSource = `${threatModel}\n${privacyReview}`;
+
+    expect(combinedSource).toMatch(/content-side settings gate/iu);
+    expect(combinedSource).toMatch(/before editor text leaves the page context/iu);
+    expect(combinedSource).toMatch(/background repeats the same pause and site-disable gate/iu);
+    expect(combinedSource).toMatch(/health checks and settings checks contain no editor text/iu);
+    expect(combinedSource).toMatch(/local loopback Nahou API/iu);
+    expect(combinedSource).toMatch(/no hosted fallback/iu);
+    expect(combinedSource).toMatch(/no telemetry/iu);
+    expect(combinedSource).toMatch(/no raw text retention/iu);
   });
 
   it("keeps the release preflight script wired to package and VM gates", async () => {
@@ -916,8 +944,11 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/local loopback Nahou API/u);
     expect(source).toMatch(/best-effort sensitive-field exclusion/u);
     expect(source).toMatch(/does not send text to Nahou-hosted services/u);
+    expect(source).toMatch(/content script checks the enabled and disabled-site settings before\s+sending\s+active-field text to the extension runtime/iu);
+    expect(source).toMatch(/service worker\s+repeats the same\s+settings gate before\s+calling\s+the local API/iu);
+    expect(source).toMatch(/health and status checks do not include editor text/iu);
     expect(source).toMatch(/does not store captured editor text/u);
-    expect(source).toMatch(/Content-script messages cannot override the stored API URL or\s+writing mode/u);
+    expect(source).toMatch(/Content-script messages cannot\s+override the stored API URL\s+or\s+writing mode/u);
     expect(source).toMatch(/does not use telemetry/u);
     expect(source).toMatch(/does not load or execute remote code/u);
     expect(source).toMatch(/No Nahou operator or reviewer receives or reads user editor text/u);
@@ -1024,6 +1055,8 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/ManualQaReportCompleted/u);
     expect(source).toMatch(/ManualQaReleaseDecision/u);
     expect(source).toMatch(/check-browser-extension-pages-readiness\.ps1 -RequireReady/u);
+    expect(source).toMatch(/nahou-browser-extension-1\.0\.0\.1-release-artifacts/u);
+    expect(source).not.toMatch(/nahou-browser-extension-0\.7\.0-release-artifacts/u);
     expect(source).toMatch(/browser-extension\/MANUAL_RELEASE_GATES\.md/u);
     expect(source).toMatch(/docs\/testing\/browser-extension-v0\.7-validation\.md/u);
     expect(source).toMatch(/live production-editor QA, manual screen-reader review/u);
@@ -1041,15 +1074,18 @@ describe("browser extension package metadata", () => {
     );
 
     expect(source).toMatch(/Browser Extension v0\.7 Validation Summary/u);
+    expect(source).toMatch(/V2A browser-first local-ready build/u);
     expect(source).toMatch(/validate-browser-extension-release\.ps1/u);
     expect(source).toMatch(/prepare-browser-extension-release-candidate\.ps1/u);
     expect(source).toMatch(/check-public-release-hygiene\.ps1 -RequireClean/u);
     expect(source).toMatch(/docs\/testing\/reports\//u);
     expect(source).toMatch(/ALFARAHEEDI_VM_QA_ROOT/u);
     expect(source).toMatch(/Current Evidence/u);
-    expect(source).toMatch(/runtime, settings, and package suites/u);
+    expect(source).toMatch(/As of 2026-06-30/u);
+    expect(source).toMatch(/158 browser-extension runtime, settings, and package tests/u);
     expect(source).toMatch(/Packaged Edge Accessibility Tree smoke/u);
     expect(source).toMatch(/packaged Chrome for Testing keyboard-flow smoke/u);
+    expect(source).toMatch(/VM smokes are not refreshed by the 2026-06-30 Phase 8 documentation pass/u);
     expect(source).toMatch(/150\.0\.7871\.24/u);
     expect(source).toMatch(/LocalScreenshotRoot/u);
     expect(source).toContain(selectedScreenshotRoot);
@@ -1058,7 +1094,8 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1 -RequireValid/u);
     expect(source).toMatch(/GitHub Pages is configured/u);
     expect(source).toMatch(/workflow mode/u);
-    expect(source).toMatch(/privacy page still must be merged\s+to `main` and deployed/su);
+    expect(source).toMatch(/live browser-extension privacy URL currently returns HTTP 200/u);
+    expect(source).toMatch(/Any later privacy-page wording change\s+must be merged to `main` and deployed/su);
     expect(source).toMatch(/suggestion-panel cleanup after\s+Apply/u);
     expect(source).toMatch(/StoreReady.+false/su);
     expect(source).not.toMatch(/LisanStudio-QA/u);

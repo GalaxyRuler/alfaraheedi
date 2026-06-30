@@ -1,17 +1,20 @@
 # Browser Extension v0.7 Validation Summary
 
-This is the public-safe validation summary for the Nahou v0.7 browser
-extension foundation. Detailed VM evidence logs are intentionally kept out of
-the public release branch under `docs/testing/reports/` because they can contain
-local guest artifact paths and private QA-machine identifiers.
+This is the public-safe validation summary for the Nahou V2A browser-first
+local-ready build. The filename preserves the original v0.7 evidence lineage,
+but current package and store-prep artifacts use the manifest version
+`1.0.0.1`. Detailed VM evidence logs are intentionally kept out of the public
+release branch under `docs/testing/reports/` because they can contain local
+guest artifact paths and private QA-machine identifiers.
 
 ## Scope
 
-The v0.7 extension is a Manifest V3 browser-extension foundation for editable
-web fields. It connects only to the configured loopback Nahou local API,
-stores only extension settings, avoids telemetry and hosted services, and does
-not claim live Gmail, WhatsApp Web, Google Docs, Word, or PowerPoint integration
-until those exact surfaces have separate current verification.
+The V2A browser-first local-ready build is a Manifest V3 browser-extension
+foundation for editable web fields. It connects only to the configured loopback
+Nahou local API, stores only extension settings, avoids telemetry and hosted
+services, and does not claim live Gmail, WhatsApp Web, Google Docs, Word, or
+PowerPoint integration until those exact surfaces have separate current
+verification.
 
 ## Automated Local Gates
 
@@ -74,11 +77,15 @@ selected in `browser-extension/STORE_ASSETS.md`, not an implicit latest VM run.
 
 ## Current Evidence
 
-As of 2026-06-23 local time, the source-controlled local gates have fresh passing evidence
-for the browser-extension runtime, settings, and package suites, release
-preflight, public-release hygiene, release-candidate handoff, generated release
-handoff, and store-bundle integrity. The latest VM release-preflight pass also
-returned `Ok: true` for the
+As of 2026-06-30 local time, the source-controlled local gates have fresh
+passing evidence for 158 browser-extension runtime, settings, and package tests,
+release preflight, public-release hygiene, public privacy URL readiness, and
+Pages readiness. The 2026-06-30 Phase 8 documentation pass did not refresh the
+release-candidate handoff, generated release handoff, store-bundle integrity, or
+packaged VM evidence because no package runtime behavior changed.
+
+The most recent source-controlled packaged VM release-preflight evidence is from
+2026-06-23 and returned `Ok: true` for the
 packaged Edge Accessibility Tree smoke, packaged Edge production-editor fixture
 smoke, packaged Edge store screenshot capture, packaged Edge keyboard-flow
 smoke, and packaged Chrome for Testing keyboard-flow smoke.
@@ -90,10 +97,13 @@ store-bundle screenshot root so reviewer artifacts can be checked for drift.
 The latest local store-bundle integrity check reported `ScreenshotRootsMatch:
 true` for that selected set.
 
-GitHub Pages is configured for `GalaxyRuler/alfaraheedi` in workflow mode with
-HTTPS enforced. The Pages workflow and static privacy page still must be merged
-to `main` and deployed before the public privacy URL can be used for store
-submission.
+VM smokes are not refreshed by the 2026-06-30 Phase 8 documentation pass. Run
+the VM command above before using VM evidence for a store-upload candidate.
+
+GitHub Pages is configured for `GalaxyRuler/alfaraheedi` in workflow mode. The
+live browser-extension privacy URL currently returns HTTP 200 and contains the
+required stable store policy strings. Any later privacy-page wording change
+must be merged to `main` and deployed before the live URL can reflect it.
 
 The Chrome for Testing keyboard-flow smoke used Chrome for Testing
 `150.0.7871.24` and verified options-page tab order, popup tab order, rendered

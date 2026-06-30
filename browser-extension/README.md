@@ -1,6 +1,7 @@
 # Nahou Browser Extension
 
-This is the v0.7 browser-extension foundation for live web-editor assistance.
+This is the V2A browser-first extension foundation for live web-editor
+assistance in supported editable web fields.
 
 ## Current Scope
 
@@ -16,7 +17,7 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - Editable fields inside open shadow roots are detected through composed browser event paths.
 - Closed shadow roots and composed-path boundaries that do not expose an editable target are classified as unsupported.
 - Text is debounced and sent through the extension service worker to the configured local Nahou HTTP API only when checking is enabled for the current site.
-- Extension options store the loopback API URL, default writing mode, enabled state, and disabled-site hosts in `chrome.storage.local`, with a reset control for packaged defaults.
+- Extension options store the loopback API URL, default writing mode, enabled/paused state, and disabled-site hosts in `chrome.storage.local`, with a reset control for packaged defaults.
 - The service worker uses the stored loopback API URL and writing mode for analysis requests; content-script messages cannot override those settings.
 - The service worker rejects blank, malformed, and oversized analysis messages before reading settings or calling the local API.
 - Suggestions render in a small page-local panel near the editor, clamped inside the viewport for right-edge, bottom-edge, or narrow-window editors.
@@ -40,7 +41,7 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - Anchored contenteditable replacements use DOM ranges so simple inline markup is preserved when applying a suggestion.
 - The extension does not auto-apply suggestions, send text to hosted services, or use telemetry.
 
-Production-editor-specific anchoring for apps such as Gmail, WhatsApp Web, and Google Docs is intentionally later v0.7 work. This slice proves editor discovery, localhost analysis, safe page UI injection, matching-frame injection for iframe-hosted editors, non-mutating underline marks for textarea and safe text-like input fields, CSS Highlight marks for simple contenteditable fields, open Shadow DOM editor event handling, and guarded replacement for editable text without flattening simple inline markup or collapsing simple contenteditable line breaks, including blank lines represented by empty blocks or repeated `<br>` nodes. Read-only/disabled text controls, ARIA read-only/disabled editable controls, password inputs, sensitive-hinted editable controls or ancestor containers such as OTP, credit-card, token, API-key, and secret fields, other non-text-like controls, oversized text, closed shadow roots, unsupported complex rich-editor islands, `contenteditable="false"` islands, hidden decoration nodes, and known invisible rich-editor sentinel nodes inside an editable root are ignored.
+Production-editor-specific anchoring for apps such as Gmail, WhatsApp Web, and Google Docs is intentionally later V2A evidence work. This slice proves editor discovery, localhost analysis, safe page UI injection, matching-frame injection for iframe-hosted editors, non-mutating underline marks for textarea and safe text-like input fields, CSS Highlight marks for simple contenteditable fields, open Shadow DOM editor event handling, and guarded replacement for editable text without flattening simple inline markup or collapsing simple contenteditable line breaks, including blank lines represented by empty blocks or repeated `<br>` nodes. Read-only/disabled text controls, ARIA read-only/disabled editable controls, password inputs, sensitive-hinted editable controls or ancestor containers such as OTP, credit-card, token, API-key, and secret fields, other non-text-like controls, oversized text, closed shadow roots, unsupported complex rich-editor islands, `contenteditable="false"` islands, hidden decoration nodes, and known invisible rich-editor sentinel nodes inside an editable root are ignored.
 
 ## Run Locally
 
@@ -87,7 +88,7 @@ Build a clean extension zip from the repository root:
 .\scripts\package-browser-extension.ps1
 ```
 
-The package is written to `dist\browser-extension\nahou-browser-extension-0.7.0.zip`.
+The package is written to `dist\browser-extension\nahou-browser-extension-1.0.0.1.zip`.
 The packaging helper validates the MV3 manifest, keeps API host permissions loopback-only, rejects optional permissions, rejects external-connection or web-accessible-resource expansion, requires matching-frame injection for iframe editors, verifies the manifest-declared PNG icons and toolbar action, and includes only runtime extension files, icons, and required static imports.
 `src/editorSurface.js` is a source/test helper for focused DOM behavior coverage; it is intentionally excluded from the upload zip because the packaged content script is self-contained.
 Store-submission notes live in `STORE_SUBMISSION.md`; they document the single purpose, permission justifications, privacy claims, and still-manual review items.

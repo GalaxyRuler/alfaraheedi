@@ -19,12 +19,17 @@ not a shipped public release claim.
 
 1. The user runs the local Nahou API on loopback.
 2. The browser extension detects a supported active editor.
-3. Active editor text flows from active editor text -> content script ->
-   extension messaging/background -> local loopback Nahou API.
+3. Active editor text flows from active editor text -> content-side settings
+   gate -> extension messaging/background -> background settings gate -> local
+   loopback Nahou API.
 4. The local deterministic engine returns suggestions.
 5. The content script renders local-first field UI for supported text fields.
 6. Accepted deterministic suggestions apply in place only when the editor
    identity, projection version, and original text still match.
+
+The content-side settings gate runs before editor text leaves the page context.
+The background settings gate repeats the pause and site-disable checks before
+calling the local loopback Nahou API.
 
 ## Release-Blocking V2A Surface
 
@@ -33,7 +38,7 @@ not a shipped public release claim.
 | Textarea and text-like input fields | Inline suggestions, local loopback analysis, field UI, and guarded deterministic apply for supported text-like fields. |
 | Simple contenteditable fields | Suggestions and guarded apply only where text projection to DOM ranges is stable. |
 | Stale or changed editor text | Apply is blocked when the original text no longer matches. |
-| Paused or site-disabled extension | Editor text is not sent to the local API while paused or disabled for the current site. |
+| Paused or site-disabled extension | Editor text is not sent from the content script to extension runtime or from background to the local API while paused or disabled for the current site. |
 | Sensitive-looking fields | Password, payment, token, one-time-code, API-key, secret, read-only, disabled, hidden, and similar fields are excluded on a best-effort basis. |
 | Local API unavailable | The user sees sanitized unavailable status; no hosted fallback is used. |
 | IME/composition and RTL/mixed text | Analysis waits for composition to finish, and UI must preserve directionality for Arabic and mixed text. |
