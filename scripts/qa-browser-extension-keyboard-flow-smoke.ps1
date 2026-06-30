@@ -291,6 +291,13 @@ try {
         $apiPort = 3498
         $pagePort = 41098
         $cdpPort = 9298
+        $keyboardOnlyCardFlow = @(
+            'options-tab-order',
+            'popup-tab-order',
+            'suggestion-card-focus',
+            'keyboard-apply',
+            'panel-cleanup'
+        )
 
         New-Item -ItemType Directory -Force -Path $extensionDir, $profileDir | Out-Null
         Expand-Archive -LiteralPath (Join-Path $Root 'extension.zip') -DestinationPath $extensionDir -Force
@@ -535,6 +542,7 @@ new Promise((resolve) => {
                 BrowserExecutable = $browserInfo.Executable
                 BrowserVersion = $browserInfo.Version
                 ExtensionId = $extensionId
+                KeyboardOnlyCardFlow = $keyboardOnlyCardFlow
                 SettingsStatus = $settingsStatus
                 OptionsFocus = $optionsFocus
                 PopupFocus = $popupFocus

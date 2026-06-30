@@ -96,15 +96,50 @@ Live URL: TODO
 
 Use disposable public-safe text only, for example `helo wat you are do?`.
 
+## Controlled Fixture Coverage
+
+Record whether automated or WhiteKnight-assisted fixture evidence exists for
+each local-ready browser claim. Use public-safe fixture names only.
+
+| Surface | Result | Evidence summary | Limitation or follow-up |
+| --- | --- | --- | --- |
+| textarea | TODO | TODO | TODO |
+| text-input | TODO | TODO | TODO |
+| simple-contenteditable | TODO | TODO | TODO |
+| shadow-dom | TODO | TODO | TODO |
+| iframe | TODO | TODO | TODO |
+| repeated-text | TODO | TODO | TODO |
+| RTL/mixed text | TODO | TODO | TODO |
+| large text refusal | TODO | TODO | TODO |
+| sensitive fields | TODO | TODO | TODO |
+| API unavailable | TODO | TODO | TODO |
+| paused/site-disabled | TODO | TODO | TODO |
+| keyboard-only card flow | TODO | TODO | TODO |
+| accessibility scan | TODO | TODO | TODO |
+
+## Real-Site Manual Coverage
+
 | Surface | Result | Evidence summary | Limitation or follow-up |
 | --- | --- | --- | --- |
 | Normal browser textarea | TODO | TODO | TODO |
 | Gmail compose | TODO | TODO | TODO |
 | WhatsApp Web composer | TODO | TODO | TODO |
 | Google Docs | TODO | TODO | TODO |
+| Plain contenteditable site | TODO | TODO | TODO |
+| Framework-heavy editor | TODO | TODO | TODO |
 | Iframe editor, when available | TODO | TODO | TODO |
 
 Privacy check: TODO confirm no raw private text was recorded.
+
+## WhiteKnight Evidence
+
+Use WhiteKnight for physical browser, foreground, or screenshot evidence when
+VM evidence is not sufficient. Store detailed artifacts only in ignored private
+locations such as `docs\testing\reports\` or `dist\browser-extension-manual-qa\`.
+
+WhiteKnight used: TODO Yes / No / Not needed
+WhiteKnight evidence root: TODO
+Public-safe artifact check: TODO Pass / Fail
 
 ## Gate 4: Manual Screen-Reader And Keyboard Review
 

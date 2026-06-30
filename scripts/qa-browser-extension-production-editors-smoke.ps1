@@ -131,6 +131,19 @@ try {
         $apiPort = 3488
         $pagePort = 41088
         $cdpPort = 9288
+        $controlledFixtureCoverage = [ordered]@{
+            'textarea' = 'covered-by-keyboard-and-ax-smokes'
+            'text-input' = 'covered-by-package-runtime-tests'
+            'simple-contenteditable' = 'covered-by-production-editor-smoke'
+            'shadow-dom' = 'covered-by-package-runtime-tests'
+            'iframe' = 'covered-by-manifest-and-package-tests'
+            'repeated-text' = 'covered-by-anchored-apply-tests'
+            'rtl-mixed' = 'covered-by-runtime-and-visual-review-gates'
+            'large-text-refusal' = 'covered-by-package-runtime-tests'
+            'sensitive-field' = 'covered-by-package-runtime-tests'
+            'api-unavailable' = 'covered-by-local-connection-ux-tests'
+            'paused-site-disabled' = 'covered-by-settings-tests'
+        }
 
         New-Item -ItemType Directory -Force -Path $extensionDir, $profileDir | Out-Null
         Expand-Archive -LiteralPath (Join-Path $Root 'extension.zip') -DestinationPath $extensionDir -Force
@@ -195,9 +208,23 @@ class Handler(BaseHTTPRequestHandler):
             request = json.loads(raw)
         except Exception:
             request = {"text": ""}
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(request, ensure_ascii=False) + "\n")
         text = request.get("text", "")
+        if text == "helo  wat you are do?":
+            shape = "gmail-like-compose"
+        elif text == "helo\nwat you are do?":
+            shape = "whatsapp-like-compose"
+        elif "private quoted text" in text:
+            shape = "quoted-text-leak"
+        else:
+            shape = "other"
+        summary = {
+            "surface": shape,
+            "text_length": len(text),
+            "contains_private_quote": "private quoted text" in text,
+            "text": "<public-fixture-text-redacted>"
+        }
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(summary, ensure_ascii=False) + "\n")
         if "helo  wat" in text:
             span = {"start_utf16": 6, "end_utf16": 9}
         else:
@@ -407,10 +434,10 @@ new Promise((resolve) => {
             if (Test-Path -LiteralPath $requestLog) {
                 $requests = @(Get-Content -LiteralPath $requestLog | Where-Object { $_.Trim() } | ForEach-Object { $_ | ConvertFrom-Json })
             }
-            $texts = @($requests | ForEach-Object { $_.text })
-            $gmailRequest = [bool](@($texts | Where-Object { $_ -eq 'helo  wat you are do?' } | Select-Object -First 1))
-            $whatsappRequest = [bool](@($texts | Where-Object { $_ -eq "helo`nwat you are do?" } | Select-Object -First 1))
-            $quotedLeak = [bool](@($texts | Where-Object { $_ -like '*private quoted text*' } | Select-Object -First 1))
+            $requestSurfaces = @($requests | ForEach-Object { $_.surface })
+            $gmailRequest = [bool](@($requestSurfaces | Where-Object { $_ -eq 'gmail-like-compose' } | Select-Object -First 1))
+            $whatsappRequest = [bool](@($requestSurfaces | Where-Object { $_ -eq 'whatsapp-like-compose' } | Select-Object -First 1))
+            $quotedLeak = [bool](@($requests | Where-Object { $_.contains_private_quote -eq $true -or $_.surface -eq 'quoted-text-leak' } | Select-Object -First 1))
             $ok = (
                 $settingsStatus -eq 'Saved.' -and
                 $gmailRequest -and
@@ -428,8 +455,10 @@ new Promise((resolve) => {
                 Ok = $ok
                 QaRoot = $Root
                 ExtensionId = $extensionId
+                ControlledFixtureCoverage = $controlledFixtureCoverage
+                NoRawPrivateText = -not $quotedLeak
                 SettingsStatus = $settingsStatus
-                Requests = $texts
+                RequestSummaries = $requests
                 GmailRequestMatched = $gmailRequest
                 WhatsAppRequestMatched = $whatsappRequest
                 QuotedTextLeaked = $quotedLeak

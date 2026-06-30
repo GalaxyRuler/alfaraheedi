@@ -141,6 +141,12 @@ try {
         $apiPort = 3467
         $pagePort = 41067
         $cdpPort = 9267
+        $accessibilityScanCoverage = @(
+            'options-page',
+            'toolbar-popup',
+            'suggestion-panel',
+            'accessibility-scan'
+        )
 
         New-Item -ItemType Directory -Force -Path $extensionDir, $profileDir | Out-Null
         Expand-Archive -LiteralPath (Join-Path $Root 'extension.zip') -DestinationPath $extensionDir -Force
@@ -350,6 +356,7 @@ ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
                 Ok = $ok
                 QaRoot = $Root
                 ExtensionId = $extensionId
+                AccessibilityScanCoverage = $accessibilityScanCoverage
                 SettingsStatus = $settingsStatus
                 PanelState = $panelState
                 Checks = $checks

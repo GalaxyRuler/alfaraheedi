@@ -4,6 +4,11 @@ This matrix tracks the browser-first V2A claim gates. Detailed logs,
 screenshots, and live-site QA notes must stay private or ignored unless they are
 reduced to public-safe, no-raw-text evidence.
 
+The public-safe browser-extension evidence summary is
+`docs/testing/browser-extension-v2-validation.md`. Use WhiteKnight for physical
+browser, foreground, or screenshot evidence when VM evidence is not sufficient,
+but keep raw live editor text and account-side artifacts out of source control.
+
 ## Browser-First Contract Gates
 
 | Gate | Expected behavior | Evidence required | Release blocker |
@@ -17,8 +22,8 @@ reduced to public-safe, no-raw-text evidence.
 | IME/composition | Browser IME/composition input is not analyzed until composition ends, so partial composing text is not sent. | Composition tests and browser QA. | Yes |
 | RTL/mixed text | Arabic, Latin, emoji, and mixed-direction text keep UTF-16 offset mapping, direction-aware UI, and guarded apply behavior. | RTL/mixed and emoji span fixtures plus visual/keyboard review. | Yes |
 | projection review-only fallback | Ambiguous repeated originals without trusted spans and DOM-unavailable projections remain review-only and do not create applyable DOM ranges. | Projection tests covering repeated originals and unavailable synthetic line-break ranges. | Yes |
-| real-site/manual-gated | Gmail, WhatsApp Web, Google Docs, iframe-hosted editors, and other production editors require disposable public-safe manual evidence before any site-specific claim. | Manifest `all_frames` package validation plus completed manual report with private raw text excluded. | Yes for site-specific claims |
-| accessibility/keyboard review | Suggestion UI supports keyboard focus, dismissal, visible focus, direction-aware labels, and assistive-technology review gates. | Keyboard smoke, accessibility smoke, and manual screen-reader review before public claim. | Yes |
+| real-site/manual-gated | Gmail, WhatsApp Web, Google Docs, iframe-hosted editors, one plain contenteditable site, and one safe framework-heavy editor require disposable public-safe manual evidence before any site-specific claim. | Manifest `all_frames` package validation plus completed manual report with private raw text excluded; failures become documented limitations. | Yes for site-specific claims |
+| accessibility/keyboard review | Suggestion UI supports keyboard focus, dismissal, visible focus, direction-aware labels, and assistive-technology review gates. | Keyboard smoke, Accessibility Tree smoke, axe/manual scan evidence when available, and manual screen-reader review before public claim. | Yes |
 | release/store gates | Local-ready package, public privacy/support pages, store dashboard state, screenshots, and account-side review gates match the claim. | Release readiness scripts plus account-side manual confirmation. | Yes before store readiness |
 
 ## Deferred Evidence Rows
