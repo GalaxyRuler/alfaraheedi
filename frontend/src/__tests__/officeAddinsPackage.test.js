@@ -23,6 +23,10 @@ describe("Office add-ins package metadata", () => {
     );
 
     expect(manifest).toMatch(/xsi:type="TaskPaneApp"/u);
+    expect(manifest).toMatch(/^<\?xml version="1\.0" encoding="utf-8"/u);
+    expect(devManifest).toMatch(/^<\?xml version="1\.0" encoding="utf-8"/u);
+    expect(prodManifest).toMatch(/^<\?xml version="1\.0" encoding="utf-8"/u);
+    expect(`${manifest}\n${devManifest}\n${prodManifest}`).not.toMatch(/encoding="utf-16"/u);
     expect(manifest).toMatch(/<Version>1\.0\.0\.1<\/Version>/u);
     expect(manifest).toMatch(/<Host Name="Document"\s*\/>/u);
     expect(manifest).toMatch(/<Host Name="Presentation"\s*\/>/u);
@@ -121,6 +125,14 @@ describe("Office add-ins package metadata", () => {
       path.join(repoRoot, "scripts/New-OfficeAddinDevCertificate.ps1"),
       "utf8",
     );
+    const whiteKnightWordQaScript = await fs.readFile(
+      path.join(repoRoot, "scripts/qa-office-addins-whiteknight-word-sideload.ps1"),
+      "utf8",
+    );
+    const whiteKnightPowerPointQaScript = await fs.readFile(
+      path.join(repoRoot, "scripts/qa-office-addins-whiteknight-powerpoint-sideload.ps1"),
+      "utf8",
+    );
     const serveTool = await fs.readFile(
       path.join(addinsRoot, "tools/serve-office-addin.mjs"),
       "utf8",
@@ -157,6 +169,8 @@ describe("Office add-ins package metadata", () => {
     expect(validateScript).toMatch(/MANUAL_RELEASE_GATES\.md/u);
     expect(validateScript).toMatch(/check-office-addins-manual-qa-report\.ps1/u);
     expect(validateScript).toMatch(/new-office-addins-manual-qa-report\.ps1/u);
+    expect(validateScript).toMatch(/qa-office-addins-whiteknight-powerpoint-sideload\.ps1/u);
+    expect(validateScript).toMatch(/qa-office-addins-whiteknight-word-sideload\.ps1/u);
     expect(validateScript).toMatch(/serve-office-addin\.mjs/u);
     expect(validateScript).toMatch(/New-OfficeAddinDevCertificate\.ps1/u);
     expect(validateScript).toMatch(/serve-office-addins\.ps1/u);
@@ -167,6 +181,31 @@ describe("Office add-ins package metadata", () => {
     expect(certScript).toMatch(/Cert:\\CurrentUser\\Root/u);
     expect(certScript).toMatch(/Export-PfxCertificate/u);
     expect(certScript).toMatch(/if \(\$Trust\)/u);
+    expect(whiteKnightWordQaScript).toMatch(/WhiteKnight/u);
+    expect(whiteKnightWordQaScript).toMatch(/whiteknight:readiness/u);
+    expect(whiteKnightWordQaScript).toMatch(/whiteknight:desktop:prepare/u);
+    expect(whiteKnightWordQaScript).toMatch(/whiteknight:desktop/u);
+    expect(whiteKnightWordQaScript).toMatch(/schtasks\.exe/u);
+    expect(whiteKnightWordQaScript).toMatch(/\/IT/u);
+    expect(whiteKnightWordQaScript).toMatch(/OfficeExtensionsShowAddinFlyout/u);
+    expect(whiteKnightWordQaScript).toMatch(/office-addin-debugging/u);
+    expect(whiteKnightWordQaScript).toMatch(/certutil\.exe/u);
+    expect(whiteKnightWordQaScript).toMatch(/ComSpec/u);
+    expect(whiteKnightWordQaScript).toMatch(/System32\\curl\.exe/u);
+    expect(whiteKnightWordQaScript).toMatch(/\$hostSlug-sideload-result\.json/u);
+    expect(whiteKnightWordQaScript).toMatch(/SampleSha256/u);
+    expect(whiteKnightWordQaScript).toMatch(/ReportStoresRawPrivateText/u);
+    expect(whiteKnightWordQaScript).toMatch(/StageOnly/u);
+    expect(whiteKnightWordQaScript).toMatch(/HostApp/u);
+    expect(whiteKnightWordQaScript).toMatch(/PowerPoint/u);
+    expect(whiteKnightWordQaScript).toMatch(/PresentationSelectionRequested/u);
+    expect(whiteKnightWordQaScript).toMatch(/Add-ins are disabled/u);
+    expect(whiteKnightWordQaScript).toMatch(/AddinsEnabled/u);
+    expect(whiteKnightWordQaScript).toMatch(/powerpoint-sideload-result\.json|\$hostSlug-sideload-result\.json/u);
+    expect(whiteKnightWordQaScript).toMatch(/Apply Safe Fixes/u);
+    expect(whiteKnightWordQaScript).not.toMatch(/Chrome Web Store|Edge Add-ons/u);
+    expect(whiteKnightPowerPointQaScript).toMatch(/-HostApp PowerPoint/u);
+    expect(whiteKnightPowerPointQaScript).toMatch(/qa-office-addins-whiteknight-word-sideload\.ps1/u);
     expect(serveTool).toMatch(/https\.createServer/u);
     expect(serveTool).toMatch(/fs\.realpath/u);
     expect(serveTool).toMatch(/isInsideRepoRoot/u);
