@@ -21,6 +21,60 @@
   }
 
   function rangeForSuggestion(text, suggestion) {
+    const resolution = resolveSuggestionRange(text, suggestion);
+    return resolution.range;
+  }
+
+  function projectionForEditor(editor, suggestion) {
+    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
+      const resolution = resolveSuggestionRange(editor.value, suggestion);
+      if (!resolution.range) {
+        return reviewOnlyProjection(resolution.reason, editor, suggestion);
+      }
+      if (!suggestion?.original) {
+        return reviewOnlyProjection("missing-original", editor, suggestion);
+      }
+      return applyableProjection("plain-text", editor, suggestion, resolution.range);
+    }
+
+    if (runtime.isContentEditableElement(editor)) {
+      const text = runtime.textFromContentEditable(editor);
+      const resolution = resolveSuggestionRange(text, suggestion);
+      if (!resolution.range) {
+        return reviewOnlyProjection(resolution.reason, editor, suggestion);
+      }
+      if (!suggestion?.original) {
+        return reviewOnlyProjection("missing-original", editor, suggestion);
+      }
+
+      const domRange = textRangeToDomRange(
+        editor,
+        resolution.range.start,
+        resolution.range.end,
+      );
+      if (!domRange || !domRangeMatchesSuggestion(domRange, suggestion)) {
+        domRange?.detach();
+        return unavailableProjection(
+          "dom-range-unavailable",
+          editor,
+          suggestion,
+          resolution.range,
+        );
+      }
+
+      return applyableProjection(
+        "contenteditable",
+        editor,
+        suggestion,
+        resolution.range,
+        domRange,
+      );
+    }
+
+    return unavailableProjection("unsupported-editor", editor, suggestion, null);
+  }
+
+  function resolveSuggestionRange(text, suggestion) {
     const span = suggestion?.span;
     if (
       span &&
@@ -32,14 +86,64 @@
     ) {
       const current = text.slice(span.start_utf16, span.end_utf16);
       if (!suggestion.original || current === suggestion.original) {
-        return { start: span.start_utf16, end: span.end_utf16 };
+        return {
+          range: { start: span.start_utf16, end: span.end_utf16 },
+          reason: null,
+        };
       }
+      return { range: null, reason: "span-original-mismatch" };
     }
 
-    if (!suggestion?.original) return null;
+    if (!suggestion?.original) return { range: null, reason: "missing-original" };
     const index = text.indexOf(suggestion.original);
-    if (index === -1) return null;
-    return { start: index, end: index + suggestion.original.length };
+    if (index === -1) return { range: null, reason: "original-not-found" };
+    if (text.indexOf(suggestion.original, index + 1) !== -1) {
+      return { range: null, reason: "ambiguous-original" };
+    }
+    return {
+      range: { start: index, end: index + suggestion.original.length },
+      reason: null,
+    };
+  }
+
+  function applyableProjection(kind, editor, suggestion, range, domRange = null) {
+    return {
+      status: "applyable",
+      applyable: true,
+      kind,
+      editor,
+      suggestion,
+      range,
+      domRange,
+    };
+  }
+
+  function reviewOnlyProjection(reason, editor, suggestion) {
+    return {
+      status: "review-only",
+      applyable: false,
+      reason,
+      editor,
+      suggestion,
+      range: null,
+      domRange: null,
+    };
+  }
+
+  function unavailableProjection(reason, editor, suggestion, range) {
+    return {
+      status: "unavailable",
+      applyable: false,
+      reason,
+      editor,
+      suggestion,
+      range,
+      domRange: null,
+    };
+  }
+
+  function domRangeMatchesSuggestion(domRange, suggestion) {
+    return !suggestion?.original || domRange.toString() === suggestion.original;
   }
 
   function textRangeToDomRange(root, start, end) {
@@ -143,7 +247,10 @@
 
   Object.assign(runtime, {
     markRangesForText,
+    projectSuggestionToEditor: projectionForEditor,
+    projectionForEditor,
     rangeForSuggestion,
+    resolveSuggestionRange,
     suggestionRangesForText,
     textRangeToDomRange,
   });
