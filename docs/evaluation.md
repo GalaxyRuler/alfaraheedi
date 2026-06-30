@@ -31,14 +31,17 @@ The command prints JSON and exits non-zero on release-gating failures. The repor
 - Failure rows include `fixture_file` and `case_id` so CI output can point back
   to the exact JSON or JSONL fixture.
 
-## v1.0 Fixture Files
+## Versioned Fixture Files
 
-The v1.0 release fixtures live in JSONL files so focused cases can be appended
-without rewriting large arrays:
+Versioned release fixtures live in JSONL files so focused cases can be appended
+without rewriting large arrays. The current versioned files are:
 
 - `datasets/eval/v1.0-arabic.jsonl`
 - `datasets/eval/v1.0-english.jsonl`
 - `datasets/eval/v1.0-mixed.jsonl`
+- `datasets/eval/v1.1-arabic.jsonl`
+- `datasets/eval/v2-arabic.jsonl`
+- `datasets/eval/v2-mixed.jsonl`
 
 Each row uses the normal eval fields plus:
 
@@ -46,6 +49,15 @@ Each row uses the normal eval fields plus:
 - `blocked_sources`: explicit release blockers that do not depend on a rule
   firing, usually for manual QA or policy evidence.
 - `notes`: public-safe context for maintainers.
+
+V2 fixtures are stricter than earlier seed rows:
+
+- every V2 row must include `metadata`;
+- `metadata.raw_text_user_provided` must be `false`;
+- `metadata.notes` must explain the public-safe reduction;
+- positive rows name the exact expected rule source;
+- false-positive guards use `expected_behavior: "no_suggestion"` and keep
+  `expected_sources` empty.
 
 Every new safe rule must add at least one positive fixture, two negative
 fixtures, and a false-positive guard when there is an obvious risk. The current
@@ -55,10 +67,22 @@ rule taxonomy is:
 | --- | --- |
 | spelling-like | `english:common-typo` |
 | punctuation | `arabic:latin-comma`, `arabic:latin-question-mark`, `arabic:latin-semicolon` |
-| spacing | `arabic:repeated-space`, `arabic:space-before-punctuation`, `arabic:space-after-punctuation` |
+| spacing | `arabic:repeated-space`, `arabic:browser-nbsp`, `arabic:space-before-punctuation`, `arabic:space-after-punctuation` |
 | grammar | `arabic:conversational-greeting`, `english:you-are-do` |
+| orthography | `arabic:tatweel`, `arabic:common-phrase-orthography` |
 | style | future suggest-only rules; no v1.0 safe auto-apply style rule |
 | LLM-only | optional local LLM suggestions; never safe auto-apply in v1.0 |
+
+The V2A browser usefulness fixtures deliberately stay narrow:
+
+- `arabic:browser-nbsp` auto-applies only for non-breaking spaces between
+  adjacent Arabic letters and has technical/protected-span negative fixtures.
+- `arabic:common-phrase-orthography` is suggest-only and only rewrites the exact
+  public-safe phrase `ان شاء الله`; it is not a broad hamza or morphology rule.
+- `arabic:latin-comma` covers Arabic sentences with an embedded uppercase Latin
+  acronym only when Arabic text resumes after the comma, and post-comma spacing
+  remains available after that comma is accepted; Latin technical lists remain
+  clean.
 
 ## Report-Derived Fixtures
 

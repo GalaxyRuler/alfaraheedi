@@ -147,6 +147,14 @@ pub fn seed_cases() -> anyhow::Result<Vec<EvalCase>> {
         include_str!("../../../datasets/eval/v1.0-mixed.jsonl"),
         "datasets/eval/v1.0-mixed.jsonl",
     )?);
+    cases.extend(read_jsonl_cases(
+        include_str!("../../../datasets/eval/v2-arabic.jsonl"),
+        "datasets/eval/v2-arabic.jsonl",
+    )?);
+    cases.extend(read_jsonl_cases(
+        include_str!("../../../datasets/eval/v2-mixed.jsonl"),
+        "datasets/eval/v2-mixed.jsonl",
+    )?);
     Ok(cases)
 }
 
@@ -181,8 +189,7 @@ fn read_jsonl_cases(raw: &str, fixture_file: &str) -> anyhow::Result<Vec<EvalCas
 
 fn annotate_fixture_file(cases: &mut [EvalCase], fixture_file: &str) {
     for case in cases {
-        case.fixture_file
-            .get_or_insert_with(|| fixture_file.to_owned());
+        case.fixture_file = Some(fixture_file.to_owned());
     }
 }
 
@@ -194,6 +201,11 @@ pub fn validate_cases(cases: &[EvalCase]) -> anyhow::Result<()> {
 }
 
 fn validate_case(case: &EvalCase) -> anyhow::Result<()> {
+    let is_v2_fixture = case
+        .fixture_file
+        .as_deref()
+        .is_some_and(|fixture| fixture.starts_with("datasets/eval/v2-"));
+
     anyhow::ensure!(
         case.max_false_positives == 0,
         "eval case {} allows false positives; release eval is strict",
@@ -208,8 +220,29 @@ fn validate_case(case: &EvalCase) -> anyhow::Result<()> {
     }
 
     let Some(metadata) = &case.metadata else {
+        anyhow::ensure!(
+            !is_v2_fixture,
+            "eval case {} v2 fixture is missing metadata",
+            case.id
+        );
         return Ok(());
     };
+
+    if is_v2_fixture {
+        anyhow::ensure!(
+            !metadata.raw_text_user_provided,
+            "eval case {} v2 fixture includes raw user-provided text",
+            case.id
+        );
+        anyhow::ensure!(
+            metadata
+                .notes
+                .as_deref()
+                .is_some_and(|notes| !notes.trim().is_empty()),
+            "eval case {} v2 fixture metadata.notes is empty",
+            case.id
+        );
+    }
 
     anyhow::ensure!(
         !metadata.source.reference.trim().is_empty(),
@@ -356,5 +389,20 @@ fn ratio_or_one(numerator: usize, denominator: usize) -> f32 {
         1.0
     } else {
         numerator as f32 / denominator as f32
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::read_jsonl_cases;
+
+    #[test]
+    fn read_jsonl_cases_enforces_actual_v2_fixture_path() {
+        let raw = r#"{"id":"spoofed-v2","fixture_file":"datasets/eval/v1.0-arabic.jsonl","mode":"arabic","text":"مرحبا بالعالم","expected_sources":[],"blocked_sources":[],"max_false_positives":0}"#;
+
+        let error = read_jsonl_cases(raw, "datasets/eval/v2-arabic.jsonl")
+            .expect_err("actual v2 fixture path should require metadata");
+
+        assert!(error.to_string().contains("v2 fixture is missing metadata"));
     }
 }

@@ -1,7 +1,7 @@
 use write_arabic::default_rule_set;
 use write_eval::{
     EvalCase, EvalCaseMetadata, EvalCaseSource, EvalCaseSourceKind, EvalFailureKind,
-    ExpectedBehavior, evaluate, validate_cases,
+    ExpectedBehavior, evaluate, seed_cases, validate_cases,
 };
 
 #[test]
@@ -198,6 +198,63 @@ fn validation_rejects_false_positive_allowance() {
         error
             .to_string()
             .contains("allows false positives; release eval is strict")
+    );
+}
+
+#[test]
+fn validation_requires_metadata_for_v2_fixtures() {
+    let cases = vec![EvalCase {
+        id: "v2-missing-metadata".to_owned(),
+        mode: Some("arabic".to_owned()),
+        text: "مرحبا بالعالم".to_owned(),
+        expected_sources: vec![],
+        fixture_file: Some("datasets/eval/v2-arabic.jsonl".to_owned()),
+        max_false_positives: 0,
+        metadata: None,
+        ..EvalCase::default()
+    }];
+
+    let error = validate_cases(&cases).expect_err("v2 fixtures should require metadata");
+
+    assert!(error.to_string().contains("v2 fixture is missing metadata"));
+}
+
+#[test]
+fn seed_cases_include_public_safe_v2_fixtures() {
+    let cases = seed_cases().expect("seed cases load");
+    let v2_cases = cases
+        .iter()
+        .filter(|case| {
+            case.fixture_file
+                .as_deref()
+                .is_some_and(|fixture| fixture.starts_with("datasets/eval/v2-"))
+        })
+        .collect::<Vec<_>>();
+
+    assert!(
+        v2_cases.len() >= 10,
+        "expected v2 fixtures to be loaded into release eval"
+    );
+    assert!(
+        v2_cases.iter().all(|case| case.metadata.is_some()),
+        "all v2 fixtures should carry reviewed metadata"
+    );
+    assert!(
+        v2_cases.iter().all(|case| case
+            .metadata
+            .as_ref()
+            .is_some_and(|metadata| !metadata.raw_text_user_provided)),
+        "v2 fixtures must stay public-safe"
+    );
+    assert!(
+        v2_cases.iter().all(|case| {
+            matches!(
+                case.fixture_file.as_deref(),
+                Some("datasets/eval/v2-arabic.jsonl")
+                    | Some("datasets/eval/v2-mixed.jsonl")
+            )
+        }),
+        "loaded v2 fixture paths should come from the loader, not row input"
     );
 }
 

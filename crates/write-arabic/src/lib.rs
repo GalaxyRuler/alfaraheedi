@@ -3,6 +3,7 @@ use std::ops::Range;
 use write_core::{Category, Document, Engine, Language, Rule, RuleInfo, Severity, Suggestion};
 
 const TATWEEL: char = '\u{0640}';
+const NBSP: char = '\u{00A0}';
 
 #[derive(Debug, Clone, Default)]
 pub struct ArabicRuleSet;
@@ -26,6 +27,13 @@ pub fn rule_catalog() -> Vec<RuleInfo> {
             category: Category::Spacing,
             safe_auto_apply: true,
             description: "Collapse repeated spaces in Arabic text.".to_owned(),
+        },
+        RuleInfo {
+            source: "arabic:browser-nbsp".to_owned(),
+            language: Language::Arabic,
+            category: Category::Spacing,
+            safe_auto_apply: true,
+            description: "Replace browser non-breaking spaces between Arabic words.".to_owned(),
         },
         RuleInfo {
             source: "arabic:space-before-punctuation".to_owned(),
@@ -69,6 +77,14 @@ pub fn rule_catalog() -> Vec<RuleInfo> {
             safe_auto_apply: false,
             description: "Suggest a complete form for a common Arabic greeting.".to_owned(),
         },
+        RuleInfo {
+            source: "arabic:common-phrase-orthography".to_owned(),
+            language: Language::Arabic,
+            category: Category::Orthography,
+            safe_auto_apply: false,
+            description: "Suggest high-precision orthography for exact common Arabic phrases."
+                .to_owned(),
+        },
     ]
 }
 
@@ -84,7 +100,9 @@ impl Rule for ArabicRuleSet {
         suggestions.extend(space_before_punctuation_suggestions(document));
         suggestions.extend(space_after_punctuation_suggestions(document));
         suggestions.extend(spacing_suggestions(document));
+        suggestions.extend(browser_nbsp_suggestions(document));
         suggestions.extend(conversational_greeting_suggestions(document));
+        suggestions.extend(common_phrase_orthography_suggestions(document));
         suggestions
     }
 }
@@ -138,9 +156,7 @@ fn punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
         }
 
         let replacement = match character {
-            ',' if has_arabic_before(document.text(), byte_index)
-                && has_arabic_after(document.text(), end) =>
-            {
+            ',' if should_replace_latin_comma(document.text(), byte_index, end) => {
                 Some(("arabic:latin-comma", "،"))
             }
             '?' if has_arabic_before(document.text(), byte_index) => {
@@ -169,6 +185,27 @@ fn punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
     suggestions
 }
 
+fn should_replace_latin_comma(text: &str, start: usize, end: usize) -> bool {
+    has_arabic_before(text, start) && has_arabic_after(text, end)
+        || punctuation_follows_latin_acronym_before_arabic_text(text, start, end)
+}
+
+fn punctuation_follows_latin_acronym_before_arabic_text(
+    text: &str,
+    punctuation_start: usize,
+    punctuation_end: usize,
+) -> bool {
+    if next_script_context(text, punctuation_end) != Some(ScriptContext::Arabic) {
+        return false;
+    }
+
+    let Some((token_start, token)) = previous_ascii_token(text, punctuation_start) else {
+        return false;
+    };
+
+    is_uppercase_latin_acronym(token) && has_arabic_before(text, token_start)
+}
+
 fn spacing_suggestions(document: &Document) -> Vec<Suggestion> {
     let mut suggestions = Vec::new();
     let mut run_start = None;
@@ -194,6 +231,29 @@ fn spacing_suggestions(document: &Document) -> Vec<Suggestion> {
         && has_arabic_before(document.text(), start)
     {
         push_spacing_suggestion(document, start, document.text().len(), &mut suggestions);
+    }
+
+    suggestions
+}
+
+fn browser_nbsp_suggestions(document: &Document) -> Vec<Suggestion> {
+    let mut suggestions = Vec::new();
+    let mut run_start = None;
+    let text = document.text();
+
+    for (byte_index, character) in text.char_indices() {
+        if character == NBSP {
+            run_start.get_or_insert(byte_index);
+            continue;
+        }
+
+        if let Some(start) = run_start.take() {
+            push_browser_nbsp_suggestion(document, start, byte_index, &mut suggestions);
+        }
+    }
+
+    if let Some(start) = run_start {
+        push_browser_nbsp_suggestion(document, start, text.len(), &mut suggestions);
     }
 
     suggestions
@@ -256,7 +316,14 @@ fn space_after_punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
         if document.range_is_protected(punctuation_start..punctuation_end) {
             continue;
         }
-        if !has_arabic_before(text, punctuation_start) {
+        let has_arabic_context_before = has_arabic_before(text, punctuation_start)
+            || matches!(character, ',' | '،')
+                && punctuation_follows_latin_acronym_before_arabic_text(
+                    text,
+                    punctuation_start,
+                    punctuation_end,
+                );
+        if !has_arabic_context_before {
             continue;
         }
 
@@ -330,6 +397,54 @@ fn conversational_greeting_suggestions(document: &Document) -> Vec<Suggestion> {
     suggestions
 }
 
+#[derive(Debug, Clone, Copy)]
+struct ExactPhraseCorrection {
+    original: &'static str,
+    replacement: &'static str,
+}
+
+const EXACT_PHRASE_CORRECTIONS: &[ExactPhraseCorrection] = &[
+    ExactPhraseCorrection {
+        original: "ان شاء الله",
+        replacement: "إن شاء الله",
+    },
+];
+
+fn common_phrase_orthography_suggestions(document: &Document) -> Vec<Suggestion> {
+    let text = document.text();
+    let mut suggestions = Vec::new();
+
+    for correction in EXACT_PHRASE_CORRECTIONS {
+        for (start, original) in text.match_indices(correction.original) {
+            let end = start + original.len();
+            let range = start..end;
+            if !has_arabic_boundary_before(text, start)
+                || !has_arabic_boundary_after(text, end)
+                || document.range_is_protected(range.clone())
+            {
+                continue;
+            }
+
+            if let Ok(span) = document.span_for_byte_range(range) {
+                suggestions.push(Suggestion::replacement(
+                    "arabic:common-phrase-orthography",
+                    span,
+                    Language::Arabic,
+                    Category::Orthography,
+                    Severity::Warning,
+                    0.92,
+                    original,
+                    vec![correction.replacement.to_owned()],
+                    "Use the conventional orthography for this exact Arabic phrase.",
+                    false,
+                ));
+            }
+        }
+    }
+
+    suggestions
+}
+
 fn arabic_word_tokens(document: &Document) -> Vec<ArabicWordToken> {
     let text = document.text();
     let mut tokens = Vec::new();
@@ -361,6 +476,39 @@ fn push_arabic_word_token(text: &str, range: Range<usize>, tokens: &mut Vec<Arab
         range,
         text: slice.to_owned(),
     });
+}
+
+fn push_browser_nbsp_suggestion(
+    document: &Document,
+    start: usize,
+    end: usize,
+    suggestions: &mut Vec<Suggestion>,
+) {
+    let text = document.text();
+    if document.range_is_protected(start..end)
+        || previous_character(text, start).is_none_or(|character| !is_arabic_script(character))
+        || next_character(text, end).is_none_or(|character| !is_arabic_script(character))
+    {
+        return;
+    }
+
+    if let (Ok(span), Some(original)) = (
+        document.span_for_byte_range(start..end),
+        document.text().get(start..end),
+    ) {
+        suggestions.push(Suggestion::replacement(
+            "arabic:browser-nbsp",
+            span,
+            Language::Arabic,
+            Category::Spacing,
+            Severity::Warning,
+            0.98,
+            original,
+            vec![" ".to_string()],
+            "Replace browser non-breaking space between Arabic words.",
+            true,
+        ));
+    }
 }
 
 fn push_spacing_suggestion(
@@ -406,6 +554,63 @@ fn has_arabic_after(text: &str, byte_index: usize) -> bool {
     text.get(byte_index..)
         .and_then(|suffix| suffix.chars().find_map(script_context))
         .is_some_and(|script| script == ScriptContext::Arabic)
+}
+
+fn next_script_context(text: &str, byte_index: usize) -> Option<ScriptContext> {
+    text.get(byte_index..)?.chars().find_map(script_context)
+}
+
+fn previous_ascii_token(text: &str, byte_index: usize) -> Option<(usize, &str)> {
+    let prefix = text.get(..byte_index)?;
+    let token_end = prefix.trim_end_matches(' ').len();
+    if token_end == 0 {
+        return None;
+    }
+
+    let mut token_start = token_end;
+    for (candidate_start, character) in prefix[..token_end].char_indices().rev() {
+        if !character.is_ascii_alphanumeric() {
+            break;
+        }
+        token_start = candidate_start;
+    }
+
+    if token_start == token_end {
+        return None;
+    }
+
+    let token = text.get(token_start..token_end)?;
+    Some((token_start, token))
+}
+
+fn is_uppercase_latin_acronym(token: &str) -> bool {
+    let mut letters = 0usize;
+
+    for character in token.chars() {
+        if character.is_ascii_uppercase() {
+            letters += 1;
+        } else if !character.is_ascii_digit() {
+            return false;
+        }
+    }
+
+    letters >= 2 && token.len() <= 12
+}
+
+fn has_arabic_boundary_before(text: &str, byte_index: usize) -> bool {
+    previous_character(text, byte_index).is_none_or(|character| !is_arabic_script(character))
+}
+
+fn has_arabic_boundary_after(text: &str, byte_index: usize) -> bool {
+    next_character(text, byte_index).is_none_or(|character| !is_arabic_script(character))
+}
+
+fn previous_character(text: &str, byte_index: usize) -> Option<char> {
+    text.get(..byte_index)?.chars().next_back()
+}
+
+fn next_character(text: &str, byte_index: usize) -> Option<char> {
+    text.get(byte_index..)?.chars().next()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
