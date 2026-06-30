@@ -2,6 +2,12 @@
 
 - [ ] Clean git status
 - [ ] Public v1.0 claims match `docs/public/v1.0-product-contract.md`
+- [ ] For V2A work, public V2 claims match `docs/public/v2-product-contract.md`
+- [ ] For V2A work, `docs/testing/v2-acceptance-matrix.md` has source-controlled gates for supported browser text fields, stale apply, privacy settings, accessibility, real-site manual evidence, and store readiness
+- [ ] V2A is described as a browser-first planned or development lane unless release-candidate evidence explicitly supports a public release claim
+- [ ] V2B desktop overlay support and Office live underlines remain separately gated and deferred unless explicitly rescoped
+- [ ] V2A security and privacy docs reviewed: `docs/security/v2-browser-extension-threat-model.md` and `docs/security/v2-browser-extension-privacy-review.md`
+- [ ] No V2A release or store copy claims full grammar checking, every website, every rich editor, desktop-wide live overlay support, Office live underlines, hosted processing, bundled model weights, automatic LLM rewriting, or store approval before account-side gates
 - [ ] `docs/testing/v1.0-acceptance-matrix.md` has public-safe evidence files for each release-blocking desktop-foundation surface
 - [ ] No public page claims universal live desktop overlays, hosted processing, bundled model weights, complete Arabic morphology, full English grammar, or store approval that has not happened
 - [ ] Desktop installer remains the primary v1.0 user artifact

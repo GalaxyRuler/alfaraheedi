@@ -35,6 +35,59 @@ describe("desktop release packaging", () => {
     expect(readme).not.toMatch(/complete grammar checker/u);
   });
 
+  it("documents the V2A browser-first contract without premature product claims", async () => {
+    const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+    const contractPath = path.join(repoRoot, "docs/public/v2-product-contract.md");
+    const acceptanceMatrixPath = path.join(
+      repoRoot,
+      "docs/testing/v2-acceptance-matrix.md",
+    );
+
+    await expect(fs.access(contractPath)).resolves.toBeUndefined();
+
+    const contract = await fs.readFile(contractPath, "utf8");
+    const acceptanceMatrix = await fs.readFile(acceptanceMatrixPath, "utf8");
+
+    expect(contract).toMatch(
+      /Nahou checks supported browser text fields as you type, shows local-first suggestions directly in the field, and applies accepted deterministic suggestions in place when the original text still matches\./u,
+    );
+    expect(readme).toMatch(/planned browser-first development lane, not a current public release\s+claim/u);
+    expect(contract).toMatch(/does not replace the v1\.0 desktop selected-text product contract/u);
+    expect(contract).toMatch(/not a shipped public release claim/u);
+
+    for (const nonClaim of [
+      /No full Arabic grammar checking, full grammar checking, or grammar-perfection\s+guarantee/u,
+      /No universal support for every website or every rich editor/u,
+      /No desktop-wide live overlay support/u,
+      /No Office live underlines/u,
+      /No hosted processing/u,
+      /No bundled model weights or automatic LLM rewriting/u,
+      /No store approval or readiness before account-side gates/u,
+    ]) {
+      expect(contract).toMatch(nonClaim);
+    }
+
+    for (const acceptanceRow of [
+      /textarea\/input inline suggestions/u,
+      /simple contenteditable suggestions/u,
+      /stale apply\/suggestion handling/u,
+      /sensitive-field exclusion/u,
+      /paused\/site-disabled/u,
+      /local API unavailable/u,
+      /IME\/composition/u,
+      /RTL\/mixed text/u,
+      /real-site\/manual-gated/u,
+      /accessibility\/keyboard review/u,
+      /release\/store gates/u,
+    ]) {
+      expect(acceptanceMatrix).toMatch(acceptanceRow);
+    }
+
+    expect(readme).not.toMatch(/works everywhere/u);
+    expect(readme).not.toMatch(/complete grammar checker/u);
+    expect(readme).not.toMatch(/desktop-wide live underlines/u);
+  });
+
   it("defaults the optional Windows developer zip to the current release candidate", async () => {
     const source = await fs.readFile(
       path.join(repoRoot, "scripts/package-windows.ps1"),
