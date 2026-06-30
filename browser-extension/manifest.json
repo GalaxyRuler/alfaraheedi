@@ -37,6 +37,12 @@
         "https://*/*"
       ],
       "js": [
+        "src/editorDiscovery.js",
+        "src/textProjection.js",
+        "src/suggestionAnchors.js",
+        "src/applySuggestion.js",
+        "src/overlayLayer.js",
+        "src/suggestionCard.js",
         "src/content.js"
       ],
       "css": [
