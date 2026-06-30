@@ -211,10 +211,11 @@ Export a local upload-prep bundle after preflight with:
 ```
 
 The export writes
-`dist\browser-extension-store-submission\nahou-browser-extension-1.0.0.1-store-submission\`
+`dist\browser-extension-store-submission\nahou-browser-extension-2.0.0.1-store-submission\`
 with the upload zip, reviewer docs, privacy policy source, store asset
-checklist, selected screenshots, and `RELEASE_MANIFEST.json` containing SHA-256
-hashes and byte counts for the upload package, reviewer docs, and screenshots.
+checklist, selected screenshots, V2 validation summary, and
+`RELEASE_MANIFEST.json` containing SHA-256 hashes and byte counts for the upload
+package, reviewer docs, and screenshots.
 The bundle is still local prep only; the
 privacy policy must be published at a stable public URL before Chrome Web Store
 or Edge Add-ons upload.
@@ -270,9 +271,11 @@ Use `-RequireLocalReady` when validating local artifacts only, and
 `-RequireStoreReady` after merge, Pages deployment, live-editor QA,
 screen-reader review, and store-dashboard preparation are complete.
 
-The public-safe validation summary lives at
-`docs/testing/browser-extension-v0.7-validation.md`. Keep detailed VM logs under
-ignored `docs/testing/reports/` rather than in the public release branch.
+The public-safe V2A validation summary lives at
+`docs/testing/browser-extension-v2-validation.md`; the older
+`docs/testing/browser-extension-v0.7-validation.md` remains in the reviewer
+bundle to preserve evidence lineage. Keep detailed VM logs under ignored
+`docs/testing/reports/` rather than in the public release branch.
 
 To include packaged VM smokes:
 

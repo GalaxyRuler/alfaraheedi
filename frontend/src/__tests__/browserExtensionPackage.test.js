@@ -1033,9 +1033,9 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1/u);
     expect(source).not.toMatch(/Check browser extension store submission integrity[\s\S]*-RequireValid/u);
     expect(source).toMatch(/actions\/upload-artifact@v6/u);
-    expect(source).toMatch(/nahou-browser-extension-1\.0\.0\.1-release-artifacts/u);
-    expect(source).toMatch(/dist\/browser-extension\/nahou-browser-extension-1\.0\.0\.1\.zip/u);
-    expect(source).toMatch(/dist\/browser-extension-store-submission\/nahou-browser-extension-1\.0\.0\.1-store-submission\/\*\*/u);
+    expect(source).toMatch(/nahou-browser-extension-2\.0\.0\.1-ci-preflight-artifacts/u);
+    expect(source).toMatch(/dist\/browser-extension\/nahou-browser-extension-2\.0\.0\.1\.zip/u);
+    expect(source).toMatch(/dist\/browser-extension-store-submission\/nahou-browser-extension-2\.0\.0\.1-store-submission\/\*\*/u);
     expect(source).toMatch(/if-no-files-found:\s+error/u);
     expect(source).not.toMatch(/check-browser-extension-pages-readiness\.ps1\s+-RequireReady/u);
     expect(source).not.toMatch(/RunVmSmokes/u);
@@ -1098,7 +1098,8 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/ManualQaReportCompleted/u);
     expect(source).toMatch(/ManualQaReleaseDecision/u);
     expect(source).toMatch(/check-browser-extension-pages-readiness\.ps1 -RequireReady/u);
-    expect(source).toMatch(/nahou-browser-extension-1\.0\.0\.1-release-artifacts/u);
+    expect(source).toMatch(/nahou-browser-extension-2\.0\.0\.1-ci-preflight-artifacts/u);
+    expect(source).toMatch(/complete store-submission bundle/u);
     expect(source).not.toMatch(/nahou-browser-extension-0\.7\.0-release-artifacts/u);
     expect(source).toMatch(/browser-extension\/MANUAL_RELEASE_GATES\.md/u);
     expect(source).toMatch(/docs\/testing\/browser-extension-v0\.7-validation\.md/u);
@@ -1146,6 +1147,26 @@ describe("browser extension package metadata", () => {
     expect(source).not.toMatch(/C:\\QA/u);
     expect(source).not.toMatch(/C:\\CodexProjects/u);
     expect(source).not.toMatch(/C:\\Users/u);
+  });
+
+  it("includes V2 validation evidence in store-submission reviewer docs", async () => {
+    const exportSource = await fs.readFile(
+      path.join(repoRoot, "scripts/export-browser-extension-store-submission.ps1"),
+      "utf8",
+    );
+    const integritySource = await fs.readFile(
+      path.join(repoRoot, "scripts/check-browser-extension-store-submission-integrity.ps1"),
+      "utf8",
+    );
+    const handoffSource = await fs.readFile(
+      path.join(repoRoot, "scripts/export-browser-extension-release-handoff.ps1"),
+      "utf8",
+    );
+
+    expect(exportSource).toMatch(/browser-extension-v0\.7-validation\.md/u);
+    expect(exportSource).toMatch(/browser-extension-v2-validation\.md/u);
+    expect(integritySource).toMatch(/02-reviewer-docs\/browser-extension-v2-validation\.md/u);
+    expect(handoffSource).toMatch(/02-reviewer-docs\/browser-extension-v2-validation\.md/u);
   });
 
   it("ships a V2 browser-extension validation summary for Phase 9 evidence", async () => {

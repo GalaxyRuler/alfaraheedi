@@ -4,6 +4,38 @@
 
 No unreleased changes.
 
+## v2.0.0-rc.1 - 2026-06-30
+
+### Added
+
+- Promoted the V2A browser-first extension lane to a local-ready release
+  candidate for supported browser text fields.
+- Added in-field suggestions, non-mutating underline/highlight marks, keyboard
+  suggestion-card flow, stale-apply guards, contenteditable DOM-range apply,
+  iframe and open Shadow DOM coverage, pause/site-disable enforcement, and
+  public-safe V2 validation evidence.
+- Added store-prep reviewer evidence for the V2A local-ready browser claim while
+  keeping live Gmail, WhatsApp Web, Google Docs, manual screen-reader, and
+  account-side store submission gates separate.
+
+### Safety
+
+- V2A remains local-first: active editor text is gated before leaving the page
+  context, gated again before the loopback API call, and never sent to a hosted
+  writing service or telemetry endpoint.
+- Public reports, release notes, screenshots, and store-prep evidence must not
+  include raw live editor text.
+
+### Known Limitations
+
+- The V2A release candidate does not claim every website, every rich editor,
+  production Gmail/WhatsApp/Google Docs compatibility, desktop-wide live
+  overlays, Office live underlines, hosted processing, bundled model weights, or
+  browser-store approval.
+- Store readiness remains false until account-side live-editor QA, manual
+  screen-reader review, and Chrome Web Store / Edge Add-ons submission gates are
+  completed.
+
 ## v1.0.0-rc.1 - 2026-06-25
 
 ### Added

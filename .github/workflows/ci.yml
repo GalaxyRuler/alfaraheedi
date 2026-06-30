@@ -66,13 +66,13 @@ jobs:
       - name: Inspect browser extension store submission integrity
         shell: pwsh
         run: .\scripts\check-browser-extension-store-submission-integrity.ps1
-      - name: Upload browser extension release artifacts
+      - name: Upload browser extension CI preflight artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: nahou-browser-extension-1.0.0.1-release-artifacts
+          name: nahou-browser-extension-2.0.0.1-ci-preflight-artifacts
           path: |
-            dist/browser-extension/nahou-browser-extension-1.0.0.1.zip
-            dist/browser-extension-store-submission/nahou-browser-extension-1.0.0.1-store-submission/**
+            dist/browser-extension/nahou-browser-extension-2.0.0.1.zip
+            dist/browser-extension-store-submission/nahou-browser-extension-2.0.0.1-store-submission/**
           if-no-files-found: error
           retention-days: 14
 
@@ -94,8 +94,8 @@ jobs:
       - name: Upload Office add-ins foundation artifact
         uses: actions/upload-artifact@v6
         with:
-          name: nahou-office-addins-1.0.0.1-foundation
-          path: dist/office-addins/nahou-office-addins-1.0.0.1.zip
+          name: nahou-office-addins-2.0.0.1-foundation
+          path: dist/office-addins/nahou-office-addins-2.0.0.1.zip
           if-no-files-found: error
           retention-days: 14
 

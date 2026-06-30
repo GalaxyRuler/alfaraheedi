@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Nahou Writing Companion",
   "short_name": "Nahou",
-  "version": "1.0.0.1",
+  "version": "2.0.0.1",
   "description": "Local-first writing suggestions for editable web fields.",
   "icons": {
     "16": "icons/icon-16.png",

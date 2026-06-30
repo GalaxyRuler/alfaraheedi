@@ -250,8 +250,7 @@ fn seed_cases_include_public_safe_v2_fixtures() {
         v2_cases.iter().all(|case| {
             matches!(
                 case.fixture_file.as_deref(),
-                Some("datasets/eval/v2-arabic.jsonl")
-                    | Some("datasets/eval/v2-mixed.jsonl")
+                Some("datasets/eval/v2-arabic.jsonl") | Some("datasets/eval/v2-mixed.jsonl")
             )
         }),
         "loaded v2 fixture paths should come from the loader, not row input"

@@ -138,6 +138,7 @@ $requiredReviewerDocPaths = @(
     "02-reviewer-docs/STORE_ASSETS.md",
     "02-reviewer-docs/MANUAL_RELEASE_GATES.md",
     "02-reviewer-docs/browser-extension-v0.7-validation.md",
+    "02-reviewer-docs/browser-extension-v2-validation.md",
     "02-reviewer-docs/PRIVACY_POLICY.md",
     "02-reviewer-docs/privacy.html"
 )

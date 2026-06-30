@@ -4,7 +4,7 @@
 - [ ] Public v1.0 claims match `docs/public/v1.0-product-contract.md`
 - [ ] For V2A work, public V2 claims match `docs/public/v2-product-contract.md`
 - [ ] For V2A work, `docs/testing/v2-acceptance-matrix.md` has source-controlled gates for supported browser text fields, stale apply, privacy settings, accessibility, real-site manual evidence, and store readiness
-- [ ] V2A is described as a browser-first planned or development lane unless release-candidate evidence explicitly supports a public release claim
+- [ ] V2A is described as a browser-first local-ready release-candidate lane only when release-candidate evidence explicitly supports the claim
 - [ ] V2B desktop overlay support and Office live underlines remain separately gated and deferred unless explicitly rescoped
 - [ ] V2A security and privacy docs reviewed: `docs/security/v2-browser-extension-threat-model.md` and `docs/security/v2-browser-extension-privacy-review.md`
 - [ ] No V2A release or store copy claims full grammar checking, every website, every rich editor, desktop-wide live overlay support, Office live underlines, hosted processing, bundled model weights, automatic LLM rewriting, or store approval before account-side gates
@@ -32,7 +32,7 @@
 - [ ] For browser-extension changes: `.\scripts\validate-browser-extension-release.ps1`
 - [ ] For public release hygiene: `.\scripts\check-public-release-hygiene.ps1 -RequireClean`
 - [ ] Manual log and screenshot review confirms no raw selected text in public artifacts or source-controlled reports
-- [ ] For browser-extension pull requests: confirm the CI artifact `nahou-browser-extension-1.0.0.1-release-artifacts` contains the upload zip, `RELEASE_MANIFEST.json`, reviewer docs, and selected screenshots
+- [ ] For browser-extension pull requests: confirm the CI artifact `nahou-browser-extension-2.0.0.1-ci-preflight-artifacts` contains the upload zip, `RELEASE_MANIFEST.json`, reviewer docs, and V2 validation summary; because CI runs with `-AllowMissingScreenshots`, do not treat this artifact as the complete store-submission bundle
 - [ ] For browser-extension local-ready artifacts: `.\scripts\prepare-browser-extension-release-candidate.ps1` and confirm `LocalReady: true` and `ScreenshotRootsMatch: true`
 - [ ] For browser-extension handoff artifacts: `.\scripts\export-browser-extension-release-handoff.ps1` and review the generated Markdown/JSON under `dist\browser-extension-release-handoff\`
 - [ ] For browser-extension validation evidence: review `docs/testing/browser-extension-v0.7-validation.md`; keep detailed VM logs under ignored `docs/testing/reports\`

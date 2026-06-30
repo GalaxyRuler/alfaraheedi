@@ -2,18 +2,19 @@
 
 Last updated: 2026-06-30
 
-V2A is the browser-first development lane for Grammarly-like in-text assistance.
-It does not replace the v1.0 desktop selected-text product contract until the
-V2A release gates pass and a release note explicitly says so.
+V2A is the browser-first release-candidate lane for Grammarly-like in-text
+assistance in supported browser text fields. It does not replace the v1.0
+desktop selected-text product contract for desktop workflows.
 
 ## Public Claim
 
-The V2A target public claim is:
+The V2A local-ready public claim is:
 
 > Nahou checks supported browser text fields as you type, shows local-first suggestions directly in the field, and applies accepted deterministic suggestions in place when the original text still matches.
 
-Until the acceptance matrix and release gates pass, this is a planned V2A claim,
-not a shipped public release claim.
+This claim remains bounded to source-controlled local-ready evidence. Store
+readiness and site-specific production-editor claims require the separate manual
+and account-side gates listed below.
 
 ## Supported V2A Path
 

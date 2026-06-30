@@ -1,8 +1,8 @@
 # Browser Extension Store Assets
 
-This file tracks the screenshot set and listing-asset rules for the v0.7
-browser-extension foundation. It is intentionally source-controlled metadata,
-not the generated PNG binaries.
+This file tracks the screenshot set and listing-asset rules for the V2A
+browser-extension release candidate. It is intentionally source-controlled
+metadata, not the generated PNG binaries.
 
 ## Current Screenshot Set
 
