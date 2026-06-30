@@ -1,6 +1,7 @@
 (() => {
   const runtime =
     globalThis.NahouExtensionRuntime || (globalThis.NahouExtensionRuntime = {});
+  const MAX_DISCOVERY_TEXT_CHARS = 6_000;
   const BLOCK_LINE_TAGS = new Set([
     "ADDRESS",
     "ARTICLE",
@@ -31,57 +32,60 @@
   ]);
   const TEXT_LIKE_INPUT_TYPES = new Set(["email", "search", "tel", "text", "url"]);
   const SENSITIVE_AUTOCOMPLETE_TOKENS = new Set([
+    "cc-additional-name",
     "cc-csc",
     "cc-exp",
     "cc-exp-month",
     "cc-exp-year",
+    "cc-family-name",
+    "cc-given-name",
+    "cc-name",
     "cc-number",
+    "cc-type",
     "current-password",
     "new-password",
     "one-time-code",
   ]);
-  const SENSITIVE_EDITABLE_HINT_RE =
-    /(?:^|[-_\s])(?:2fa|api[-_\s]*key|apikey|auth|card|cc|credit|csc|cvc|cvv|mfa|otp|passcode|password|secret|ssn|token)(?:$|[-_\s])/iu;
+  const SENSITIVE_EXPLICIT_EDITABLE_HINT_RE =
+    /(?:^|[-_\s])(?:2fa|api[-_\s]*key|apikey|auth|card|credit|csc|cvc|cvv|mfa|otp|passcode|password|secret|ssn|token)(?:$|[-_\s])/iu;
+  const SENSITIVE_CARD_ABBREVIATION_RE =
+    /(?:^|[-_\s])(?:cc|csc|cvc|cvv)(?:$|[-_\s])/iu;
+  const PAYMENT_CONTEXT_RE =
+    /(?:^|[-_\s])(?:billing|card|credit|debit|payment|payments)(?:$|[-_\s])/iu;
+  const POSSIBLE_EDITOR_EVENT_TYPES = new Set([
+    "beforeinput",
+    "compositionend",
+    "compositionstart",
+    "compositionupdate",
+    "input",
+  ]);
   const SENSITIVE_CONTEXT_SELECTOR =
     'form,fieldset,[role="group"],[role="region"],[aria-label],[aria-labelledby]';
   const IGNORED_RICH_EDITOR_SENTINEL_SELECTOR =
     '[data-slate-zero-width],[data-slate-placeholder="true"],[data-lexical-placeholder="true"],.ProseMirror-trailingBreak';
+  const UNSUPPORTED_COMPLEX_RICH_EDITOR_SELECTOR =
+    '[data-nahou-unsupported-editor],.monaco-editor,.cm-editor,[data-codemirror]';
 
   function discoverEditorSurface(target) {
-    const element = editableElementForTarget(target);
-    if (!element) return null;
-
-    if (element instanceof HTMLTextAreaElement) {
-      return {
-        element,
-        kind: "textarea",
-        text: element.value,
-      };
-    }
-
-    if (element instanceof HTMLInputElement) {
-      return {
-        element,
-        kind: "input",
-        text: element.value,
-      };
-    }
-
+    const classification = classifyEditorSurface(target);
+    if (!classification.supported) return null;
     return {
-      element,
-      kind: "contenteditable",
-      text: textFromContentEditable(element),
+      element: classification.element,
+      kind: classification.kind,
+      text: classification.text,
     };
   }
 
-  function editableElementForTarget(target) {
-    if (!(target instanceof Element)) return null;
-    const textControl = target.closest("textarea,input");
-    if (textControl) {
-      return isIgnoredEditable(textControl) ? null : textControl;
+  function classifyEditorSurface(targetOrEvent) {
+    if (isEventLike(targetOrEvent)) {
+      return classifyEditorSurfaceForEvent(targetOrEvent);
     }
-    if (isAriaUnavailableEditable(target)) return null;
-    return contentEditableElementForTarget(target);
+    return classifyEditorTarget(targetOrEvent, { enforceTextLimit: true });
+  }
+
+  function editableElementForTarget(target) {
+    const classification = classifyEditorTarget(target, { enforceTextLimit: false });
+    return classification.supported ? classification.element : null;
   }
 
   function editableElementForEvent(event) {
@@ -100,6 +104,148 @@
       return editor.value;
     }
     return textFromContentEditable(editor);
+  }
+
+  function classifyEditorSurfaceForEvent(event) {
+    let firstUnsupported = null;
+    let sawElementBoundary = false;
+
+    if (typeof event.composedPath === "function") {
+      for (const target of event.composedPath()) {
+        if (!(target instanceof Element)) continue;
+        sawElementBoundary = true;
+        const classification = classifyEditorTarget(target, {
+          enforceTextLimit: true,
+        });
+        if (classification.supported) return classification;
+        if (classification.reason !== "no-editable-target" && !firstUnsupported) {
+          firstUnsupported = classification;
+        }
+      }
+
+      if (firstUnsupported) return firstUnsupported;
+      if (
+        sawElementBoundary &&
+        event.target instanceof Element &&
+        isPossibleClosedShadowEditorEvent(event)
+      ) {
+        return unsupportedEditor(
+          "closed-shadow-or-composed-path-boundary",
+          event.target,
+        );
+      }
+    }
+
+    return classifyEditorTarget(event.target, { enforceTextLimit: true });
+  }
+
+  function classifyEditorTarget(target, options = {}) {
+    if (!(target instanceof Element)) return unsupportedEditor("no-editable-target");
+
+    const textControl = target.closest("textarea,input");
+    if (textControl) {
+      return classifyTextControl(textControl, options);
+    }
+
+    return classifyContentEditableTarget(target, options);
+  }
+
+  function classifyTextControl(element, options = {}) {
+    if (isInsideClosedShadowRoot(element)) {
+      return unsupportedEditor("closed-shadow-root", element);
+    }
+
+    if (isAriaReadonlyEditable(element)) return unsupportedEditor("aria-readonly", element);
+    if (isAriaDisabledEditable(element)) return unsupportedEditor("aria-disabled", element);
+    if (element.disabled) return unsupportedEditor("disabled", element);
+    if (element.readOnly) return unsupportedEditor("readonly", element);
+
+    if (element instanceof HTMLInputElement && !TEXT_LIKE_INPUT_TYPES.has(element.type)) {
+      return unsupportedEditor("unsupported-input-type", element);
+    }
+
+    if (!(element instanceof HTMLTextAreaElement) && !(element instanceof HTMLInputElement)) {
+      return unsupportedEditor("no-editable-target");
+    }
+
+    const sensitivity = sensitiveEditableReason(element);
+    if (sensitivity) return unsupportedEditor(sensitivity, element);
+
+    const text = element.value;
+    if (options.enforceTextLimit && text.length > MAX_DISCOVERY_TEXT_CHARS) {
+      return unsupportedEditor("oversized-text", element, { textLength: text.length });
+    }
+
+    return supportedEditor(element, element instanceof HTMLTextAreaElement ? "textarea" : "input", text);
+  }
+
+  function classifyContentEditableTarget(target, options = {}) {
+    let element = target;
+    while (element instanceof HTMLElement) {
+      if (element.hasAttribute("contenteditable")) {
+        if (isInsideClosedShadowRoot(element)) {
+          return unsupportedEditor("closed-shadow-root", element);
+        }
+        if (isAriaReadonlyEditable(element)) {
+          return unsupportedEditor("aria-readonly", element);
+        }
+        if (isAriaDisabledEditable(element)) {
+          return unsupportedEditor("aria-disabled", element);
+        }
+        if (hasDisabledContentEditableValue(element)) {
+          return unsupportedEditor("contenteditable-disabled", element);
+        }
+        if (!hasEditableContentEditableValue(element)) {
+          return unsupportedEditor("unsupported-contenteditable", element);
+        }
+        if (hasEditableContentEditableAncestor(element)) {
+          return unsupportedEditor("unsupported-rich-editor-island", element);
+        }
+
+        const sensitivity = sensitiveEditableReason(element);
+        if (sensitivity) return unsupportedEditor(sensitivity, element);
+
+        if (hasUnsupportedComplexRichEditorIsland(element)) {
+          return unsupportedEditor("unsupported-rich-editor-island", element);
+        }
+
+        const text = textFromContentEditable(element);
+        if (options.enforceTextLimit && text.length > MAX_DISCOVERY_TEXT_CHARS) {
+          return unsupportedEditor("oversized-text", element, { textLength: text.length });
+        }
+
+        return supportedEditor(element, "contenteditable", text);
+      }
+      element = element.parentElement;
+    }
+    return unsupportedEditor("no-editable-target");
+  }
+
+  function supportedEditor(element, kind, text) {
+    return {
+      supported: true,
+      element,
+      kind,
+      text,
+    };
+  }
+
+  function unsupportedEditor(reason, element = null, extra = {}) {
+    return {
+      supported: false,
+      reason,
+      element,
+      ...extra,
+    };
+  }
+
+  function isEventLike(value) {
+    return (
+      value !== null &&
+      typeof value === "object" &&
+      !(value instanceof Element) &&
+      ("target" in value || typeof value.composedPath === "function")
+    );
   }
 
   function textFromContentEditable(editor) {
@@ -160,6 +306,11 @@
     return null;
   }
 
+  function isInsideClosedShadowRoot(element) {
+    const root = element.getRootNode?.();
+    return root instanceof ShadowRoot && root.mode === "closed";
+  }
+
   function hasEditableContentEditableValue(element) {
     if (!element.hasAttribute("contenteditable")) return false;
     const value = contentEditableValue(element);
@@ -181,6 +332,27 @@
 
     const style = window.getComputedStyle(element);
     return style.display === "none" || style.visibility === "hidden";
+  }
+
+  function hasUnsupportedComplexRichEditorIsland(element) {
+    if (element.matches(UNSUPPORTED_COMPLEX_RICH_EDITOR_SELECTOR)) return true;
+    return Array.from(element.querySelectorAll("[contenteditable]")).some(
+      (child) => child !== element && hasEditableContentEditableValue(child),
+    );
+  }
+
+  function hasEditableContentEditableAncestor(element) {
+    let current = element.parentElement;
+    while (current instanceof HTMLElement) {
+      if (
+        current.hasAttribute("contenteditable") &&
+        hasEditableContentEditableValue(current)
+      ) {
+        return true;
+      }
+      current = current.parentElement;
+    }
+    return false;
   }
 
   function contentEditableValue(element) {
@@ -206,6 +378,11 @@
     return false;
   }
 
+  function sensitiveEditableReason(element) {
+    if (hasSensitiveEditableHint(element)) return "sensitive-field";
+    return sensitiveAncestorElementFor(element) ? "sensitive-ancestor" : null;
+  }
+
   function hasSensitiveEditableHint(element) {
     const autocompleteTokens = (element.getAttribute("autocomplete") ?? "")
       .trim()
@@ -226,37 +403,73 @@
     ]
       .filter(Boolean)
       .join(" ");
-    return SENSITIVE_EDITABLE_HINT_RE.test(hintText);
+    return hasSensitiveDirectHintText(hintText);
   }
 
   function hasSensitiveEditableContext(element) {
-    if (hasSensitiveEditableHint(element)) return true;
+    return hasSensitiveEditableHint(element) || sensitiveAncestorElementFor(element) !== null;
+  }
 
+  function sensitiveAncestorElementFor(element) {
     let current = element.parentElement;
     while (current && current !== document.body) {
-      if (isSensitiveEditableContextElement(current)) return true;
+      if (isSensitiveEditableContextElement(current)) return current;
       current = current.parentElement;
     }
-    return false;
+    return null;
   }
 
   function isSensitiveEditableContextElement(element) {
     if (!(element instanceof HTMLElement)) return false;
     if (!element.matches(SENSITIVE_CONTEXT_SELECTOR)) return false;
 
-    if (hasSensitiveEditableHint(element)) return true;
+    if (hasSensitiveElementIdentityHint(element)) return true;
 
-    const labelText = labelledByText(element);
-    if (SENSITIVE_EDITABLE_HINT_RE.test(labelText)) return true;
+    const labelText = [
+      element.getAttribute("aria-label"),
+      labelledByText(element),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    if (hasSensitiveAncestorLabelText(labelText)) return true;
 
     if (element instanceof HTMLFieldSetElement) {
       const legend = Array.from(element.children).find(
         (child) => child instanceof HTMLLegendElement,
       );
-      return SENSITIVE_EDITABLE_HINT_RE.test(legend?.textContent ?? "");
+      return hasSensitiveAncestorLabelText(legend?.textContent ?? "");
     }
 
     return false;
+  }
+
+  function hasSensitiveDirectHintText(text) {
+    if (!text) return false;
+    return (
+      SENSITIVE_EXPLICIT_EDITABLE_HINT_RE.test(text) ||
+      SENSITIVE_CARD_ABBREVIATION_RE.test(text)
+    );
+  }
+
+  function hasSensitiveElementIdentityHint(element) {
+    const hintText = [
+      element.id,
+      element.getAttribute("name"),
+      element.getAttribute("title"),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return hasSensitiveDirectHintText(hintText);
+  }
+
+  function hasSensitiveAncestorLabelText(text) {
+    if (!text) return false;
+    if (SENSITIVE_EXPLICIT_EDITABLE_HINT_RE.test(text)) return true;
+    return PAYMENT_CONTEXT_RE.test(text);
+  }
+
+  function isPossibleClosedShadowEditorEvent(event) {
+    return POSSIBLE_EDITOR_EVENT_TYPES.has(event.type ?? "");
   }
 
   function labelledByText(element) {
@@ -271,12 +484,26 @@
   function isAriaUnavailableEditable(element) {
     return (
       element instanceof Element &&
-      (element.getAttribute("aria-readonly")?.trim().toLowerCase() === "true" ||
-        element.getAttribute("aria-disabled")?.trim().toLowerCase() === "true")
+      (isAriaReadonlyEditable(element) || isAriaDisabledEditable(element))
+    );
+  }
+
+  function isAriaReadonlyEditable(element) {
+    return (
+      element instanceof Element &&
+      element.getAttribute("aria-readonly")?.trim().toLowerCase() === "true"
+    );
+  }
+
+  function isAriaDisabledEditable(element) {
+    return (
+      element instanceof Element &&
+      element.getAttribute("aria-disabled")?.trim().toLowerCase() === "true"
     );
   }
 
   Object.assign(runtime, {
+    classifyEditorSurface,
     discoverEditorSurface,
     editableElementForEvent,
     editableElementForTarget,

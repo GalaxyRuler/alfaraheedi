@@ -11,9 +11,10 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - Disable/re-enable control for the current site from the toolbar popup.
 - Content script detects focused editable `textarea`, safe text-like `input` types (`text`, `search`, `email`, `url`, and `tel`), and contenteditable fields using `true`, empty, or `plaintext-only` tokens.
 - Read-only/disabled native controls and ARIA read-only/disabled editable controls are ignored before text is analyzed.
-- Read-only, disabled, password, sensitive-hinted, and other non-text-like textarea/input controls are ignored, sensitive-hinted contenteditable roots are ignored, and editors inside sensitive-hinted forms, fieldsets, groups, or regions are ignored.
+- Read-only, disabled, password, hidden, sensitive-hinted, oversized, unsupported complex rich-editor, and other non-text-like textarea/input controls are ignored, sensitive-hinted contenteditable roots are ignored, and editors inside sensitive-hinted forms, fieldsets, groups, or regions are ignored.
 - The content script is injected into matching frames so iframe-hosted editable fields can be handled.
 - Editable fields inside open shadow roots are detected through composed browser event paths.
+- Closed shadow roots and composed-path boundaries that do not expose an editable target are classified as unsupported.
 - Text is debounced and sent through the extension service worker to the configured local Nahou HTTP API.
 - Extension options store the loopback API URL and default writing mode in `chrome.storage.local`.
 - The service worker uses the stored loopback API URL and writing mode for analysis requests; content-script messages cannot override those settings.
@@ -26,9 +27,11 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - Delayed API responses are ignored if the editor text has changed since the request was sent.
 - Plain textarea and input fields get scroll- and layout-synchronized non-mutating wavy underline overlays for anchored suggestions.
 - Contenteditable fields get non-mutating browser-native CSS Highlight marks when the browser supports the CSS Highlight API.
-- Individual suggestions can be applied when the current editor text still contains the original text.
-- Plain textarea/input replacements prefer validated suggestion spans, so repeated original text applies to the clicked occurrence.
+- Individual suggestions can be applied when the current editor text resolves to a trusted UTF-16 span or one unambiguous original-text occurrence.
+- Plain textarea/input replacements prefer validated suggestion spans, so repeated original text applies to the clicked occurrence; repeated originals without a trusted span remain review-only.
 - Accepted replacements place the caret after the inserted text and dispatch a composed `InputEvent` with `inputType="insertReplacementText"` and replacement `data`, so page frameworks and open Shadow DOM hosts can observe applied edits.
+- Projection covers UTF-16 spans, emoji-adjacent spans, Arabic/Latin mixed text, RTL text, line breaks, block boundaries, hidden decoration, non-editable islands, and known editor sentinels when a stable range can be built.
+- Ambiguous or DOM-unavailable projections return review-only/unavailable runtime results and do not create applyable DOM ranges.
 - Runtime analyze requests preserve the editor text exactly, including leading or trailing whitespace, so API spans remain aligned with the field.
 - Oversized editor text is refused locally with a status message before it is sent through the extension runtime or local API.
 - Suggestion panels and underline marks are cleared immediately after a successful apply, editor text change, focus loss, or editor removal.
@@ -37,7 +40,7 @@ This is the v0.7 browser-extension foundation for live web-editor assistance.
 - Anchored contenteditable replacements use DOM ranges so simple inline markup is preserved when applying a suggestion.
 - The extension does not auto-apply suggestions, send text to hosted services, or use telemetry.
 
-Production-editor-specific anchoring for apps such as Gmail, WhatsApp Web, and Google Docs is intentionally later v0.7 work. This slice proves editor discovery, localhost analysis, safe page UI injection, matching-frame injection for iframe-hosted editors, non-mutating underline marks for textarea and safe text-like input fields, CSS Highlight marks for simple contenteditable fields, open Shadow DOM editor event handling, and guarded replacement for editable text without flattening simple inline markup or collapsing simple contenteditable line breaks, including blank lines represented by empty blocks or repeated `<br>` nodes. Read-only/disabled text controls, ARIA read-only/disabled editable controls, password inputs, sensitive-hinted editable controls or ancestor containers such as OTP, credit-card, token, API-key, and secret fields, other non-text-like controls, `contenteditable="false"` islands, hidden decoration nodes, and known invisible rich-editor sentinel nodes inside an editable root are ignored.
+Production-editor-specific anchoring for apps such as Gmail, WhatsApp Web, and Google Docs is intentionally later v0.7 work. This slice proves editor discovery, localhost analysis, safe page UI injection, matching-frame injection for iframe-hosted editors, non-mutating underline marks for textarea and safe text-like input fields, CSS Highlight marks for simple contenteditable fields, open Shadow DOM editor event handling, and guarded replacement for editable text without flattening simple inline markup or collapsing simple contenteditable line breaks, including blank lines represented by empty blocks or repeated `<br>` nodes. Read-only/disabled text controls, ARIA read-only/disabled editable controls, password inputs, sensitive-hinted editable controls or ancestor containers such as OTP, credit-card, token, API-key, and secret fields, other non-text-like controls, oversized text, closed shadow roots, unsupported complex rich-editor islands, `contenteditable="false"` islands, hidden decoration nodes, and known invisible rich-editor sentinel nodes inside an editable root are ignored.
 
 ## Run Locally
 

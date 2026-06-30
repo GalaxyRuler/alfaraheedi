@@ -3,9 +3,10 @@
     globalThis.NahouExtensionRuntime || (globalThis.NahouExtensionRuntime = {});
 
   function applicableSuggestionSetForEditor(editor, analysis) {
+    const suggestions = Array.isArray(analysis?.suggestions) ? analysis.suggestions : [];
     return new Set(
-      runtime.suggestionRangesForText(runtime.textFromEditor(editor), analysis).map(
-        (entry) => entry.suggestion,
+      suggestions.filter(
+        (suggestion) => runtime.projectionForEditor(editor, suggestion).applyable,
       ),
     );
   }
