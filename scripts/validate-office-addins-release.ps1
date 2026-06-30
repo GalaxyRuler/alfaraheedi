@@ -124,6 +124,8 @@ if (-not (Test-Path -LiteralPath $serveTool)) {
 }
 
 $manifestXml = [xml](Get-Content -LiteralPath $manifestPath -Raw)
+$manifestText = Get-Content -LiteralPath $manifestPath -Raw
+$devManifestText = Get-Content -LiteralPath $devManifestPath -Raw
 $devManifestXml = [xml](Get-Content -LiteralPath $devManifestPath -Raw)
 $prodManifestText = Get-Content -LiteralPath $prodManifestPath -Raw
 $prodManifestXml = [xml]$prodManifestText
@@ -132,10 +134,13 @@ $results.Version = [string]$manifestXml.OfficeApp.Version
 $results.ReleaseVersion = if ($ReleaseVersion) { $ReleaseVersion } else { $results.Version }
 
 foreach ($manifestInfo in @(
-    @{ Description = "generated"; Xml = $manifestXml },
-    @{ Description = "development"; Xml = $devManifestXml },
-    @{ Description = "production"; Xml = $prodManifestXml }
+    @{ Description = "generated"; Xml = $manifestXml; Text = $manifestText },
+    @{ Description = "development"; Xml = $devManifestXml; Text = $devManifestText },
+    @{ Description = "production"; Xml = $prodManifestXml; Text = $prodManifestText }
 )) {
+    if ($manifestInfo.Text -notmatch '^\s*<\?xml version="1\.0" encoding="utf-8"') {
+        throw "$($manifestInfo.Description) manifest XML declaration must declare utf-8 to match the source-controlled bytes."
+    }
     $manifestVersion = [string]$manifestInfo.Xml.OfficeApp.Version
     if ($manifestVersion -ne $results.ReleaseVersion) {
         throw "$($manifestInfo.Description) manifest version must equal release version $($results.ReleaseVersion): $manifestVersion"
@@ -215,6 +220,8 @@ $releaseScriptPaths = [string[]]@(
     (Join-Path $PSScriptRoot "New-OfficeAddinDevCertificate.ps1"),
     (Join-Path $PSScriptRoot "new-office-addins-manual-qa-report.ps1"),
     (Join-Path $PSScriptRoot "package-office-addins.ps1"),
+    (Join-Path $PSScriptRoot "qa-office-addins-whiteknight-powerpoint-sideload.ps1"),
+    (Join-Path $PSScriptRoot "qa-office-addins-whiteknight-word-sideload.ps1"),
     (Join-Path $PSScriptRoot "serve-office-addins.ps1"),
     (Join-Path $PSScriptRoot "validate-office-addins-release.ps1")
 )

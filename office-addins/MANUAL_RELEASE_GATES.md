@@ -70,6 +70,16 @@ Arabic spacing sample is:
 كيف حال  ما اخبار
 ```
 
+The WhiteKnight Word harness can collect repeatable evidence for this gate:
+
+```powershell
+.\scripts\qa-office-addins-whiteknight-word-sideload.ps1 -AllowBlocked
+```
+
+Use `-StageOnly` when validating the payload shape without opening Word. Live
+WhiteKnight artifacts must record counts, hashes, screenshots, UIA snapshots,
+and pass/fail checks only; do not use private document text.
+
 Pass criteria:
 
 - Word loads the manifest and opens the Nahou task pane.
@@ -87,6 +97,19 @@ Pass criteria:
 ## Gate 4: PowerPoint Sideload Flow
 
 Use a disposable presentation and public-safe text only.
+
+The WhiteKnight PowerPoint harness can collect repeatable evidence for this
+gate:
+
+```powershell
+.\scripts\qa-office-addins-whiteknight-powerpoint-sideload.ps1 -AllowBlocked
+```
+
+Use `-StageOnly` when validating the payload shape without opening PowerPoint.
+Live WhiteKnight artifacts must record counts, hashes, screenshots, UIA
+snapshots, and pass/fail checks only; do not use private slide text.
+If the host reports that add-ins are disabled, record the
+`PowerPointAddinsEnabled=false` evidence as an Office host/license blocker.
 
 Pass criteria:
 

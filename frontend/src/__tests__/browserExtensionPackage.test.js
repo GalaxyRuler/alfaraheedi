@@ -931,9 +931,9 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1/u);
     expect(source).not.toMatch(/Check browser extension store submission integrity[\s\S]*-RequireValid/u);
     expect(source).toMatch(/actions\/upload-artifact@v6/u);
-    expect(source).toMatch(/nahou-browser-extension-0\.7\.0-release-artifacts/u);
-    expect(source).toMatch(/dist\/browser-extension\/nahou-browser-extension-0\.7\.0\.zip/u);
-    expect(source).toMatch(/dist\/browser-extension-store-submission\/nahou-browser-extension-0\.7\.0-store-submission\/\*\*/u);
+    expect(source).toMatch(/nahou-browser-extension-1\.0\.0\.1-release-artifacts/u);
+    expect(source).toMatch(/dist\/browser-extension\/nahou-browser-extension-1\.0\.0\.1\.zip/u);
+    expect(source).toMatch(/dist\/browser-extension-store-submission\/nahou-browser-extension-1\.0\.0\.1-store-submission\/\*\*/u);
     expect(source).toMatch(/if-no-files-found:\s+error/u);
     expect(source).not.toMatch(/check-browser-extension-pages-readiness\.ps1\s+-RequireReady/u);
     expect(source).not.toMatch(/RunVmSmokes/u);

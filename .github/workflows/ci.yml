@@ -69,10 +69,10 @@ jobs:
       - name: Upload browser extension release artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: nahou-browser-extension-0.7.0-release-artifacts
+          name: nahou-browser-extension-1.0.0.1-release-artifacts
           path: |
-            dist/browser-extension/nahou-browser-extension-0.7.0.zip
-            dist/browser-extension-store-submission/nahou-browser-extension-0.7.0-store-submission/**
+            dist/browser-extension/nahou-browser-extension-1.0.0.1.zip
+            dist/browser-extension-store-submission/nahou-browser-extension-1.0.0.1-store-submission/**
           if-no-files-found: error
           retention-days: 14
 
@@ -94,8 +94,8 @@ jobs:
       - name: Upload Office add-ins foundation artifact
         uses: actions/upload-artifact@v6
         with:
-          name: nahou-office-addins-1.0.0-foundation
-          path: dist/office-addins/nahou-office-addins-1.0.0.zip
+          name: nahou-office-addins-1.0.0.1-foundation
+          path: dist/office-addins/nahou-office-addins-1.0.0.1.zip
           if-no-files-found: error
           retention-days: 14
 

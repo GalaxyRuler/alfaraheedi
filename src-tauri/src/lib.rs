@@ -28,6 +28,7 @@ const CAPTURE_POLL_ATTEMPTS: usize = 12;
 const CAPTURE_POLL_INTERVAL: Duration = Duration::from_millis(45);
 const FOCUS_RETURN_DELAY: Duration = Duration::from_millis(180);
 const CAPTURE_SOURCE_FOCUS_DELAY: Duration = Duration::from_millis(120);
+#[cfg(windows)]
 const SYNTHETIC_SHORTCUT_STEP_DELAY: Duration = Duration::from_millis(60);
 #[cfg(windows)]
 const HOTKEY_RELEASE_TIMEOUT: Duration = Duration::from_millis(700);

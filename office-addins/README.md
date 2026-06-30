@@ -78,6 +78,38 @@ Private reports are written under `dist\office-addins-manual-qa\` by default.
 Do not include private document text, account names, tenant names, certificate
 passwords, tokens, or private screenshots in those reports.
 
+## WhiteKnight Word QA Harness
+
+Word sideload activation can be probed on the WhiteKnight physical runner with:
+
+```powershell
+.\scripts\qa-office-addins-whiteknight-word-sideload.ps1 -AllowBlocked
+```
+
+PowerPoint sideload activation can be probed with the same harness through the
+PowerPoint wrapper:
+
+```powershell
+.\scripts\qa-office-addins-whiteknight-powerpoint-sideload.ps1 -AllowBlocked
+```
+
+Use `-StageOnly` to generate the local payload without connecting to
+WhiteKnight. The live harness runs the Homelab WhiteKnight readiness and
+interactive-desktop gates, stages a disposable Word document or creates a
+disposable PowerPoint slide with public-safe Arabic text, imports only the
+generated localhost public certificate on WhiteKnight, starts the loopback Nahou
+API and HTTPS task-pane host, launches Office through `office-addin-debugging`,
+and returns host-specific result JSON plus screenshot/UIA artifacts under
+`dist\office-addins-whiteknight-qa\`.
+
+The harness records selected-text evidence as character counts and SHA-256
+hashes. It must not be used with private documents, and it does not replace
+manual accessibility review or any AppSource submission review.
+
+If an Office host displays an "Add-ins are disabled" task-pane notice, the
+harness records the host-specific `*AddinsEnabled` check as failed and stops
+before selected-text read/apply actions.
+
 ## Sideload Boundary
 
 Microsoft documents that Office add-in manifests describe how an add-in is
