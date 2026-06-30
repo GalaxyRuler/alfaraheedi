@@ -101,6 +101,12 @@ function withElementOffsetHeight(height, run) {
   }
 }
 
+function openRuntimeSuggestionCardFromBadge() {
+  const badge = screen.getByRole("button", { name: /Nahou suggestions:/u });
+  fireEvent.click(badge);
+  return screen.getByRole("dialog", { name: "Nahou suggestions" });
+}
+
 describe("browser extension editor surface", () => {
   it("discovers textarea and contenteditable writing surfaces", () => {
     document.body.innerHTML = `
@@ -425,7 +431,7 @@ describe("browser extension editor surface", () => {
       ],
     });
 
-    const panel = screen.getByRole("region", {
+    const panel = screen.getByRole("dialog", {
       name: "Nahou suggestions",
     });
     const applyButton = screen.getByRole("button", {
@@ -470,7 +476,7 @@ describe("browser extension editor surface", () => {
       ],
     });
 
-    const panel = screen.getByRole("region", {
+    const panel = screen.getByRole("dialog", {
       name: "Nahou suggestions",
     });
     expect(screen.getAllByRole("button", { name: /Apply suggestion:/u })).toHaveLength(1);
@@ -1203,6 +1209,10 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    const badge = screen.getByRole("button", { name: /1 issue, Local/u });
+    fireEvent.click(badge);
+
     const panel = document.querySelector("[data-alfaraheedi-panel]");
     const applyButton = screen.getByRole("button", { name: /Apply suggestion:/u });
     const describedBy = applyButton.getAttribute("aria-describedby");
@@ -1334,6 +1344,9 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    openRuntimeSuggestionCardFromBadge();
+
     const panels = document.querySelectorAll("[data-alfaraheedi-panel]");
     expect(panels).toHaveLength(1);
     expect(panels[0]).toHaveTextContent("hello");
@@ -1398,9 +1411,8 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
-    expect(document.querySelector("[data-alfaraheedi-panel]")).toHaveTextContent(
-      "hello",
-    );
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).not.toBeNull();
 
     secondEditor.focus();
     secondEditor.value = "helo second";
@@ -1788,6 +1800,7 @@ describe("browser extension content script", () => {
       text: "helo",
     });
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1);
     expect(applyButton).toBeTruthy();
     fireEvent.click(applyButton);
@@ -1837,8 +1850,10 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    fireEvent.click(document.querySelector("[data-alfaraheedi-suggestion-index='1']"));
+
     const applyButtons = screen.getAllByRole("button", { name: /Apply suggestion:/u });
-    fireEvent.click(applyButtons.at(-1));
+    fireEvent.click(applyButtons[0]);
 
     expect(editor).toHaveValue("helo then hello");
 
@@ -1887,8 +1902,10 @@ describe("browser extension content script", () => {
       text: "  helo then helo",
     });
 
+    fireEvent.click(document.querySelector("[data-alfaraheedi-suggestion-index='1']"));
+
     const applyButtons = screen.getAllByRole("button", { name: /Apply suggestion:/u });
-    fireEvent.click(applyButtons.at(-1));
+    fireEvent.click(applyButtons[0]);
 
     expect(editor).toHaveValue("  helo then hello");
 
@@ -1976,6 +1993,7 @@ describe("browser extension content script", () => {
 
     expect(document.querySelector("[data-alfaraheedi-marks]")).not.toBeNull();
 
+    openRuntimeSuggestionCardFromBadge();
     editor.value = "already fixed";
     fireEvent.click(screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1));
 
@@ -2020,13 +2038,15 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
-    expect(document.querySelector("[data-alfaraheedi-panel]")).not.toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).not.toBeNull();
     expect(document.querySelector("[data-alfaraheedi-marks]")).not.toBeNull();
 
     editor.value = "hello";
     fireEvent.input(editor);
 
     expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).toBeNull();
     expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
 
     vi.clearAllTimers();
@@ -2067,7 +2087,7 @@ describe("browser extension content script", () => {
     delete globalThis.chrome;
   });
 
-  it("keeps runtime suggestions available when keyboard focus moves from editor to panel", async () => {
+  it("keeps runtime suggestions available when keyboard focus moves from editor to badge", async () => {
     vi.useFakeTimers();
     document.body.innerHTML = `<textarea id="draft"></textarea>`;
     const editor = document.querySelector("#draft");
@@ -2097,10 +2117,17 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    const badge = screen.getByRole("button", { name: /1 issue, Local/u });
+    fireEvent.focusOut(editor, { relatedTarget: badge });
+    badge.focus();
+
+    expect(document.querySelector("[data-alfaraheedi-badge]")).not.toBeNull();
+
+    fireEvent.keyDown(badge, { key: "Enter" });
+
     const applyButton = screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1);
     expect(applyButton).toBeTruthy();
-    fireEvent.focusOut(editor, { relatedTarget: applyButton });
-    applyButton.focus();
 
     expect(applyButton.closest("[data-alfaraheedi-panel]")).not.toBeNull();
 
@@ -2237,10 +2264,11 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    openRuntimeSuggestionCardFromBadge();
     const marks = document.querySelector("[data-alfaraheedi-marks]");
     const panel = document.querySelector("[data-alfaraheedi-panel]");
     expect(marks.style.top).toBe("40px");
-    expect(panel.style.top).toBe("106px");
+    expect(panel.style.top).toBe("8px");
 
     rect = {
       left: 33,
@@ -2253,8 +2281,8 @@ describe("browser extension content script", () => {
 
     expect(marks.style.insetInlineStart).toBe("33px");
     expect(marks.style.top).toBe("74px");
-    expect(panel.style.insetInlineStart).toBe("33px");
-    expect(panel.style.top).toBe("140px");
+    expect(panel.style.insetInlineStart).toBe("8px");
+    expect(panel.style.top).toBe("8px");
 
     vi.useRealTimers();
     delete globalThis.chrome;
@@ -2299,9 +2327,10 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    openRuntimeSuggestionCardFromBadge();
     const panel = document.querySelector("[data-alfaraheedi-panel]");
-    expect(panel.style.insetInlineStart).toBe("22px");
-    expect(panel.style.top).toBe("98px");
+    expect(panel.style.insetInlineStart).toBe("8px");
+    expect(panel.style.top).toBe("8px");
 
     rect = {
       left: 41,
@@ -2312,8 +2341,8 @@ describe("browser extension content script", () => {
     };
     fireEvent.scroll(scroller);
 
-    expect(panel.style.insetInlineStart).toBe("41px");
-    expect(panel.style.top).toBe("144px");
+    expect(panel.style.insetInlineStart).toBe("8px");
+    expect(panel.style.top).toBe("8px");
 
     vi.useRealTimers();
     delete globalThis.chrome;
@@ -2361,8 +2390,9 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    openRuntimeSuggestionCardFromBadge();
     const panel = document.querySelector("[data-alfaraheedi-panel]");
-    expect(panel.style.insetInlineStart).toBe("22px");
+    expect(panel.style.insetInlineStart).toBe("8px");
     expect(panel.style.maxWidth).toBe("360px");
 
     Object.defineProperty(window, "innerWidth", {
@@ -2415,10 +2445,11 @@ describe("browser extension content script", () => {
       fireEvent.input(editor);
       await vi.advanceTimersByTimeAsync(700);
       await Promise.resolve();
+      openRuntimeSuggestionCardFromBadge();
     });
 
     const panel = document.querySelector("[data-alfaraheedi-panel]");
-    expect(panel.style.top).toBe("292px");
+    expect(panel.style.top).toBe("8px");
     expect(panel.style.maxHeight).toBe("404px");
     expect(panel.style.overflowY).toBe("auto");
 
@@ -2464,6 +2495,7 @@ describe("browser extension content script", () => {
       "helo",
     );
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = document.querySelector("[data-alfaraheedi-panel] button");
     expect(applyButton).not.toBeNull();
     fireEvent.click(applyButton);
@@ -2509,7 +2541,8 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
-    expect(document.querySelector("[data-alfaraheedi-panel]")).not.toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).not.toBeNull();
     expect(document.querySelector("[data-alfaraheedi-marks] mark")).toHaveTextContent(
       "helo",
     );
@@ -2517,6 +2550,7 @@ describe("browser extension content script", () => {
     fireEvent.focusOut(editor);
 
     expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).toBeNull();
     expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
 
     vi.useRealTimers();
@@ -2597,13 +2631,15 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
-    expect(document.querySelector("[data-alfaraheedi-panel]")).not.toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).not.toBeNull();
     expect(document.querySelector("[data-alfaraheedi-marks]")).not.toBeNull();
 
     editor.remove();
     await Promise.resolve();
 
     expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-badge]")).toBeNull();
     expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
 
     vi.clearAllTimers();
@@ -2679,6 +2715,7 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    openRuntimeSuggestionCardFromBadge();
     const panel = [...document.querySelectorAll("[data-alfaraheedi-panel]")].at(-1);
     const applyButton = panel?.querySelector("button");
     expect(applyButton).toBeTruthy();
@@ -2739,6 +2776,7 @@ describe("browser extension content script", () => {
 
   it("applies runtime contenteditable suggestions without flattening inline markup", async () => {
     vi.useFakeTimers();
+    const cssHighlight = installCssHighlightMock();
     document.body.innerHTML = `
       <div id="draft" contenteditable="true"><span>helo</span> <strong>wat</strong> you are do?</div>
     `;
@@ -2769,6 +2807,7 @@ describe("browser extension content script", () => {
     await vi.advanceTimersByTimeAsync(700);
     await Promise.resolve();
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = document.querySelector("[data-alfaraheedi-panel] button");
     fireEvent.click(applyButton);
 
@@ -2778,6 +2817,7 @@ describe("browser extension content script", () => {
 
     vi.useRealTimers();
     delete globalThis.chrome;
+    cssHighlight.restore();
   });
 
   it("analyzes runtime contenteditable br line breaks and maps highlights after them", async () => {
@@ -2919,6 +2959,7 @@ describe("browser extension content script", () => {
     expect(ranges).toHaveLength(1);
     expect(ranges[0].toString()).toBe("wat");
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1);
     expect(applyButton).toBeTruthy();
     fireEvent.click(applyButton);
@@ -2977,6 +3018,7 @@ describe("browser extension content script", () => {
     expect(ranges).toHaveLength(1);
     expect(ranges[0].toString()).toBe("wat");
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1);
     expect(applyButton).toBeTruthy();
     fireEvent.click(applyButton);
@@ -3037,6 +3079,7 @@ describe("browser extension content script", () => {
     expect(ranges).toHaveLength(1);
     expect(ranges[0].toString()).toBe("wat");
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1);
     expect(applyButton).toBeTruthy();
     fireEvent.click(applyButton);
@@ -3180,6 +3223,7 @@ describe("browser extension content script", () => {
         text: "helo wat you are do?",
       }),
     );
+    openRuntimeSuggestionCardFromBadge();
     expect(document.querySelector("[data-alfaraheedi-panel]")).toHaveTextContent(
       "hello",
     );
@@ -3190,6 +3234,7 @@ describe("browser extension content script", () => {
 
   it("analyzes runtime contenteditable fields without non-editable island text", async () => {
     vi.useFakeTimers();
+    const cssHighlight = installCssHighlightMock();
     document.body.innerHTML = `
       <div id="draft" contenteditable="true"><span>helo</span><span id="chip" contenteditable="false">LOCKED</span><span id="tail"> wat you are do?</span></div>
     `;
@@ -3227,6 +3272,7 @@ describe("browser extension content script", () => {
       }),
     );
 
+    openRuntimeSuggestionCardFromBadge();
     const applyButton = screen.getAllByRole("button", { name: /Apply suggestion:/u }).at(-1);
     expect(applyButton).toBeTruthy();
     fireEvent.click(applyButton);
@@ -3239,5 +3285,6 @@ describe("browser extension content script", () => {
 
     vi.useRealTimers();
     delete globalThis.chrome;
+    cssHighlight.restore();
   });
 });

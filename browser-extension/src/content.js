@@ -16,9 +16,12 @@
     clearSuggestionPanel,
     editableElementForEvent,
     editableElementForTarget,
+    editorForFieldBadgeTarget,
     editorForSuggestionPanelTarget,
+    isFieldBadgeFocusTarget,
     isSuggestionPanelFocusTarget,
     renderStatusPanel,
+    renderFieldBadge,
     renderSuggestionMarks,
     renderSuggestionPanel,
     shouldKeepSuggestionUiForFocusMove,
@@ -80,7 +83,8 @@
       const panel = suggestionPanelForEditor(editor);
       if (
         (panel && shouldKeepSuggestionUiForFocusMove(editor, panel, event.relatedTarget)) ||
-        isSuggestionPanelFocusTarget(event.relatedTarget)
+        isSuggestionPanelFocusTarget(event.relatedTarget) ||
+        isFieldBadgeFocusTarget?.(event.relatedTarget)
       ) {
         return;
       }
@@ -146,7 +150,7 @@
     if (response?.ok) {
       clearInjectedSuggestionUi();
       renderSuggestionMarks(editor, response.analysis);
-      renderSuggestionPanel(editor, response.analysis);
+      renderFieldBadge?.(editor, response.analysis, { statusLabel: "Local" });
     } else if (response?.skipped) {
       clearSuggestionPanel(editor);
       clearSuggestionMarks(editor);
@@ -200,6 +204,8 @@
   function editorForDismissTarget(target) {
     const editor = editableElementForTarget(target);
     if (editor) return editor;
+    const badgeEditor = editorForFieldBadgeTarget?.(target);
+    if (badgeEditor) return badgeEditor;
     return editorForSuggestionPanelTarget(target, activeEditor);
   }
 
