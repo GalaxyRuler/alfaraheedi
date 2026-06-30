@@ -53,7 +53,32 @@ $reportExists = $null -ne $manualQaReport
 $gateHashMatches = $false
 $releaseDecision = ""
 $hasTodo = $false
+$publicSafeConfirmed = $false
+$requiredV2CoveragePresent = $false
 $completed = $false
+$requiredV2CoverageTokens = @(
+    "Controlled Fixture Coverage",
+    "textarea",
+    "text-input",
+    "simple-contenteditable",
+    "shadow-dom",
+    "iframe",
+    "repeated-text",
+    "RTL/mixed text",
+    "large text refusal",
+    "sensitive fields",
+    "API unavailable",
+    "paused/site-disabled",
+    "keyboard-only card flow",
+    "accessibility scan",
+    "Real-Site Manual Coverage",
+    "Gmail compose",
+    "WhatsApp Web composer",
+    "Google Docs",
+    "Plain contenteditable site",
+    "Framework-heavy editor",
+    "WhiteKnight Evidence"
+)
 
 if ($reportExists) {
     $reportText = Get-Content -LiteralPath $manualQaReport.FullName -Raw
@@ -63,9 +88,18 @@ if ($reportExists) {
         $releaseDecision = $decisionMatch.Groups[1].Value.Trim()
     }
     $hasTodo = $reportText -match '\bTODO\b'
+    $publicSafeConfirmed = [bool](
+        $reportText -match '(?m)^Public-safe artifact check:\s*Pass\s*$' -and
+        $reportText -match '(?m)^Privacy check:\s*Pass'
+    )
+    $requiredV2CoveragePresent = -not @(
+        $requiredV2CoverageTokens | Where-Object { -not $reportText.Contains($_) }
+    )
     $completed = [bool](
         $gateHashMatches -and
         -not $hasTodo -and
+        $publicSafeConfirmed -and
+        $requiredV2CoveragePresent -and
         $releaseDecision -eq "Public release approved"
     )
 }
@@ -77,6 +111,8 @@ $result = [pscustomobject]@{
     ReportExists = $reportExists
     GateHashMatches = $gateHashMatches
     HasTodo = $hasTodo
+    PublicSafeConfirmed = $publicSafeConfirmed
+    RequiredV2CoveragePresent = $requiredV2CoveragePresent
     ReleaseDecision = $releaseDecision
     Completed = $completed
 }

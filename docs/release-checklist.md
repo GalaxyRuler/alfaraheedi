@@ -36,6 +36,7 @@
 - [ ] For browser-extension local-ready artifacts: `.\scripts\prepare-browser-extension-release-candidate.ps1` and confirm `LocalReady: true` and `ScreenshotRootsMatch: true`
 - [ ] For browser-extension handoff artifacts: `.\scripts\export-browser-extension-release-handoff.ps1` and review the generated Markdown/JSON under `dist\browser-extension-release-handoff\`
 - [ ] For browser-extension validation evidence: review `docs/testing/browser-extension-v0.7-validation.md`; keep detailed VM logs under ignored `docs/testing/reports\`
+- [ ] For V2A browser-extension evidence: review `docs/testing/browser-extension-v2-validation.md`; record unstable real-site behavior as a documented limitation before public claims
 - [ ] For browser-extension packaged VM evidence, when browser-store readiness is in scope: `.\scripts\validate-browser-extension-release.ps1 -RunVmSmokes -VmName <vm-name> -CredentialPath <credential.xml> -ChromeForTestingZipPath <chrome-for-testing-win64.zip>`
 - [ ] For browser-extension VM smokes, when browser-store readiness is in scope: use the default guest artifact root under `C:\Temp\Nahou`, or set `ALFARAHEEDI_VM_QA_ROOT` / pass `-QaRoot <guest-path>` when the QA VM needs a different guest path
 - [ ] For browser-extension store-submission artifacts, when browser-store readiness is in scope: `.\scripts\export-browser-extension-store-submission.ps1`

@@ -501,11 +501,16 @@ describe("browser extension package metadata", () => {
     expect(reportScript).toMatch(/Assert-PathUnderRepo/u);
     expect(reportScript).toMatch(/helo wat you are do\?/u);
     expect(reportScript).toMatch(/Do not include private emails, chats, document text/u);
+    expect(reportScript).toMatch(/Controlled Fixture Coverage/u);
+    expect(reportScript).toMatch(/WhiteKnight Evidence/u);
+    expect(reportScript).toMatch(/Public-safe artifact check: TODO Pass \/ Fail/u);
     expect(reportCheckScript).toMatch(/ManualQaRoot/u);
     expect(reportCheckScript).toMatch(/RequireCompleted/u);
     expect(reportCheckScript).toMatch(/GateHashMatches/u);
     expect(reportCheckScript).toMatch(/HasTodo/u);
     expect(reportCheckScript).toMatch(/ReleaseDecision/u);
+    expect(reportCheckScript).toMatch(/PublicSafeConfirmed/u);
+    expect(reportCheckScript).toMatch(/RequiredV2CoveragePresent/u);
     expect(reportCheckScript).toMatch(/Completed/u);
     expect(reportCheckScript).toMatch(/Public release approved/u);
     expect(reportCheckScript).toMatch(/TODO/u);
@@ -583,6 +588,44 @@ describe("browser extension package metadata", () => {
     expect(source).toMatch(/Assert-ManualReleaseGates/u);
     expect(source).toMatch(/ManualReleaseGates/u);
     expect(source).toMatch(/check-browser-extension-store-submission-integrity\.ps1/u);
+  });
+
+  it("keeps Phase 9 browser QA scripts mapped to the V2A controlled coverage matrix", async () => {
+    const productionSmoke = await fs.readFile(
+      path.join(repoRoot, "scripts/qa-browser-extension-production-editors-smoke.ps1"),
+      "utf8",
+    );
+    const keyboardSmoke = await fs.readFile(
+      path.join(repoRoot, "scripts/qa-browser-extension-keyboard-flow-smoke.ps1"),
+      "utf8",
+    );
+    const axSmoke = await fs.readFile(
+      path.join(repoRoot, "scripts/qa-browser-extension-ax-smoke.ps1"),
+      "utf8",
+    );
+
+    for (const requiredSurface of [
+      "textarea",
+      "text-input",
+      "simple-contenteditable",
+      "shadow-dom",
+      "iframe",
+      "repeated-text",
+      "rtl-mixed",
+      "large-text-refusal",
+      "sensitive-field",
+      "api-unavailable",
+      "paused-site-disabled",
+    ]) {
+      expect(productionSmoke).toContain(requiredSurface);
+    }
+
+    expect(productionSmoke).toMatch(/ControlledFixtureCoverage/u);
+    expect(productionSmoke).toMatch(/NoRawPrivateText/u);
+    expect(keyboardSmoke).toMatch(/KeyboardOnlyCardFlow/u);
+    expect(keyboardSmoke).toMatch(/PanelKeyboardAppliesSuggestion/u);
+    expect(axSmoke).toMatch(/AccessibilityScanCoverage/u);
+    expect(axSmoke).toMatch(/PanelRegion/u);
   });
 
   it("keeps the extension package script compatible with absolute and repo-relative paths", async () => {
@@ -1059,6 +1102,7 @@ describe("browser extension package metadata", () => {
     expect(source).not.toMatch(/nahou-browser-extension-0\.7\.0-release-artifacts/u);
     expect(source).toMatch(/browser-extension\/MANUAL_RELEASE_GATES\.md/u);
     expect(source).toMatch(/docs\/testing\/browser-extension-v0\.7-validation\.md/u);
+    expect(source).toMatch(/docs\/testing\/browser-extension-v2-validation\.md/u);
     expect(source).toMatch(/live production-editor QA, manual screen-reader review/u);
   });
 
@@ -1102,6 +1146,43 @@ describe("browser extension package metadata", () => {
     expect(source).not.toMatch(/C:\\QA/u);
     expect(source).not.toMatch(/C:\\CodexProjects/u);
     expect(source).not.toMatch(/C:\\Users/u);
+  });
+
+  it("ships a V2 browser-extension validation summary for Phase 9 evidence", async () => {
+    const source = await fs.readFile(
+      path.join(repoRoot, "docs/testing/browser-extension-v2-validation.md"),
+      "utf8",
+    );
+
+    for (const requiredText of [
+      "Controlled Fixture Coverage",
+      "textarea",
+      "text-input",
+      "simple-contenteditable",
+      "shadow-dom",
+      "iframe",
+      "repeated-text",
+      "RTL/mixed text",
+      "large text refusal",
+      "sensitive fields",
+      "API unavailable",
+      "paused/site-disabled",
+      "keyboard-only card flow",
+      "accessibility scan",
+      "Real-Site Manual Coverage",
+      "Gmail compose",
+      "WhatsApp Web composer",
+      "Google Docs",
+      "plain contenteditable site",
+      "framework-heavy editor",
+      "WhiteKnight",
+      "No raw live editor text",
+      "docs/testing/reports/",
+      "dist/browser-extension-manual-qa/",
+      "documented limitation",
+    ]) {
+      expect(source).toContain(requiredText);
+    }
   });
 
   it("keeps extension surfaces at WCAG AA text contrast with explicit backgrounds", async () => {
