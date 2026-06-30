@@ -14,6 +14,15 @@ const repoRoot = path.resolve(
   "../../..",
 );
 const extensionRoot = path.join(repoRoot, "browser-extension");
+const runtimeHelperScripts = [
+  "src/editorDiscovery.js",
+  "src/textProjection.js",
+  "src/suggestionAnchors.js",
+  "src/applySuggestion.js",
+  "src/overlayLayer.js",
+  "src/suggestionCard.js",
+];
+const runtimeContentScripts = [...runtimeHelperScripts, "src/content.js"];
 
 function getSelectedStoreScreenshotRoot(storeAssetsSource) {
   const screenshotRootMatches = [
@@ -187,6 +196,19 @@ describe("browser extension package metadata", () => {
     );
   });
 
+  it("loads shared runtime helpers before the packaged content orchestrator", async () => {
+    const manifest = validateBrowserExtensionManifest(
+      JSON.parse(
+        await fs.readFile(path.join(extensionRoot, "manifest.json"), "utf8"),
+      ),
+    );
+    const entries = await listBrowserExtensionPackageEntries(extensionRoot);
+
+    expect(manifest.content_scripts).toHaveLength(1);
+    expect(manifest.content_scripts[0].js).toEqual(runtimeContentScripts);
+    expect(entries).toEqual(expect.arrayContaining(runtimeContentScripts));
+  });
+
   it("keeps the MV3 manifest scoped to local API access and editable web fields", () => {
     const manifest = validateBrowserExtensionManifest(safeManifest);
 
@@ -275,13 +297,19 @@ describe("browser extension package metadata", () => {
       "options.html",
       "popup.html",
       "PRIVACY_POLICY.md",
+      "src/applySuggestion.js",
       "src/background.js",
       "src/content.css",
       "src/content.js",
+      "src/editorDiscovery.js",
       "src/localApi.js",
       "src/options.js",
+      "src/overlayLayer.js",
       "src/popup.js",
       "src/settings.js",
+      "src/suggestionAnchors.js",
+      "src/suggestionCard.js",
+      "src/textProjection.js",
     ]);
     expect(entries).not.toContain("src/editorSurface.js");
   });

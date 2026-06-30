@@ -10,6 +10,12 @@ import {
   normalizeExtensionSettings,
   saveExtensionSettings,
 } from "../../../browser-extension/src/settings.js";
+import "../../../browser-extension/src/editorDiscovery.js";
+import "../../../browser-extension/src/textProjection.js";
+import "../../../browser-extension/src/suggestionAnchors.js";
+import "../../../browser-extension/src/applySuggestion.js";
+import "../../../browser-extension/src/overlayLayer.js";
+import "../../../browser-extension/src/suggestionCard.js";
 
 const repoRoot = path.resolve(__dirname, "../../..");
 const extensionRoot = path.join(repoRoot, "browser-extension");
