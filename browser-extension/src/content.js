@@ -1,8 +1,17 @@
 (() => {
   const ANALYZE_MESSAGE = "ALFARAHEEDI_ANALYZE_TEXT";
   const PAGE_LOCATION_MESSAGE = "ALFARAHEEDI_PAGE_LOCATION";
+  const SETTINGS_STORAGE_KEY = "alfaraheediSettings";
   const DEBOUNCE_MS = 650;
   const MAX_TEXT_CHARS = 6_000;
+  const DEFAULT_CONTENT_SETTINGS = Object.freeze({
+    enabled: true,
+    disabledHosts: [],
+  });
+  const CLOSED_CONTENT_SETTINGS = Object.freeze({
+    enabled: false,
+    disabledHosts: [],
+  });
   const runtime = globalThis.NahouExtensionRuntime;
 
   if (!runtime) {
@@ -32,10 +41,14 @@
   let activeEditor = null;
   let debounceTimer = 0;
   let requestSeq = 0;
+  let contentSettings = null;
+  let contentSettingsPromise = null;
 
   addDetachedEditorCallback((editor) => {
     if (activeEditor === editor) activeEditor = null;
   });
+
+  setupSettingsChangeListener();
 
   if (globalThis.chrome?.runtime?.onMessage?.addListener) {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -126,6 +139,19 @@
   async function analyzeEditor(editor) {
     if (composingEditors.has(editor)) return;
     if (!editorHasFocus(editor)) return;
+
+    const currentSeq = requestSeq + 1;
+    requestSeq = currentSeq;
+    const settings = await getContentSettings();
+    if (requestSeq !== currentSeq || activeEditor !== editor) return;
+    if (!editorHasFocus(editor)) return;
+    if (!canAnalyzeCurrentPage(settings)) {
+      clearSuggestionPanel(editor);
+      clearSuggestionMarks(editor);
+      clearInjectedSuggestionUi();
+      return;
+    }
+
     const text = textFromEditor(editor);
     if (!text.trim()) {
       clearSuggestionPanel(editor);
@@ -138,8 +164,6 @@
       return;
     }
 
-    const currentSeq = requestSeq + 1;
-    requestSeq = currentSeq;
     const response = await Promise.resolve(sendAnalyzeMessage(text)).catch(() => ({
       ok: false,
       error: "Nahou local API is unavailable.",
@@ -193,6 +217,92 @@
       type: ANALYZE_MESSAGE,
       text,
     });
+  }
+
+  async function getContentSettings() {
+    if (contentSettings) return contentSettings;
+    if (contentSettingsPromise) return contentSettingsPromise;
+    if (typeof globalThis.chrome?.storage?.local?.get !== "function") {
+      contentSettings = CLOSED_CONTENT_SETTINGS;
+      return contentSettings;
+    }
+
+    contentSettingsPromise = Promise.resolve(
+      globalThis.chrome.storage.local.get(SETTINGS_STORAGE_KEY),
+    )
+      .then((stored) => {
+        contentSettings = normalizeContentSettings(stored?.[SETTINGS_STORAGE_KEY]);
+        return contentSettings;
+      })
+      .catch(() => {
+        contentSettings = CLOSED_CONTENT_SETTINGS;
+        return contentSettings;
+      });
+
+    return contentSettingsPromise;
+  }
+
+  function setupSettingsChangeListener() {
+    if (typeof globalThis.chrome?.storage?.onChanged?.addListener !== "function") {
+      return;
+    }
+
+    globalThis.chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== "local" || !changes?.[SETTINGS_STORAGE_KEY]) return;
+      contentSettings = normalizeContentSettings(
+        changes[SETTINGS_STORAGE_KEY].newValue,
+      );
+      contentSettingsPromise = null;
+
+      if (!canAnalyzeCurrentPage(contentSettings)) {
+        window.clearTimeout(debounceTimer);
+        debounceTimer = 0;
+        requestSeq += 1;
+        if (activeEditor) {
+          clearSuggestionPanel(activeEditor);
+          clearSuggestionMarks(activeEditor);
+          clearInjectedSuggestionUi();
+        }
+      }
+    });
+  }
+
+  function normalizeContentSettings(settings) {
+    if (!settings || typeof settings !== "object") return DEFAULT_CONTENT_SETTINGS;
+    return {
+      enabled:
+        typeof settings.enabled === "boolean"
+          ? settings.enabled
+          : DEFAULT_CONTENT_SETTINGS.enabled,
+      disabledHosts: normalizeDisabledHosts(settings.disabledHosts),
+    };
+  }
+
+  function normalizeDisabledHosts(hosts) {
+    if (!Array.isArray(hosts)) return [];
+    return Array.from(
+      new Set(
+        hosts
+          .map((host) => (typeof host === "string" ? host.trim().toLowerCase() : ""))
+          .filter((host) => /^[a-z0-9.-]+$/u.test(host)),
+      ),
+    ).sort();
+  }
+
+  function canAnalyzeCurrentPage(settings) {
+    if (!settings.enabled) return false;
+    const host = currentPageHost();
+    return !host || !settings.disabledHosts.includes(host);
+  }
+
+  function currentPageHost() {
+    try {
+      const url = new URL(window.location.href);
+      if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+      return url.hostname.toLowerCase();
+    } catch {
+      return null;
+    }
   }
 
   function editorForDismissEvent(event) {

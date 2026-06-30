@@ -504,6 +504,194 @@ describe("browser extension settings", () => {
     delete globalThis.chrome;
   });
 
+  it("fails closed before content-side text transmission when settings cannot be read", async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<textarea id="draft"></textarea>`;
+    const editor = document.querySelector("#draft");
+    globalThis.chrome = {
+      runtime: {
+        sendMessage: vi.fn(async () => ({
+          ok: true,
+          analysis: { suggestions: [] },
+        })),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => {
+            throw new Error(
+              "storage failed with http://127.0.0.1:3402/v1/analyze?text=private",
+            );
+          }),
+        },
+      },
+    };
+
+    await import("../../../browser-extension/src/content.js?content-settings-read-fail-closed-test");
+
+    editor.focus();
+    editor.value = "private helo";
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(700);
+    await Promise.resolve();
+
+    expect(globalThis.chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
+
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    delete globalThis.chrome;
+  });
+
+  it("cancels pending content-side analysis when settings change pauses checking", async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<textarea id="draft"></textarea>`;
+    const editor = document.querySelector("#draft");
+    const storageChangeListeners = [];
+    globalThis.chrome = {
+      runtime: {
+        sendMessage: vi.fn(async () => ({
+          ok: true,
+          analysis: { suggestions: [] },
+        })),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "english",
+              enabled: true,
+              disabledHosts: [],
+            },
+          })),
+        },
+        onChanged: {
+          addListener: vi.fn((listener) => storageChangeListeners.push(listener)),
+        },
+      },
+    };
+
+    await import("../../../browser-extension/src/content.js?content-settings-change-cancel-test");
+
+    editor.focus();
+    editor.value = "private helo";
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(storageChangeListeners).toHaveLength(1);
+    storageChangeListeners[0](
+      {
+        alfaraheediSettings: {
+          newValue: {
+            apiBaseUrl: "http://127.0.0.1:3402",
+            writingMode: "english",
+            enabled: false,
+            disabledHosts: [],
+          },
+        },
+      },
+      "local",
+    );
+    await vi.advanceTimersByTimeAsync(700);
+    await Promise.resolve();
+
+    expect(globalThis.chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
+
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    delete globalThis.chrome;
+  });
+
+  it("prevents content-side analyze messages when checking is paused", async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<textarea id="draft"></textarea>`;
+    const editor = document.querySelector("#draft");
+    globalThis.chrome = {
+      runtime: {
+        sendMessage: vi.fn(async () => ({
+          ok: true,
+          analysis: { suggestions: [] },
+        })),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "english",
+              enabled: false,
+              disabledHosts: [],
+            },
+          })),
+        },
+      },
+    };
+
+    await import("../../../browser-extension/src/content.js?content-paused-settings-gate-test");
+
+    editor.focus();
+    editor.value = "private helo";
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(700);
+    await Promise.resolve();
+
+    expect(globalThis.chrome.storage.local.get).toHaveBeenCalledWith(
+      "alfaraheediSettings",
+    );
+    expect(globalThis.chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
+
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    delete globalThis.chrome;
+  });
+
+  it("prevents content-side text transmission when the current site is disabled", async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<textarea id="draft"></textarea>`;
+    const editor = document.querySelector("#draft");
+    const currentHost = window.location.hostname;
+    expect(currentHost).toBeTruthy();
+    globalThis.chrome = {
+      runtime: {
+        sendMessage: vi.fn(async () => ({
+          ok: true,
+          analysis: { suggestions: [] },
+        })),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "english",
+              enabled: true,
+              disabledHosts: [currentHost],
+            },
+          })),
+        },
+      },
+    };
+
+    await import("../../../browser-extension/src/content.js?content-site-disabled-settings-gate-test");
+
+    editor.focus();
+    editor.value = "private helo";
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(700);
+    await Promise.resolve();
+
+    expect(globalThis.chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    expect(document.querySelector("[data-alfaraheedi-panel]")).toBeNull();
+    expect(document.querySelector("[data-alfaraheedi-marks]")).toBeNull();
+
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    delete globalThis.chrome;
+  });
+
   it("lets background settings choose writing mode for content script messages", async () => {
     vi.useFakeTimers();
     document.body.innerHTML = `<textarea id="draft"></textarea>`;
@@ -514,6 +702,18 @@ describe("browser extension settings", () => {
           ok: true,
           analysis: { suggestions: [] },
         })),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "english",
+              enabled: true,
+              disabledHosts: [],
+            },
+          })),
+        },
       },
     };
 
@@ -530,6 +730,7 @@ describe("browser extension settings", () => {
       text: "helo wat you are do?",
     });
 
+    vi.clearAllTimers();
     vi.useRealTimers();
     delete globalThis.chrome;
   });
@@ -625,6 +826,68 @@ describe("browser extension settings", () => {
     expect(fetch).toHaveBeenCalledWith("http://127.0.0.1:3402/v1/health", {
       method: "GET",
     });
+
+    vi.unstubAllGlobals();
+    delete globalThis.chrome;
+  });
+
+  it("shows API unavailable in the toolbar popup without leaking raw errors", async () => {
+    document.body.innerHTML = `
+      <main>
+        <h1>Nahou</h1>
+        <dl>
+          <dt>Local API</dt>
+          <dd id="api-base-url">Loading...</dd>
+          <dt>Writing mode</dt>
+          <dd id="writing-mode">Loading...</dd>
+          <dt>API status</dt>
+          <dd id="api-status">Checking...</dd>
+          <dt>Checking</dt>
+          <dd id="checking-status">Loading...</dd>
+          <dt>Current site</dt>
+          <dd id="site-status">Loading...</dd>
+        </dl>
+        <button id="toggle-enabled" type="button">Loading...</button>
+        <button id="toggle-site" type="button">Loading...</button>
+        <button id="open-options" type="button">Open settings</button>
+        <p id="status" role="status"></p>
+      </main>
+    `;
+    globalThis.chrome = {
+      runtime: {
+        openOptionsPage: vi.fn(async () => undefined),
+      },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "mixed",
+              enabled: true,
+            },
+          })),
+          set: vi.fn(async () => undefined),
+        },
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error(
+          "failed to fetch http://127.0.0.1:3402/v1/health?text=private",
+        );
+      }),
+    );
+
+    await import("../../../browser-extension/src/popup.js?health-popup-error-test");
+    await vi.waitFor(() =>
+      expect(document.querySelector("#api-status").textContent).toBe(
+        "Local API unreachable.",
+      ),
+    );
+
+    expect(document.body.textContent).not.toContain("private");
+    expect(document.body.textContent).not.toContain("/v1/health?text=");
 
     vi.unstubAllGlobals();
     delete globalThis.chrome;
@@ -917,6 +1180,128 @@ describe("browser extension settings", () => {
       writingMode: "mixed",
       enabled: true,
     });
+
+    delete globalThis.chrome;
+  });
+
+  it("sanitizes storage errors from the extension options page", async () => {
+    document.body.innerHTML = `
+      <form id="settings-form">
+        <input id="api-base-url" name="apiBaseUrl" type="url">
+        <select id="writing-mode" name="writingMode">
+          <option value="auto">Auto</option>
+          <option value="english">English</option>
+          <option value="mixed">Mixed</option>
+        </select>
+        <input id="enabled" name="enabled" type="checkbox">
+        <textarea id="disabled-hosts" name="disabledHosts"></textarea>
+        <button type="submit">Save</button>
+        <button id="reset-settings" type="button">Reset</button>
+      </form>
+      <p id="status" role="status"></p>
+    `;
+    globalThis.chrome = {
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            alfaraheediSettings: {
+              apiBaseUrl: "http://127.0.0.1:3402",
+              writingMode: "mixed",
+              enabled: true,
+              disabledHosts: [],
+            },
+          })),
+          set: vi.fn(async () => {
+            throw new Error(
+              "storage failed with http://127.0.0.1:3402/v1/analyze?text=private",
+            );
+          }),
+        },
+      },
+    };
+
+    await import("../../../browser-extension/src/options.js?storage-error-options-test");
+    await vi.waitFor(() =>
+      expect(document.querySelector("#api-base-url").value).toBe(
+        "http://127.0.0.1:3402",
+      ),
+    );
+
+    document.querySelector("#settings-form").dispatchEvent(
+      new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+    );
+    await vi.waitFor(() =>
+      expect(document.querySelector("#status").textContent).toBe(
+        "Could not save settings.",
+      ),
+    );
+
+    expect(document.body.textContent).not.toContain("private");
+    expect(document.body.textContent).not.toContain("/v1/analyze?text=");
+
+    delete globalThis.chrome;
+  });
+
+  it("resets extension options to the packaged defaults", async () => {
+    document.body.innerHTML = `
+      <form id="settings-form">
+        <input id="api-base-url" name="apiBaseUrl" type="url">
+        <select id="writing-mode" name="writingMode">
+          <option value="auto">Auto</option>
+          <option value="english">English</option>
+          <option value="mixed">Mixed</option>
+        </select>
+        <input id="enabled" name="enabled" type="checkbox">
+        <textarea id="disabled-hosts" name="disabledHosts"></textarea>
+        <button type="submit">Save</button>
+        <button id="reset-settings" type="button">Reset</button>
+      </form>
+      <p id="status" role="status"></p>
+    `;
+    const store = {
+      alfaraheediSettings: {
+        apiBaseUrl: "http://127.0.0.1:3402",
+        writingMode: "mixed",
+        enabled: false,
+        disabledHosts: ["mail.example.com"],
+      },
+    };
+    globalThis.chrome = {
+      storage: {
+        local: {
+          get: vi.fn(async () => store),
+          set: vi.fn(async (value) => Object.assign(store, value)),
+        },
+      },
+    };
+
+    await import("../../../browser-extension/src/options.js?reset-options-test");
+    await vi.waitFor(() =>
+      expect(document.querySelector("#api-base-url").value).toBe(
+        "http://127.0.0.1:3402",
+      ),
+    );
+
+    document.querySelector("#reset-settings").click();
+    await vi.waitFor(() =>
+      expect(document.querySelector("#status").textContent).toBe(
+        "Reset to defaults.",
+      ),
+    );
+
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+      alfaraheediSettings: DEFAULT_EXTENSION_SETTINGS,
+    });
+    expect(document.querySelector("#api-base-url").value).toBe(
+      DEFAULT_EXTENSION_SETTINGS.apiBaseUrl,
+    );
+    expect(document.querySelector("#writing-mode").value).toBe(
+      DEFAULT_EXTENSION_SETTINGS.writingMode,
+    );
+    expect(document.querySelector("#enabled").checked).toBe(
+      DEFAULT_EXTENSION_SETTINGS.enabled,
+    );
+    expect(document.querySelector("#disabled-hosts").value).toBe("");
 
     delete globalThis.chrome;
   });
