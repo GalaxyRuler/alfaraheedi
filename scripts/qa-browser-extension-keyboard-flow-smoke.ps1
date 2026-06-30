@@ -10,7 +10,7 @@ param(
 
     [string]$ChromeForTestingZipPath = "",
 
-    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-0.7.0.zip",
+    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-1.0.0.1.zip",
 
     [string]$QaRoot = ""
 )
@@ -455,6 +455,8 @@ new Promise((resolve) => {
                 $optionsFocus += Get-FocusSnapshot $socket ([ref]$id)
                 Invoke-Key $socket ([ref]$id) 'Tab' 'Tab' 9
                 $optionsFocus += Get-FocusSnapshot $socket ([ref]$id)
+                Invoke-Key $socket ([ref]$id) 'Tab' 'Tab' 9
+                $optionsFocus += Get-FocusSnapshot $socket ([ref]$id)
 
                 $null = Invoke-Cdp $socket $id 'Page.navigate' @{ url = "chrome-extension://$extensionId/popup.html" }
                 $id += 1
@@ -515,7 +517,8 @@ new Promise((resolve) => {
                 OptionsApiFirst = $optionsFocus[0].id -eq 'api-base-url'
                 OptionsWritingModeSecond = $optionsFocus[1].id -eq 'writing-mode'
                 OptionsEnabledThird = $optionsFocus[2].id -eq 'enabled'
-                OptionsSaveFourth = $optionsFocus[3].tag -eq 'BUTTON' -and $optionsFocus[3].text -eq 'Save'
+                OptionsDisabledHostsFourth = $optionsFocus[3].id -eq 'disabled-hosts'
+                OptionsSaveFifth = $optionsFocus[4].tag -eq 'BUTTON' -and $optionsFocus[4].text -eq 'Save'
                 PopupToggleFirst = $popupFocus[0].id -eq 'toggle-enabled' -and $popupFocus[0].text -eq 'Pause checking'
                 PopupOptionsSecond = $popupFocus[1].id -eq 'open-options'
                 PanelButtonRendered = $panelBefore -eq 'Apply suggestion: hello'

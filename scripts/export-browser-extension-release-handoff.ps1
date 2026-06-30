@@ -9,6 +9,8 @@ param(
 
     [string]$ChromeForTestingZipPath = "",
 
+    [string]$ScreenshotRoot = "",
+
     [switch]$SkipPackageTests,
 
     [switch]$RequireStoreReady
@@ -112,6 +114,10 @@ if ($RunVmSmokes) {
 }
 if ($SkipPackageTests) {
     $candidateArgs += "-SkipPackageTests"
+}
+if ($ScreenshotRoot) {
+    $candidateArgs += "-ScreenshotRoot"
+    $candidateArgs += $ScreenshotRoot
 }
 if ($RequireStoreReady) {
     $candidateArgs += "-RequireStoreReady"

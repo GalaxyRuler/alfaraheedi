@@ -27,6 +27,8 @@ const MAX_CAPTURE_CHARS: usize = 20_000;
 const CAPTURE_POLL_ATTEMPTS: usize = 12;
 const CAPTURE_POLL_INTERVAL: Duration = Duration::from_millis(45);
 const FOCUS_RETURN_DELAY: Duration = Duration::from_millis(180);
+const CAPTURE_SOURCE_FOCUS_DELAY: Duration = Duration::from_millis(120);
+const SYNTHETIC_SHORTCUT_STEP_DELAY: Duration = Duration::from_millis(60);
 #[cfg(windows)]
 const HOTKEY_RELEASE_TIMEOUT: Duration = Duration::from_millis(700);
 #[cfg(windows)]
@@ -189,6 +191,21 @@ pub struct CaptureResult {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+struct QaCaptureStatus {
+    status: &'static str,
+    invocation: CaptureInvocation,
+    capture_method: Option<CaptureMethod>,
+    error_category: Option<ErrorCategory>,
+    captured_char_count: Option<usize>,
+    safe_count: Option<usize>,
+    source_app: Option<String>,
+    no_selected_text: bool,
+    clipboard_unavailable: bool,
+    app_blocked_copy: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct SessionAnalysis {
     pub captured_text: String,
     pub current_text: String,
@@ -235,7 +252,8 @@ struct CompanionState {
     llm_cancel: Mutex<Option<LlmCancelHandle>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 enum CaptureInvocation {
     Shortcut,
     FocusedUi,
@@ -303,7 +321,9 @@ fn apply_replacement_to_selection(
     app.clipboard()
         .write_text(replacement.clone())
         .map_err(|_| CommandError::new("Could not write corrected text to the clipboard."))?;
-    send_paste_shortcut()?;
+    if !try_paste_message_to_source(session.source_hwnd) {
+        send_paste_shortcut()?;
+    }
     thread::sleep(Duration::from_millis(120));
     let restore_warning = restore_clipboard(&app, session.previous_clipboard_text.as_deref());
 
@@ -454,6 +474,8 @@ fn capture_selected_text_impl(
     for attempt in capture_attempt_order(settings.capture_preference) {
         match attempt {
             CaptureAttempt::Uia => {
+                focus_source_window(source_hwnd);
+                thread::sleep(CAPTURE_SOURCE_FOCUS_DELAY);
                 if let Ok(captured) = uia_pilot::try_capture_selected_text()
                     && !captured.text.trim().is_empty()
                 {
@@ -470,7 +492,14 @@ fn capture_selected_text_impl(
                 last_error = Some((ErrorCategory::NoSelectedText, CaptureAttempt::Uia));
             }
             CaptureAttempt::Clipboard => {
-                match capture_via_clipboard(app, &settings, previous_clipboard_text.as_deref()) {
+                focus_source_window(source_hwnd);
+                thread::sleep(CAPTURE_SOURCE_FOCUS_DELAY);
+                match capture_via_clipboard(
+                    app,
+                    &settings,
+                    previous_clipboard_text.as_deref(),
+                    source_hwnd,
+                ) {
                     Ok((captured_text, restore_warning)) => {
                         let context = CapturedTextContext {
                             source_app: source_app.clone(),
@@ -506,11 +535,17 @@ fn capture_via_clipboard(
     app: &AppHandle,
     settings: &CompanionSettings,
     previous_clipboard_text: Option<&str>,
+    source_hwnd: Option<isize>,
 ) -> Result<(String, Option<String>), ErrorCategory> {
     let sequence_before = clipboard_sequence_number();
 
-    send_copy_shortcut().map_err(|_| ErrorCategory::ClipboardUnavailable)?;
-    let captured = wait_for_captured_text(app, previous_clipboard_text, sequence_before);
+    try_copy_message_to_source(source_hwnd);
+    let mut captured = wait_for_captured_text(app, previous_clipboard_text, sequence_before);
+    if captured.is_none() {
+        let retry_sequence_before = clipboard_sequence_number();
+        send_copy_shortcut().map_err(|_| ErrorCategory::ClipboardUnavailable)?;
+        captured = wait_for_captured_text(app, previous_clipboard_text, retry_sequence_before);
+    }
     let restore_warning = if settings.restore_clipboard {
         restore_clipboard(app, previous_clipboard_text)
     } else {
@@ -692,7 +727,7 @@ fn wait_for_captured_text(
         if !sequence_changed {
             continue;
         }
-        if let Ok(text) = app.clipboard().read_text() {
+        if let Some(text) = read_clipboard_text(app) {
             if text.trim().is_empty() {
                 continue;
             }
@@ -702,6 +737,10 @@ fn wait_for_captured_text(
         }
     }
     None
+}
+
+fn read_clipboard_text(app: &AppHandle) -> Option<String> {
+    read_clipboard_text_native().or_else(|| app.clipboard().read_text().ok())
 }
 
 fn restore_clipboard(app: &AppHandle, previous: Option<&str>) -> Option<String> {
@@ -913,13 +952,62 @@ fn hide_review_window(app: &AppHandle) {
     }
 }
 
+fn write_qa_capture_status(status: &QaCaptureStatus) {
+    let Some(path) = std::env::var_os("NAHOU_QA_CAPTURE_STATUS_PATH") else {
+        return;
+    };
+    let Ok(raw) = serde_json::to_string_pretty(status) else {
+        return;
+    };
+    let _ = fs::write(path, raw);
+}
+
+fn qa_capture_success(invocation: CaptureInvocation, result: &CaptureResult) -> QaCaptureStatus {
+    QaCaptureStatus {
+        status: "ok",
+        invocation,
+        capture_method: Some(result.capture_method),
+        error_category: None,
+        captured_char_count: Some(result.captured_text.chars().count()),
+        safe_count: Some(result.safe_count),
+        source_app: result.source_app.clone(),
+        no_selected_text: false,
+        clipboard_unavailable: false,
+        app_blocked_copy: false,
+    }
+}
+
+fn qa_capture_error(invocation: CaptureInvocation, error: &CommandError) -> QaCaptureStatus {
+    let diagnostic = error.diagnostic.clone();
+    QaCaptureStatus {
+        status: "error",
+        invocation,
+        capture_method: diagnostic.as_ref().map(|item| item.method),
+        error_category: Some(error.category),
+        captured_char_count: None,
+        safe_count: None,
+        source_app: diagnostic.as_ref().and_then(|item| item.source_app.clone()),
+        no_selected_text: diagnostic
+            .as_ref()
+            .is_some_and(|item| item.no_selected_text),
+        clipboard_unavailable: diagnostic
+            .as_ref()
+            .is_some_and(|item| item.clipboard_unavailable),
+        app_blocked_copy: diagnostic
+            .as_ref()
+            .is_some_and(|item| item.app_blocked_copy),
+    }
+}
+
 fn emit_capture_result(app: &AppHandle, state: &CompanionState, invocation: CaptureInvocation) {
     match capture_selected_text_from_invocation(app, state, invocation) {
         Ok(result) => {
+            write_qa_capture_status(&qa_capture_success(invocation, &result));
             show_review_window(app);
             let _ = app.emit("companion-captured", result);
         }
         Err(error) => {
+            write_qa_capture_status(&qa_capture_error(invocation, &error));
             show_review_window(app);
             let _ = app.emit("companion-error", error);
         }
@@ -961,9 +1049,12 @@ pub fn run() {
         })
         .build();
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(shortcut_plugin)
+    let mut builder = tauri::Builder::default().plugin(tauri_plugin_clipboard_manager::init());
+    if has_interactive_window_station() {
+        builder = builder.plugin(shortcut_plugin);
+    }
+
+    builder
         .manage(CompanionState::default())
         .invoke_handler(tauri::generate_handler![
             capture_selected_text,
@@ -991,6 +1082,147 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running Nahou desktop app");
+}
+
+#[cfg(windows)]
+fn has_interactive_window_station() -> bool {
+    use windows_sys::Win32::{
+        System::StationsAndDesktops::{
+            GetProcessWindowStation, GetUserObjectInformationW, UOI_FLAGS, USEROBJECTFLAGS,
+        },
+        UI::WindowsAndMessaging::WSF_VISIBLE,
+    };
+
+    unsafe {
+        let station = GetProcessWindowStation();
+        if station.is_null() {
+            return false;
+        }
+
+        let mut flags = USEROBJECTFLAGS::default();
+        let mut needed = 0;
+        let ok = GetUserObjectInformationW(
+            station,
+            UOI_FLAGS,
+            &mut flags as *mut USEROBJECTFLAGS as *mut _,
+            std::mem::size_of::<USEROBJECTFLAGS>() as u32,
+            &mut needed,
+        ) != 0;
+        ok && flags.dwFlags & WSF_VISIBLE as u32 != 0
+    }
+}
+
+#[cfg(not(windows))]
+fn has_interactive_window_station() -> bool {
+    true
+}
+
+#[cfg(windows)]
+fn try_copy_message_to_source(hwnd: Option<isize>) -> bool {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        SMTO_ABORTIFHUNG, SendMessageTimeoutW, WM_COPY,
+    };
+
+    let Some(hwnd) = hwnd else {
+        return false;
+    };
+
+    unsafe {
+        let mut sent_any = false;
+        for target in message_targets_for_source(hwnd) {
+            let mut result = 0usize;
+            sent_any |=
+                SendMessageTimeoutW(target, WM_COPY, 0, 0, SMTO_ABORTIFHUNG, 250, &mut result) != 0;
+            thread::sleep(SYNTHETIC_SHORTCUT_STEP_DELAY);
+        }
+        sent_any
+    }
+}
+
+#[cfg(not(windows))]
+fn try_copy_message_to_source(_hwnd: Option<isize>) -> bool {
+    false
+}
+
+#[cfg(windows)]
+fn try_paste_message_to_source(hwnd: Option<isize>) -> bool {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        SMTO_ABORTIFHUNG, SendMessageTimeoutW, WM_PASTE,
+    };
+
+    let Some(hwnd) = hwnd else {
+        return false;
+    };
+
+    unsafe {
+        let mut sent_any = false;
+        for target in message_targets_for_source(hwnd) {
+            let mut result = 0usize;
+            sent_any |=
+                SendMessageTimeoutW(target, WM_PASTE, 0, 0, SMTO_ABORTIFHUNG, 250, &mut result)
+                    != 0;
+            thread::sleep(SYNTHETIC_SHORTCUT_STEP_DELAY);
+        }
+        sent_any
+    }
+}
+
+#[cfg(not(windows))]
+fn try_paste_message_to_source(_hwnd: Option<isize>) -> bool {
+    false
+}
+
+#[cfg(windows)]
+unsafe extern "system" fn collect_edit_children(
+    child: windows_sys::Win32::Foundation::HWND,
+    lparam: windows_sys::Win32::Foundation::LPARAM,
+) -> windows_sys::core::BOOL {
+    use windows_sys::Win32::UI::WindowsAndMessaging::GetClassNameW;
+
+    let targets = unsafe { &mut *(lparam as *mut Vec<windows_sys::Win32::Foundation::HWND>) };
+    let mut class_name = [0u16; 128];
+    let written = unsafe { GetClassNameW(child, class_name.as_mut_ptr(), class_name.len() as i32) };
+    if written > 0 {
+        let class_name = String::from_utf16_lossy(&class_name[..written as usize]);
+        if class_name.contains("RichEdit") || class_name == "Edit" {
+            targets.push(child);
+        }
+    }
+    1
+}
+
+#[cfg(windows)]
+unsafe fn message_targets_for_source(hwnd: isize) -> Vec<windows_sys::Win32::Foundation::HWND> {
+    use std::ptr;
+    use windows_sys::Win32::{
+        Foundation::{HWND, LPARAM},
+        UI::WindowsAndMessaging::{
+            EnumChildWindows, GUITHREADINFO, GetGUIThreadInfo, GetWindowThreadProcessId,
+        },
+    };
+
+    let source = hwnd as HWND;
+    let mut targets = vec![source];
+    let thread_id = unsafe { GetWindowThreadProcessId(source, ptr::null_mut()) };
+    if thread_id != 0 {
+        let mut info = GUITHREADINFO {
+            cbSize: std::mem::size_of::<GUITHREADINFO>() as u32,
+            ..Default::default()
+        };
+        if unsafe { GetGUIThreadInfo(thread_id, &mut info) } != 0 && !info.hwndFocus.is_null() {
+            targets.push(info.hwndFocus);
+        }
+    }
+    unsafe {
+        EnumChildWindows(
+            source,
+            Some(collect_edit_children),
+            &mut targets as *mut Vec<HWND> as LPARAM,
+        );
+    }
+
+    targets.dedup();
+    targets
 }
 
 #[cfg(windows)]
@@ -1022,42 +1254,24 @@ fn send_paste_shortcut() -> Result<(), CommandError> {
 #[cfg(windows)]
 fn send_ctrl_shortcut(key: u16) -> Result<(), CommandError> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
-        INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, SendInput, VK_CONTROL,
+        KEYEVENTF_KEYUP, VK_CONTROL, keybd_event,
     };
 
-    fn keyboard_input(key: u16, flags: u32) -> INPUT {
-        INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: key,
-                    wScan: 0,
-                    dwFlags: flags,
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
+    fn send_key(key: u16, flags: u32) {
+        unsafe {
+            keybd_event(key as u8, 0, flags, 0);
         }
     }
 
-    let inputs = [
-        keyboard_input(VK_CONTROL, 0),
-        keyboard_input(key, 0),
-        keyboard_input(key, KEYEVENTF_KEYUP),
-        keyboard_input(VK_CONTROL, KEYEVENTF_KEYUP),
-    ];
-    let sent = unsafe {
-        SendInput(
-            inputs.len() as u32,
-            inputs.as_ptr(),
-            std::mem::size_of::<INPUT>() as i32,
-        )
-    };
-    if sent == inputs.len() as u32 {
-        Ok(())
-    } else {
-        Err(CommandError::new("Could not send keyboard shortcut."))
-    }
+    send_key(VK_CONTROL, 0);
+    thread::sleep(SYNTHETIC_SHORTCUT_STEP_DELAY);
+    send_key(key, 0);
+    thread::sleep(SYNTHETIC_SHORTCUT_STEP_DELAY);
+    send_key(key, KEYEVENTF_KEYUP);
+    thread::sleep(SYNTHETIC_SHORTCUT_STEP_DELAY);
+    send_key(VK_CONTROL, KEYEVENTF_KEYUP);
+    thread::sleep(SYNTHETIC_SHORTCUT_STEP_DELAY);
+    Ok(())
 }
 
 #[cfg(windows)]
@@ -1140,6 +1354,56 @@ fn clipboard_sequence_number() -> Option<u32> {
     use windows_sys::Win32::System::DataExchange::GetClipboardSequenceNumber;
     let sequence = unsafe { GetClipboardSequenceNumber() };
     (sequence != 0).then_some(sequence)
+}
+
+#[cfg(windows)]
+fn read_clipboard_text_native() -> Option<String> {
+    use windows_sys::Win32::{
+        Foundation::HWND,
+        System::{
+            DataExchange::{
+                CloseClipboard, GetClipboardData, IsClipboardFormatAvailable, OpenClipboard,
+            },
+            Memory::{GlobalLock, GlobalUnlock},
+            Ole::CF_UNICODETEXT,
+        },
+    };
+
+    unsafe {
+        if IsClipboardFormatAvailable(CF_UNICODETEXT as u32) == 0 {
+            return None;
+        }
+        if OpenClipboard(std::ptr::null_mut::<std::ffi::c_void>() as HWND) == 0 {
+            return None;
+        }
+
+        let handle = GetClipboardData(CF_UNICODETEXT as u32);
+        if handle.is_null() {
+            CloseClipboard();
+            return None;
+        }
+
+        let locked = GlobalLock(handle);
+        if locked.is_null() {
+            CloseClipboard();
+            return None;
+        }
+
+        let text_ptr = locked as *const u16;
+        let mut len = 0usize;
+        while len < MAX_CAPTURE_CHARS + 1 && *text_ptr.add(len) != 0 {
+            len += 1;
+        }
+        let text = String::from_utf16_lossy(std::slice::from_raw_parts(text_ptr, len));
+        GlobalUnlock(handle);
+        CloseClipboard();
+        Some(text)
+    }
+}
+
+#[cfg(not(windows))]
+fn read_clipboard_text_native() -> Option<String> {
+    None
 }
 
 #[cfg(not(windows))]

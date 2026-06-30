@@ -16,8 +16,18 @@ describe("desktop release packaging", () => {
       path.join(repoRoot, "docs/public/v1.0-product-contract.md"),
       "utf8",
     );
+    const acceptanceMatrix = await fs.readFile(
+      path.join(repoRoot, "docs/testing/v1.0-acceptance-matrix.md"),
+      "utf8",
+    );
 
-    expect(contract).toMatch(/Windows-first, local-first writing companion/u);
+    expect(contract).toMatch(/Windows-first, local-first writing companion foundation/u);
+    expect(contract).toMatch(/Release-Blocking v1\.0 Surface/u);
+    expect(contract).toMatch(/Foundation Integrations/u);
+    expect(acceptanceMatrix).toMatch(/Desktop Foundation Gates/u);
+    expect(acceptanceMatrix).toMatch(/Deferred Integration Gates/u);
+    expect(acceptanceMatrix).toMatch(/No, deferred store gate/u);
+    expect(acceptanceMatrix).toMatch(/No, deferred sideload gate/u);
     expect(contract).toMatch(/No hosted text processing/u);
     expect(contract).toMatch(/No telemetry/u);
     expect(contract).toMatch(/No universal live underline overlay/u);
@@ -25,13 +35,13 @@ describe("desktop release packaging", () => {
     expect(readme).not.toMatch(/complete grammar checker/u);
   });
 
-  it("defaults the optional Windows developer zip to the current v0.5 release", async () => {
+  it("defaults the optional Windows developer zip to the current release candidate", async () => {
     const source = await fs.readFile(
       path.join(repoRoot, "scripts/package-windows.ps1"),
       "utf8",
     );
 
-    expect(source).toMatch(/\[string\]\$Version = "0\.5\.0"/u);
+    expect(source).toMatch(/\[string\]\$Version = "1\.0\.0-rc\.1"/u);
     expect(source).not.toMatch(/\[string\]\$Version = "0\.4\.1"/u);
   });
 

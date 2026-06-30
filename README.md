@@ -12,16 +12,18 @@ The current MVP provides a shared Rust engine, a local CLI, an Axum JSON API, a 
 
 ## v1.0 Product Contract
 
-Nahou v1.0 is a Windows-first, local-first writing companion. The primary user
-path is: install the Windows desktop setup installer, select text in another
-app, press the configured hotkey, review local deterministic suggestions, then
-replace the original selection or copy corrected text.
+Nahou v1.0 is a Windows-first, local-first writing companion foundation. The
+primary user path is: install the Windows desktop setup installer, select text
+in a supported desktop control, press the configured hotkey, review local
+deterministic suggestions, then copy corrected text or replace the original
+selection when the guarded apply path is available.
 
-The supported v1.0 surface targets are Notepad, browser textarea/input fields,
-WhatsApp Web text boxes, Word selected text, and PowerPoint selected text.
-Support is bounded by the active capture path and the target application's text
-APIs. Browser extension and Office add-in packages are optional integrations
-that require their own release gates and store-review readiness.
+The release-blocking v1.0 surface is the packaged desktop companion flow for a
+bounded selected-text workflow, with Notepad as the representative supported
+target. Browser extension and Office add-in packages are optional foundations:
+they can be built and validated as local-ready artifacts, but public browser
+store release, live production-editor claims, and Office sideload readiness
+require their own manual gates.
 
 Public v1.0 claims are defined in
 `docs/public/v1.0-product-contract.md`, and release evidence is tracked in
@@ -351,6 +353,7 @@ Near-term work after the public MVP:
 - No live underlines everywhere in the desktop companion.
 - No hosted service or telemetry pipeline.
 - Current eval coverage is small and release-gate oriented.
-- v1.0 supported surfaces remain limited to the product contract and manual QA
-  evidence for Notepad, browser textarea/input fields, WhatsApp Web text boxes,
-  Word selected text, and PowerPoint selected text.
+- v1.0 release-blocking support remains limited to the product contract and
+  manual QA evidence for the desktop-foundation selected-text flow. Browser,
+  live web editor, Word, and PowerPoint support remain deferred integration
+  gates until their separate QA evidence is complete.

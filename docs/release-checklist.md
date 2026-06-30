@@ -2,10 +2,11 @@
 
 - [ ] Clean git status
 - [ ] Public v1.0 claims match `docs/public/v1.0-product-contract.md`
-- [ ] `docs/testing/v1.0-acceptance-matrix.md` has public-safe evidence files for each supported surface
+- [ ] `docs/testing/v1.0-acceptance-matrix.md` has public-safe evidence files for each release-blocking desktop-foundation surface
 - [ ] No public page claims universal live desktop overlays, hosted processing, bundled model weights, complete Arabic morphology, full English grammar, or store approval that has not happened
 - [ ] Desktop installer remains the primary v1.0 user artifact
-- [ ] Supported v1.0 surfaces reviewed: Notepad, browser textarea/input, WhatsApp Web text box, Word selected text, PowerPoint selected text
+- [ ] Supported v1.0 desktop-foundation surface reviewed: packaged desktop selected-text flow with Notepad as the representative target
+- [ ] Browser extension, live web editors, Office add-ins, Word, and PowerPoint are documented as deferred integration gates unless this release explicitly includes them
 - [ ] Quality thresholds reviewed: zero known supported-surface crashes, no raw text in logs/reports/screenshots/public artifacts, zero known false positives in release-blocking safe-fix fixtures, installer launches without PowerShell, clipboard restore works in normal text-clipboard cases
 - [ ] `cargo fmt --all --check`
 - [ ] `cargo clippy --workspace -- -D warnings`
@@ -26,22 +27,22 @@
 - [ ] For public release hygiene: `.\scripts\check-public-release-hygiene.ps1 -RequireClean`
 - [ ] Manual log and screenshot review confirms no raw selected text in public artifacts or source-controlled reports
 - [ ] For browser-extension pull requests: confirm the CI artifact `nahou-browser-extension-0.7.0-release-artifacts` contains the upload zip, `RELEASE_MANIFEST.json`, reviewer docs, and selected screenshots
-- [ ] For browser-extension release candidates: `.\scripts\prepare-browser-extension-release-candidate.ps1` and confirm `LocalReady: true` and `ScreenshotRootsMatch: true`
-- [ ] For browser-extension release handoff: `.\scripts\export-browser-extension-release-handoff.ps1` and review the generated Markdown/JSON under `dist\browser-extension-release-handoff\`
+- [ ] For browser-extension local-ready artifacts: `.\scripts\prepare-browser-extension-release-candidate.ps1` and confirm `LocalReady: true` and `ScreenshotRootsMatch: true`
+- [ ] For browser-extension handoff artifacts: `.\scripts\export-browser-extension-release-handoff.ps1` and review the generated Markdown/JSON under `dist\browser-extension-release-handoff\`
 - [ ] For browser-extension validation evidence: review `docs/testing/browser-extension-v0.7-validation.md`; keep detailed VM logs under ignored `docs/testing/reports\`
-- [ ] For browser-extension release candidates: `.\scripts\validate-browser-extension-release.ps1 -RunVmSmokes -VmName <vm-name> -CredentialPath <credential.xml> -ChromeForTestingZipPath <chrome-for-testing-win64.zip>`
-- [ ] For browser-extension VM smokes: use the default guest artifact root under `C:\Temp\Nahou`, or set `ALFARAHEEDI_VM_QA_ROOT` / pass `-QaRoot <guest-path>` when the QA VM needs a different guest path
-- [ ] For browser-extension release candidates: `.\scripts\export-browser-extension-store-submission.ps1`
-- [ ] For browser-extension release candidates: `.\scripts\check-browser-extension-store-submission-integrity.ps1 -RequireValid`
-- [ ] For browser-extension release candidates: `.\scripts\get-browser-extension-release-readiness.ps1 -RequireLocalReady` and confirm `StoreUploadPackageMatchesPackage`, `ReleaseManifestPackageHash`, `ReleaseManifestReviewerDocs`, `ReleaseManifestScreenshots`, `StoreSubmissionIntegrity`, and `ManualQaReportGateHashMatches` are all `true`; before public release, also confirm `ManualQaReportCompleted: true` and `ManualQaReleaseDecision: Public release approved`
-- [ ] Before browser-store upload: `.\scripts\check-browser-extension-pages-readiness.ps1 -RequireReady`
-- [ ] Before public browser-store release: complete `browser-extension/MANUAL_RELEASE_GATES.md` for live production-editor QA, manual screen-reader review, public privacy URL, and store-dashboard review, then run `.\scripts\check-browser-extension-manual-qa-report.ps1 -RequireCompleted`
+- [ ] For browser-extension packaged VM evidence, when browser-store readiness is in scope: `.\scripts\validate-browser-extension-release.ps1 -RunVmSmokes -VmName <vm-name> -CredentialPath <credential.xml> -ChromeForTestingZipPath <chrome-for-testing-win64.zip>`
+- [ ] For browser-extension VM smokes, when browser-store readiness is in scope: use the default guest artifact root under `C:\Temp\Nahou`, or set `ALFARAHEEDI_VM_QA_ROOT` / pass `-QaRoot <guest-path>` when the QA VM needs a different guest path
+- [ ] For browser-extension store-submission artifacts, when browser-store readiness is in scope: `.\scripts\export-browser-extension-store-submission.ps1`
+- [ ] For browser-extension store-submission artifacts, when browser-store readiness is in scope: `.\scripts\check-browser-extension-store-submission-integrity.ps1 -RequireValid`
+- [ ] For browser-extension local-ready release candidates: `.\scripts\get-browser-extension-release-readiness.ps1 -RequireLocalReady` and confirm `StoreUploadPackageMatchesPackage`, `ReleaseManifestPackageHash`, `ReleaseManifestReviewerDocs`, `ReleaseManifestScreenshots`, `StoreSubmissionIntegrity`, and `ManualQaReportGateHashMatches` are all `true`; before public browser-store release, also confirm `ManualQaReportCompleted: true` and `ManualQaReleaseDecision: Public release approved`
+- [ ] Before browser-store upload, when browser-store readiness is in scope: `.\scripts\check-browser-extension-pages-readiness.ps1 -RequireReady`
+- [ ] Before public browser-store release, when browser-store readiness is in scope: complete `browser-extension/MANUAL_RELEASE_GATES.md` for live production-editor QA, manual screen-reader review, public privacy URL, and store-dashboard review, then run `.\scripts\check-browser-extension-manual-qa-report.ps1 -RequireCompleted`
 - [ ] For Office add-ins changes: `.\scripts\validate-office-addins-release.ps1`
 - [ ] Package Office add-ins with `.\scripts\package-office-addins.ps1`
 - [ ] For local Office sideload checks: create a dev certificate with `.\scripts\New-OfficeAddinDevCertificate.ps1`; use `-Trust` only when you accept a CurrentUser certificate store change
 - [ ] Start the Office task-pane host with `.\scripts\serve-office-addins.ps1` and verify `https://localhost:3443/office-addins/taskpane.html`
-- [ ] For Office add-ins manual sideload QA: generate `.\scripts\new-office-addins-manual-qa-report.ps1`, complete Word/PowerPoint gates, then run `.\scripts\check-office-addins-manual-qa-report.ps1 -RequireCompleted`
-- [ ] Treat v0.8 Office add-ins as a task-pane foundation until sideload QA and Word/PowerPoint replacement checks are complete
+- [ ] For Office add-ins manual sideload QA, when Office sideload readiness is in scope: generate `.\scripts\new-office-addins-manual-qa-report.ps1`, complete Word/PowerPoint gates, then run `.\scripts\check-office-addins-manual-qa-report.ps1 -RequireCompleted`
+- [ ] Treat v1.0 Office add-ins as a task-pane foundation until sideload QA and Word/PowerPoint replacement checks are complete
 - [ ] `.\scripts\smoke-cli.ps1`
 - [ ] `.\scripts\smoke-api.ps1`
 - [ ] `cargo run -p write-cli -- llm doctor`
@@ -56,7 +57,7 @@
 - [ ] Desktop Windows CI artifact `nahou-desktop-windows-setup` contains the canonical setup installer
 - [ ] For v0.9 UI Automation changes: verify the review header identifies `Windows UI Automation capture` for a supported native control and `Clipboard capture` for fallback surfaces
 - [ ] Confirm v0.9 UI Automation remains capture-only and replacement still uses clipboard paste fallback
-- [ ] Manual desktop companion QA: Notepad, browser textarea, Word, PowerPoint, WhatsApp, no selection, clipboard restore, large selection, Arabic UI, English UI, offline
+- [ ] Manual desktop companion QA for foundation scope: Notepad selected-text capture/review, no-selection or unsupported-selection behavior, clipboard restore diagnostics, and no raw text in public artifacts
 - [ ] Fresh clone test
 - [ ] README reviewed
 - [ ] Limitations reviewed

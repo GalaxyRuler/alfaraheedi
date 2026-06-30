@@ -733,6 +733,35 @@ describe("browser extension package metadata", () => {
     }
   });
 
+  it("buffers fragmented CDP WebSocket messages in packaged VM smokes", async () => {
+    const cdpSmokeScripts = [
+      "scripts/qa-browser-extension-ax-smoke.ps1",
+      "scripts/qa-browser-extension-keyboard-flow-smoke.ps1",
+      "scripts/capture-browser-extension-store-screenshots.ps1",
+    ];
+
+    for (const scriptPath of cdpSmokeScripts) {
+      const source = await fs.readFile(path.join(repoRoot, scriptPath), "utf8");
+
+      expect(source, scriptPath).toMatch(/\[IO\.MemoryStream\]::new\(\)/u);
+      expect(source, scriptPath).toMatch(/EndOfMessage/u);
+      expect(source, scriptPath).toMatch(/ConvertFrom-Json/u);
+    }
+  });
+
+  it("keeps packaged keyboard smoke aligned with extension settings tab order", async () => {
+    const source = await fs.readFile(
+      path.join(repoRoot, "scripts/qa-browser-extension-keyboard-flow-smoke.ps1"),
+      "utf8",
+    );
+
+    expect(source).toMatch(/OptionsApiFirst/u);
+    expect(source).toMatch(/OptionsWritingModeSecond/u);
+    expect(source).toMatch(/OptionsEnabledThird/u);
+    expect(source).toMatch(/OptionsDisabledHostsFourth/u);
+    expect(source).toMatch(/OptionsSaveFifth/u);
+  });
+
   it("documents configurable VM smoke artifact roots without naming local QA machines", async () => {
     const docs = {
       "browser-extension/README.md": await fs.readFile(

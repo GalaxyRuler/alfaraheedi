@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $requiredText = @(
     "Nahou Browser Extension Privacy Policy",
-    "Last updated: 2026-06-22",
+    "Last updated: 2026-06-25",
     "local loopback Nahou API",
     "does not send text to Nahou-hosted services",
     "does not store captured editor text",

@@ -49,7 +49,7 @@ function Get-SelectedScreenshotRoot {
     $assetManifest = Get-Content -LiteralPath $AssetManifestPath -Raw
     $pathMatches = [regex]::Matches(
         $assetManifest,
-        '(?m)^(?:[A-Z]:\\.*?browser-extension-store-assets\\v0\.7-extension-store-screenshots-\d{8}-\d{6}|dist\\browser-extension-store-assets\\v0\.7-extension-store-screenshots-\d{8}-\d{6})$'
+        '(?m)^\s*(?:[A-Z]:\\.*?browser-extension-store-assets\\v0\.7-extension-store-screenshots-\d{8}-\d{6}|dist\\browser-extension-store-assets\\v0\.7-extension-store-screenshots-\d{8}-\d{6})\s*$'
     )
     if ($pathMatches.Count -eq 0) {
         return ""

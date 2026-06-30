@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CredentialPath,
 
-    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-0.7.0.zip",
+    [string]$ZipPath = "dist\browser-extension\nahou-browser-extension-1.0.0.1.zip",
 
     [string]$QaRoot = ""
 )
@@ -73,19 +73,33 @@ try {
                 [Threading.CancellationToken]::None
             ).GetAwaiter().GetResult() | Out-Null
 
-            $deadline = (Get-Date).AddSeconds(20)
+            $deadline = (Get-Date).AddSeconds(30)
             while ((Get-Date) -lt $deadline) {
-                $buffer = New-Object byte[] 262144
-                $task = $Socket.ReceiveAsync(
-                    [ArraySegment[byte]]::new($buffer),
-                    [Threading.CancellationToken]::None
-                )
-                if (-not $task.Wait(3000)) {
+                $stream = [IO.MemoryStream]::new()
+                $timedOut = $false
+                do {
+                    $buffer = New-Object byte[] 262144
+                    $cts = [Threading.CancellationTokenSource]::new()
+                    $cts.CancelAfter(3000)
+                    try {
+                        $result = $Socket.ReceiveAsync(
+                            [ArraySegment[byte]]::new($buffer),
+                            $cts.Token
+                        ).GetAwaiter().GetResult()
+                    } catch {
+                        $timedOut = $true
+                        break
+                    } finally {
+                        $cts.Dispose()
+                    }
+
+                    $stream.Write($buffer, 0, $result.Count)
+                } while (-not $result.EndOfMessage)
+                if ($timedOut) {
                     continue
                 }
 
-                $result = $task.Result
-                $text = [Text.Encoding]::UTF8.GetString($buffer, 0, $result.Count)
+                $text = [Text.Encoding]::UTF8.GetString($stream.ToArray())
                 $message = $text | ConvertFrom-Json
                 if ($message.PSObject.Properties.Name -contains 'id' -and $message.id -eq $Id) {
                     return $message

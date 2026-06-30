@@ -23,13 +23,13 @@ describe("Office add-ins package metadata", () => {
     );
 
     expect(manifest).toMatch(/xsi:type="TaskPaneApp"/u);
-    expect(manifest).toMatch(/<Version>1\.0\.0<\/Version>/u);
-    expect(manifest).toMatch(/<Host Name="Document"\/>/u);
-    expect(manifest).toMatch(/<Host Name="Presentation"\/>/u);
+    expect(manifest).toMatch(/<Version>1\.0\.0\.1<\/Version>/u);
+    expect(manifest).toMatch(/<Host Name="Document"\s*\/>/u);
+    expect(manifest).toMatch(/<Host Name="Presentation"\s*\/>/u);
     expect(manifest).not.toMatch(/<Requirements>/u);
     expect(manifest).toMatch(/<Permissions>ReadWriteDocument<\/Permissions>/u);
     expect(manifest).toMatch(
-      /<SourceLocation DefaultValue="https:\/\/localhost:3443\/office-addins\/taskpane\.html"\/>/u,
+      /<SourceLocation DefaultValue="https:\/\/localhost:3443\/office-addins\/taskpane\.html"\s*\/>/u,
     );
     expect(manifest).toMatch(/http:\/\/127\.0\.0\.1:3000/u);
     expect(manifest).toMatch(/http:\/\/localhost:3000/u);
@@ -39,8 +39,8 @@ describe("Office add-ins package metadata", () => {
     expect(prodManifest).toContain(
       "https://galaxyruler.github.io/alfaraheedi/office-addins/taskpane.html",
     );
-    expect(prodManifest).toContain(
-      '<PrivacyUrl DefaultValue="https://galaxyruler.github.io/alfaraheedi/privacy.html"/>',
+    expect(prodManifest).toMatch(
+      /<PrivacyUrl DefaultValue="https:\/\/galaxyruler\.github\.io\/alfaraheedi\/privacy\.html"\s*\/>/u,
     );
     expect(prodManifest).not.toMatch(/localhost|127\.0\.0\.1/u);
   });

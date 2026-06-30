@@ -2,22 +2,47 @@
 
 ## Unreleased
 
+No unreleased changes.
+
+## v1.0.0-rc.1 - 2026-06-25
+
 ### Added
 
-- Added a v0.8 Office add-ins foundation for Word and PowerPoint selected-text
-  task-pane integration.
-- Added a v0.7 Chrome Manifest V3 browser-extension foundation for editable web fields, including scroll- and layout-synchronized non-mutating wavy underline overlays for safe text-like inputs (`text`, `search`, `email`, `url`, and `tel`) and textarea fields while excluding password, sensitive-hinted fields, and sensitive-hinted ancestor containers, CSS Highlight marks for contenteditable fields, broader contenteditable token discovery, read-only/disabled and ARIA read-only/disabled text-control skipping, iframe-hosted editor injection, open Shadow DOM text-control event handling, loopback API URL and writing-mode extension settings, a toolbar popup for quick settings/status access with a loopback API health check and pause/resume control, keyboard-accessible suggestion panel focus handling with unique replacement-specific Apply labels, bidirectional `dir="auto"` panel/source/replacement text, AA contrast and Windows forced-colors fallbacks for extension UI, and Escape dismissal, non-actionable stale/unanchored suggestion display, IME/composition-safe debounce, local oversized-text refusal before runtime/API sends, sanitized runtime/API error messages, stale-response protection while users keep typing, stale Apply status when a rendered suggestion no longer matches current text, contenteditable line-break and blank-block newline/offset handling, non-editable, hidden, and production sentinel rich-editor island skipping, span-anchored plain-field replacement for repeated text with untrimmed analyze requests, composed replacement `InputEvent` dispatch for applied fixes, manifest-declared PNG extension icons, clean extension zip packaging, store-preflight manifest/privacy guardrails, and guarded individual suggestion apply/edit/focus/removal cleanup that clears injected review UI while preserving simple inline contenteditable markup.
-- Added a source-controlled browser-extension manual release gate and private report generator for live production-editor checks, manual screen-reader review, public privacy URL readiness, and store-dashboard review before public store submission.
-- Added desktop companion local LLM setup fields for loopback runtime URL, model id, and timeout.
-- Added desktop companion runtime status checking without requiring `writecheck serve`.
-- Added desktop companion runtime doctor checks for policy, configuration, `/v1/models`, and suggestion-only probing.
-- Added selected-text local LLM suggestions in the companion review window, with manual apply only.
-- Added progress and cancellation controls for in-flight desktop companion local LLM suggestions.
+- Added the Windows desktop companion as the primary v1.0 product path:
+  install Nahou, select text in a supported app, press `Ctrl+Alt+A`,
+  review local suggestions, then copy corrected text or replace the selection.
+- Added the Chrome/Chromium browser-extension foundation for editable web
+  fields with loopback-only API settings, accessible suggestion-panel focus
+  handling, `dir="auto"` mixed Arabic/English text, viewport clamping,
+  Escape dismissal, forced-colors fallbacks, and guarded individual apply.
+- Added the Word and PowerPoint Office add-ins foundation for selected-text
+  task-pane checks through Office.js and the local Nahou API.
+- Added UIA-first desktop capture diagnostics and fallback notices while
+  keeping replacement on the clipboard-paste path for v1.0.
+- Added desktop companion local LLM setup fields for loopback runtime URL,
+  model id, timeout, runtime status checking, runtime doctor checks, selected
+  text suggestion requests, progress, and cancellation controls.
 
 ### Safety
 
-- Desktop local LLM runtime URLs are validated as loopback-only.
-- LLM output remains suggestion-only and is not eligible for deterministic safe auto-apply.
+- Nahou remains local-first for v1.0: no hosted processing, telemetry, or
+  bundled model weights are required for the desktop path.
+- Desktop local LLM runtime URLs are validated as loopback-only, and LLM output
+  remains suggestion-only with manual apply only.
+- Browser extension and Office add-in release gates keep API endpoints local and
+  keep raw captured text out of source-controlled QA reports by default.
+
+### Known Limitations
+
+- UIA capture and desktop replacement support are app/control dependent; v1.0
+  supports the documented surfaces and falls back to clipboard-based behavior
+  where required.
+- Browser extension and Office add-ins are optional v1.0 integrations with
+  their own sideload/store-readiness gates; the Windows desktop installer is
+  the primary user path.
+- Nahou does not claim broad Arabic morphology, broad English grammar checking,
+  live desktop underlines, hosted model fallback, or bundled local model
+  weights.
 
 ## v0.5.0 - 2026-06-21
 

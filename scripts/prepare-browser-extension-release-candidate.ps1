@@ -11,6 +11,8 @@ param(
 
     [string]$PrivacyUrl = "https://galaxyruler.github.io/alfaraheedi/browser-extension/privacy.html",
 
+    [string]$ScreenshotRoot = "",
+
     [switch]$SkipPackageTests,
 
     [switch]$RunVmSmokes,
@@ -101,6 +103,10 @@ $exportArgs = [string[]]@(
     $StoreSubmissionOutDir,
     "-SkipPreflight"
 )
+if ($ScreenshotRoot) {
+    $exportArgs += "-ScreenshotRoot"
+    $exportArgs += $ScreenshotRoot
+}
 $export = Invoke-JsonPowerShellScript $exportScript $exportArgs "Store submission export"
 
 $integrityArgs = [string[]]@(

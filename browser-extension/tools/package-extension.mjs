@@ -23,8 +23,8 @@ export function validateBrowserExtensionManifest(manifest) {
   if (!nonEmptyString(manifest?.short_name) || manifest.short_name.length > 12) {
     errors.push("short_name is required and must be 12 characters or fewer.");
   }
-  if (!/^\d+\.\d+\.\d+$/u.test(manifest?.version ?? "")) {
-    errors.push("version must use x.y.z format.");
+  if (!/^\d+\.\d+\.\d+(?:\.\d+)?$/u.test(manifest?.version ?? "")) {
+    errors.push("version must use x.y.z or x.y.z.n format.");
   }
   if (!nonEmptyString(manifest?.description)) {
     errors.push("description is required.");

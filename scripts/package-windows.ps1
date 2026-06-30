@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "0.5.0",
+    [string]$Version = "1.0.0-rc.1",
     [switch]$SkipFrontendInstall
 )
 

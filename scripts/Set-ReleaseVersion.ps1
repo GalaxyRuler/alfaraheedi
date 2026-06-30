@@ -73,6 +73,24 @@ Update-TextFile -Changes $changes -RelativePath "Cargo.toml" -Description "Works
     $Content -replace '(?m)^(version\s*=\s*)"[^"]+"', "`${1}`"$Version`""
 }
 
+foreach ($cargoManifestPath in @(
+    "crates/write-arabic/Cargo.toml",
+    "crates/write-api/Cargo.toml",
+    "crates/write-cli/Cargo.toml",
+    "crates/write-english/Cargo.toml",
+    "crates/write-eval/Cargo.toml",
+    "crates/write-mixed/Cargo.toml",
+    "crates/write-service/Cargo.toml",
+    "crates/write-spell/Cargo.toml",
+    "crates/write-wasm/Cargo.toml",
+    "src-tauri/Cargo.toml"
+)) {
+    Update-TextFile -Changes $changes -RelativePath $cargoManifestPath -Description "Internal Cargo dependency versions" -Transform {
+        param([string]$Content)
+        $Content -replace '(write-(?:arabic|api|core|english|llm|service)\s*=\s*\{[^}]*version\s*=\s*)"[^"]+"', "`${1}`"$Version`""
+    }
+}
+
 Update-TextFile -Changes $changes -RelativePath "frontend/package.json" -Description "Frontend package version" -Transform {
     param([string]$Content)
     $json = $Content | ConvertFrom-Json

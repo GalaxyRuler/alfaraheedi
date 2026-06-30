@@ -80,11 +80,46 @@ function Find-PublicDocLocalReference {
 }
 
 function Find-ReportRawTextSample {
+    $arabicHello = -join @(
+        [char]0x0645,
+        [char]0x0631,
+        [char]0x062D,
+        [char]0x0628,
+        [char]0x0640,
+        [char]0x0640,
+        [char]0x0627,
+        "  ",
+        [char]0x0628,
+        [char]0x0627,
+        [char]0x0644,
+        [char]0x0639,
+        [char]0x0627,
+        [char]0x0644,
+        [char]0x0645
+    )
+    $arabicQuestion = -join @(
+        [char]0x0643,
+        [char]0x064A,
+        [char]0x0641,
+        " ",
+        [char]0x062D,
+        [char]0x0627,
+        [char]0x0644,
+        "  ",
+        [char]0x0645,
+        [char]0x0627,
+        " ",
+        [char]0x0627,
+        [char]0x062E,
+        [char]0x0628,
+        [char]0x0627,
+        [char]0x0631
+    )
     $samplePatterns = [string[]]@(
         "hello what are you doing",
         "helo wat you are do",
-        "مرحبــا  بالعالم",
-        "كيف حال  ما اخبار",
+        $arabicHello,
+        $arabicQuestion,
         "sample private selected text",
         "raw selected text sample"
     )
