@@ -13,3 +13,4 @@ export const clearSuggestionMarks = runtime.clearSuggestionMarks;
 export const renderSuggestionPanel = runtime.renderSuggestionPanel;
 export const clearSuggestionPanel = runtime.clearSuggestionPanel;
 export const applySuggestionToEditor = runtime.applySuggestionToEditor;
+export const createSuggestionAnchor = runtime.createSuggestionAnchor;
