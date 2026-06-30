@@ -93,6 +93,22 @@ fn arabic_rules_suggest_adding_space_after_arabic_punctuation() {
 }
 
 #[test]
+fn arabic_rules_suggest_adding_space_after_latin_question_mark_in_arabic_context() {
+    let analysis = Engine::new()
+        .with_rule(ArabicRuleSet)
+        .analyze("هل وصلت?نعم");
+
+    let sources = analysis
+        .suggestions
+        .iter()
+        .map(|suggestion| suggestion.source.as_str())
+        .collect::<Vec<_>>();
+
+    assert!(sources.contains(&"arabic:latin-question-mark"));
+    assert!(sources.contains(&"arabic:space-after-punctuation"));
+}
+
+#[test]
 fn arabic_rules_collapse_repeated_spaces_in_arabic_context() {
     let analysis = Engine::new()
         .with_rule(ArabicRuleSet::default())
