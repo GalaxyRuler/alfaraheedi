@@ -248,7 +248,7 @@ fn space_after_punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
     let text = document.text();
 
     for (punctuation_start, character) in text.char_indices() {
-        if !matches!(character, '،' | '؛' | '؟') {
+        if !matches!(character, '،' | '؛' | '؟' | ',' | ';' | '?') {
             continue;
         }
 
@@ -280,7 +280,7 @@ fn space_after_punctuation_suggestions(document: &Document) -> Vec<Suggestion> {
                 0.93,
                 "",
                 vec![" ".to_string()],
-                "Add a space after Arabic punctuation.",
+                "Add a space after punctuation in Arabic text.",
                 false,
             ));
         }

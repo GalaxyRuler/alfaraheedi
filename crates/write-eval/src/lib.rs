@@ -136,6 +136,10 @@ pub fn seed_cases() -> anyhow::Result<Vec<EvalCase>> {
         "datasets/eval/v1.0-arabic.jsonl",
     )?);
     cases.extend(read_jsonl_cases(
+        include_str!("../../../datasets/eval/v1.1-arabic.jsonl"),
+        "datasets/eval/v1.1-arabic.jsonl",
+    )?);
+    cases.extend(read_jsonl_cases(
         include_str!("../../../datasets/eval/v1.0-english.jsonl"),
         "datasets/eval/v1.0-english.jsonl",
     )?);
