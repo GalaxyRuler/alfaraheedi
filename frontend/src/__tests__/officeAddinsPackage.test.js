@@ -315,8 +315,8 @@ describe("Office add-ins package metadata", () => {
     expect(workflow).toMatch(/cache-dependency-path:\s+frontend\/package-lock\.json/u);
     expect(workflow).toMatch(/validate-office-addins-release\.ps1/u);
     expect(workflow).toMatch(/actions\/upload-artifact@v6/u);
-    expect(workflow).toMatch(/nahou-office-addins-1\.0\.0-foundation/u);
-    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-1\.0\.0\.zip/u);
+    expect(workflow).toMatch(/nahou-office-addins-1\.0\.0\.1-foundation/u);
+    expect(workflow).toMatch(/dist\/office-addins\/nahou-office-addins-1\.0\.0\.1\.zip/u);
   });
 
   it("documents the v0.8 boundary without claiming live Office store readiness", async () => {
