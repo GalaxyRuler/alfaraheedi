@@ -3,33 +3,26 @@
     globalThis.NahouExtensionRuntime || (globalThis.NahouExtensionRuntime = {});
 
   function applySuggestionToEditor(editor, suggestion) {
-    const original = suggestion?.original;
-    const replacement = runtime.replacementForSuggestion(suggestion);
-    if (!original || !replacement) return false;
+    const resolution = runtime.resolveAnchoredSuggestionForApply(editor, suggestion);
+    if (!resolution.ok) return false;
 
     if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
-      const textRange = runtime.rangeForSuggestion(editor.value, suggestion);
-      if (!textRange) return false;
       editor.value = replaceAt(
         editor.value,
-        textRange.start,
-        textRange.end - textRange.start,
-        replacement,
+        resolution.range.start,
+        resolution.range.end - resolution.range.start,
+        resolution.replacement,
       );
-      setPlainTextSelection(editor, textRange.start + replacement.length);
-      dispatchReplacementInputEvent(editor, replacement);
+      setPlainTextSelection(editor, resolution.range.start + resolution.replacement.length);
+      dispatchReplacementInputEvent(editor, resolution.replacement);
       return true;
     }
 
     if (runtime.isContentEditableElement(editor)) {
-      const text = runtime.textFromContentEditable(editor);
-      const textRange = runtime.rangeForSuggestion(text, suggestion);
-      if (!textRange) return false;
-      const domRange = runtime.textRangeToDomRange(editor, textRange.start, textRange.end);
-      if (!domRange || domRange.toString() !== original) return false;
-      const replacementNode = replaceDomRange(domRange, replacement);
+      if (!resolution.domRange) return false;
+      const replacementNode = replaceDomRange(resolution.domRange, resolution.replacement);
       setContentEditableSelectionAfter(replacementNode);
-      dispatchReplacementInputEvent(editor, replacement);
+      dispatchReplacementInputEvent(editor, resolution.replacement);
       return true;
     }
 
