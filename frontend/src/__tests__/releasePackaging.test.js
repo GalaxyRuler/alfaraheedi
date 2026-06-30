@@ -52,8 +52,13 @@ describe("desktop release packaging", () => {
       /Nahou checks supported browser text fields as you type, shows local-first suggestions directly in the field, and applies accepted deterministic suggestions in place when the original text still matches\./u,
     );
     expect(readme).toMatch(/planned browser-first development lane, not a current public release\s+claim/u);
+    expect(readme).toMatch(/V2A browser-extension foundation/u);
+    expect(readme).not.toMatch(/The v0\.7 browser-extension foundation lives in `browser-extension\/`/u);
     expect(contract).toMatch(/does not replace the v1\.0 desktop selected-text product contract/u);
     expect(contract).toMatch(/not a shipped public release claim/u);
+    expect(contract).toMatch(/content-side settings gate/u);
+    expect(contract).toMatch(/before editor text leaves the page context/u);
+    expect(contract).toMatch(/background settings gate/u);
 
     for (const nonClaim of [
       /No full Arabic grammar checking, full grammar checking, or grammar-perfection\s+guarantee/u,

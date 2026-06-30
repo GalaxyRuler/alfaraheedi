@@ -1,9 +1,10 @@
 # Browser Extension Manual Release Gates
 
 These gates define the manual evidence required before Nahou browser
-extension v0.7 is submitted as a public Chrome Web Store or Microsoft Edge
-Add-ons release. Automated VM smokes are necessary, but they do not replace
-live editor, screen-reader, privacy URL, or store-dashboard verification.
+extension V2A browser-first build is submitted as a public Chrome Web Store or
+Microsoft Edge Add-ons release. Automated VM smokes are necessary, but they do
+not replace live editor, screen-reader, privacy URL, or store-dashboard
+verification.
 
 Use the local report generator to create a private checklist:
 
@@ -81,7 +82,7 @@ Required minimum matrix:
 | RTL Arabic text | Suggestions preserve readable direction, anchoring, and caret behavior for Arabic text. | Arabic RTL web-field behavior if current evidence passes. |
 | Mixed Arabic/English text | Suggestions preserve readable direction, anchoring, and caret behavior for mixed text. | Mixed Arabic/English web-field behavior if current evidence passes. |
 | Sensitive fields | Password, one-time-code, credit-card, token, API-key, secret, read-only, disabled, aria-readonly, and hidden rich-editor sentinel fields are skipped. | Sensitive-field exclusion claim if current evidence passes. |
-| Paused and site-disabled modes | Global pause stops analysis requests, current-site disable stops analysis only for that host, and re-enable resumes checks. | User control claim if current evidence passes. |
+| Paused and site-disabled modes | Global pause stops analysis before active text leaves the page context, current-site disable stops analysis only for that host, background makes no local API call with editor text, and re-enable resumes checks. | User control claim if current evidence passes. |
 
 Pass criteria:
 
@@ -90,7 +91,9 @@ Pass criteria:
 - Sensitive-looking fields are skipped.
 - Suggestions are anchored to the intended visible text.
 - Apply fails closed if the text changed before the user accepts a suggestion.
-- The toolbar pause control stops analysis requests while paused.
+- The toolbar pause control stops analysis requests while paused, including the
+  content-side message to the extension runtime and any background local API
+  call with editor text.
 - Any unsupported editor is recorded as a limitation, not hidden.
 
 ## Gate 4: Manual Screen-Reader And Keyboard Review

@@ -11,15 +11,19 @@ data flow.
 The V2A browser extension data flow is:
 
 ```text
-active editor text -> content script -> extension messaging/background -> local loopback Nahou API
+active supported editor text -> content-side settings gate -> extension messaging/background -> background settings gate -> local loopback Nahou API
 ```
 
 Suggestions and status flow back through the same extension path to the content
 script field UI. There is no hosted fallback and no telemetry endpoint in V2A.
+The content-side settings gate runs before editor text leaves the page context,
+and background repeats the same pause and site-disable gate before any local API
+call.
 
 ## Data Processed
 
-- Active editor text from supported browser text fields.
+- Active editor text from supported browser text fields after enabled and
+  site-disabled settings are checked.
 - Deterministic suggestion metadata needed to render and apply a suggestion.
 - Extension settings such as enabled or paused state, disabled site list,
   loopback API URL, and writing mode.
@@ -33,7 +37,8 @@ supported editor, or private site metadata beyond settings needed for
 per-site disable.
 
 Nahou V2A does not retain raw editor text, suggestions, raw API request bodies,
-raw API responses, or telemetry events by default.
+raw API responses, or telemetry events by default. Health checks and settings
+checks contain no editor text.
 
 ## Retention
 
@@ -44,17 +49,19 @@ report locations or be regenerated with public-safe synthetic text.
 
 ## Logs, Reports, And Docs
 
-Raw editor text must stay out of logs, public reports, docs, screenshots,
-release notes, issue templates, and source-controlled QA evidence. Public
-evidence may include pass/fail status, tested surfaces, package hashes, script
-results, sanitized error categories, and public-safe fixture labels.
+Raw live editor text must stay out of browser-extension public reports, store
+materials, docs, screenshots, release notes, issue templates, and
+source-controlled QA evidence. Public evidence may include pass/fail status,
+tested surfaces, package hashes, script results, sanitized error categories,
+and public-safe fixture labels.
 
 ## User Controls
 
 The extension must provide settings to pause or resume checking and disable the
-current site. While paused or site-disabled, editor text must not be sent to the
-local API. Health checks and connection status checks must not include editor
-text.
+current site. While paused or site-disabled, editor text must not be sent from
+the content script to the extension runtime or from the background service
+worker to the local API. Health checks and connection status checks must not
+include editor text.
 
 ## Sensitive-Field Exclusion
 

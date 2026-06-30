@@ -7,11 +7,16 @@ policy covers the Nahou browser extension only.
 
 ## What The Extension Does
 
-When the extension is enabled, it detects focused editable text fields on web
-pages and sends active editable-field text to the user's configured local
-Nahou API. The API URL must be a loopback address such as
-`http://127.0.0.1` or `http://localhost`. Suggestions are rendered in the page
-near the editable field and are applied only when the user accepts them.
+When the extension is enabled and the current site is not disabled, it detects
+focused editable text fields on web pages and sends active editable-field text
+to the user's configured local Nahou API. The API URL must be a loopback
+address such as `http://127.0.0.1` or `http://localhost`. Suggestions are
+rendered in the page near the editable field and are applied only when the user
+accepts them.
+
+The content script checks the enabled and disabled-site settings before sending
+active-field text to the extension runtime. The service worker repeats the same
+settings gate before calling the local API.
 
 ## Data Accessed
 
@@ -39,6 +44,7 @@ inaccessible.
 The extension sends active-field text only to the configured local loopback
 Nahou API. It does not send text to Nahou-hosted services, third
 party writing services, analytics providers, or telemetry services.
+Health and status checks do not include editor text.
 
 In short: local loopback Nahou API only.
 
@@ -55,8 +61,10 @@ The extension stores only extension settings in browser extension storage:
 - enabled or paused state;
 - disabled-site hostnames chosen by the user.
 
-The background service worker uses these stored settings for analysis requests.
-Content-script messages cannot override the stored API URL or writing mode.
+The content script uses the enabled and disabled-site settings before analysis
+messages are sent. The background service worker uses these stored settings for
+analysis requests. Content-script messages cannot override the stored API URL
+or writing mode.
 
 The extension does not store captured editor text, suggestions, browsing
 history, page contents, credentials, or raw API responses.
@@ -74,7 +82,9 @@ script imports, `eval`, `new Function`, or `importScripts`.
 ## User Controls
 
 The extension can be paused from the toolbar popup or the options page. When
-paused, it does not send active-field text for analysis.
+paused, it does not send active-field text for analysis. The content-side
+settings gate blocks analysis before editor text leaves the page context, and
+the background service worker repeats the same gate before any local API call.
 
 The extension can also be disabled for the current site from the toolbar popup
 and re-enabled for that site later. Disabled-site hostnames can be reviewed or

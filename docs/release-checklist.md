@@ -32,7 +32,7 @@
 - [ ] For browser-extension changes: `.\scripts\validate-browser-extension-release.ps1`
 - [ ] For public release hygiene: `.\scripts\check-public-release-hygiene.ps1 -RequireClean`
 - [ ] Manual log and screenshot review confirms no raw selected text in public artifacts or source-controlled reports
-- [ ] For browser-extension pull requests: confirm the CI artifact `nahou-browser-extension-0.7.0-release-artifacts` contains the upload zip, `RELEASE_MANIFEST.json`, reviewer docs, and selected screenshots
+- [ ] For browser-extension pull requests: confirm the CI artifact `nahou-browser-extension-1.0.0.1-release-artifacts` contains the upload zip, `RELEASE_MANIFEST.json`, reviewer docs, and selected screenshots
 - [ ] For browser-extension local-ready artifacts: `.\scripts\prepare-browser-extension-release-candidate.ps1` and confirm `LocalReady: true` and `ScreenshotRootsMatch: true`
 - [ ] For browser-extension handoff artifacts: `.\scripts\export-browser-extension-release-handoff.ps1` and review the generated Markdown/JSON under `dist\browser-extension-release-handoff\`
 - [ ] For browser-extension validation evidence: review `docs/testing/browser-extension-v0.7-validation.md`; keep detailed VM logs under ignored `docs/testing/reports\`
