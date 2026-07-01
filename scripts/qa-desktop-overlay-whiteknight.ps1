@@ -2,6 +2,9 @@ param(
     [string]$LocalArtifactRoot = "dist\desktop-overlay-whiteknight-qa",
     [string]$RunLabel = "v2b-desktop-overlay",
     [string]$BinaryPath = "target\debug\alfaraheedi.exe",
+    [string]$ObservedTargetApp = "FocusedControl",
+    [string]$ObservedFixture = "public-safe-focused-control",
+    [string[]]$AllowedSupport = @(),
     [switch]$SkipBuild,
     [switch]$StageOnly
 )
@@ -98,6 +101,9 @@ $manifest = [ordered]@{
     RunRoot = $runRoot
     Command = "probe_desktop_overlay"
     Mode = if ($StageOnly) { "stage_only" } else { "metadata_template" }
+    ObservedTargetApp = $ObservedTargetApp
+    ObservedFixture = $ObservedFixture
+    AllowedSupport = $AllowedSupport
     Privacy = "Do not include raw text, account data, tokens, private screenshots, clipboard contents, or private window titles."
     ProbePayloadPolicy = "Sanitized metadata only: support, focused_control, text_pattern_supported, visible_range_rect_count, value_pattern_supported, replacement_supported, control_class, monitor_present."
     Targets = $targets
@@ -125,6 +131,15 @@ if (-not $StageOnly) {
 
     Assert-PublicSafeProbeJson -JsonText $probeText
     $probe = $probeText | ConvertFrom-Json
+    $support = [string]$probe.support
+    $supportAllowed = $true
+    if ($AllowedSupport.Count -gt 0) {
+        $supportAllowed = $AllowedSupport -contains $support
+        if (-not $supportAllowed) {
+            throw "Desktop overlay probe support '$support' was not in the allowed set for ${ObservedTargetApp}: $($AllowedSupport -join ', ')"
+        }
+    }
+
     $probePath = Join-Path $runRoot "probe-desktop-overlay.json"
     $probeText | Set-Content -LiteralPath $probePath -Encoding utf8
 
@@ -133,11 +148,15 @@ if (-not $StageOnly) {
     $manifest.ProbeCommand = "$binary --qa-probe-desktop-overlay"
     $manifest.ProbeResult = @{
         Path = $probePath
-        Support = $probe.support
+        Support = $support
+        SupportAllowed = $supportAllowed
         Method = $probe.method
         VisibleRangeRectCount = $probe.visible_range_rect_count
         ReplacementSupported = $probe.replacement_supported
         MonitorPresent = $probe.monitor_present
+        TextPatternSupported = $probe.text_pattern_supported
+        ValuePatternSupported = $probe.value_pattern_supported
+        ControlClass = $probe.control_class
     }
 }
 
@@ -154,6 +173,9 @@ overlay spike.
 Command under review: ``probe_desktop_overlay``
 
 CLI evidence command: ``--qa-probe-desktop-overlay``
+
+Focused-target evidence flags: ``-ObservedTargetApp``, ``-ObservedFixture``,
+and ``-AllowedSupport``.
 
 Do not include raw text, account data, tokens, private screenshots, clipboard
 contents, or private window titles.

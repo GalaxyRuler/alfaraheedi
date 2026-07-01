@@ -107,16 +107,24 @@ describe("desktop release packaging", () => {
       repoRoot,
       "scripts/qa-desktop-overlay-whiteknight.ps1",
     );
+    const matrixScriptPath = path.join(
+      repoRoot,
+      "scripts/qa-desktop-overlay-whiteknight-target-matrix.ps1",
+    );
 
     await expect(fs.access(researchPath)).resolves.toBeUndefined();
     await expect(fs.access(scriptPath)).resolves.toBeUndefined();
+    await expect(fs.access(matrixScriptPath)).resolves.toBeUndefined();
 
     const research = await fs.readFile(researchPath, "utf8");
     const script = await fs.readFile(scriptPath, "utf8");
+    const matrixScript = await fs.readFile(matrixScriptPath, "utf8");
 
     expect(contract).toMatch(/V2B is a later evidence-driven desktop overlay track/u);
     expect(research).toMatch(/probe-only/u);
     expect(research).toMatch(/support matrix/u);
+    expect(research).toMatch(/WhiteKnight target-matrix run on 2026-07-01/u);
+    expect(research).not.toMatch(/pending WhiteKnight run/u);
     for (const category of ["supported", "fallback", "blocked", "unsafe"]) {
       expect(research).toMatch(new RegExp(`\\b${category}\\b`, "u"));
     }
@@ -124,7 +132,17 @@ describe("desktop release packaging", () => {
     expect(script).toMatch(/StageOnly/u);
     expect(script).toMatch(/probe_desktop_overlay/u);
     expect(script).toMatch(/--qa-probe-desktop-overlay/u);
+    expect(script).toMatch(/ObservedTargetApp/u);
+    expect(script).toMatch(/ObservedFixture/u);
+    expect(script).toMatch(/AllowedSupport/u);
     expect(script).toMatch(/Do not include raw text/u);
+    expect(matrixScript).toMatch(/Notepad/u);
+    expect(matrixScript).toMatch(/Word/u);
+    expect(matrixScript).toMatch(/PowerPoint/u);
+    expect(matrixScript).toMatch(/EdgeOrChrome/u);
+    expect(matrixScript).toMatch(/Electron/u);
+    expect(matrixScript).toMatch(/AllowedSupport/u);
+    expect(matrixScript).toMatch(/No raw user text/u);
     expect(readme).not.toMatch(/desktop-wide live overlay support/u);
     expect(readme).not.toMatch(/desktop-wide live underlines/u);
   });
