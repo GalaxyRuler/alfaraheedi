@@ -20,6 +20,7 @@ use write_core::{Analysis, ApplyOutcome, Suggestion};
 use write_llm::{LlmDoctorReport, LlmStatus, LlmSuggestion};
 use write_service::{AnalyzeInput, ApplySafeInput, LlmSuggestInput, RulesResponse, WritingMode};
 
+mod uia_overlay_probe;
 mod uia_pilot;
 
 const DEFAULT_HOTKEY: &str = "Ctrl+Alt+A";
@@ -393,6 +394,15 @@ fn get_companion_status(state: State<'_, CompanionState>) -> Result<CompanionSta
 #[tauri::command]
 fn get_uia_pilot_status() -> uia_pilot::UiaPilotStatus {
     uia_pilot::status()
+}
+
+#[tauri::command]
+fn probe_desktop_overlay() -> uia_overlay_probe::DesktopOverlayProbe {
+    uia_overlay_probe::probe()
+}
+
+pub fn desktop_overlay_probe_qa_json() -> Result<String, serde_json::Error> {
+    serde_json::to_string_pretty(&uia_overlay_probe::probe())
 }
 
 #[tauri::command]
@@ -1071,6 +1081,7 @@ pub fn run() {
             suggest_with_local_llm_for_session,
             cancel_companion_llm_suggestion,
             get_uia_pilot_status,
+            probe_desktop_overlay,
             list_rules,
         ])
         .setup(|app| {
@@ -1654,5 +1665,46 @@ mod tests {
     fn shortcut_capture_runs_after_hotkey_release() {
         assert!(!should_capture_on_shortcut_state(ShortcutState::Pressed));
         assert!(should_capture_on_shortcut_state(ShortcutState::Released));
+    }
+
+    #[test]
+    fn desktop_overlay_probe_serializes_only_sanitized_metadata() {
+        let probe = uia_overlay_probe::DesktopOverlayProbe::fixture_for_tests(
+            uia_overlay_probe::OverlaySupport::Fallback,
+        );
+
+        let serialized = serde_json::to_string(&probe).expect("probe serializes");
+
+        assert!(serialized.contains("windows_uia_overlay_probe"));
+        assert!(serialized.contains("visible_range_rect_count"));
+        assert!(!serialized.contains("raw_text"));
+        assert!(!serialized.contains("captured_text"));
+        assert!(!serialized.contains("current_text"));
+        assert!(!serialized.contains("مرحب"));
+        assert_eq!(probe.support, uia_overlay_probe::OverlaySupport::Fallback);
+        assert!(!probe.replacement_supported);
+    }
+
+    #[test]
+    fn desktop_overlay_probe_qa_json_is_public_safe() {
+        let json = desktop_overlay_probe_qa_json().expect("probe QA JSON serializes");
+
+        assert!(json.contains("windows_uia_overlay_probe"));
+        assert!(json.contains("visible_range_rect_count"));
+        for forbidden in [
+            "raw_text",
+            "captured_text",
+            "current_text",
+            "selected_text",
+            "clipboard_content",
+            "window_title",
+            "document_name",
+            "مرحب",
+        ] {
+            assert!(
+                !json.contains(forbidden),
+                "forbidden field leaked: {forbidden}"
+            );
+        }
     }
 }

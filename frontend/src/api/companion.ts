@@ -61,6 +61,35 @@ export interface UiaPilotStatus {
   reason: string;
 }
 
+export type DesktopOverlaySupport =
+  | "supported"
+  | "fallback"
+  | "blocked"
+  | "unsafe";
+
+export interface DesktopOverlayRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export interface DesktopOverlayProbe {
+  available: boolean;
+  platform: string;
+  method: "windows_uia_overlay_probe";
+  support: DesktopOverlaySupport;
+  reason: string;
+  focused_control: boolean;
+  text_pattern_supported: boolean;
+  visible_range_rect_count: number;
+  visible_range_rects: DesktopOverlayRect[];
+  value_pattern_supported: boolean;
+  replacement_supported: boolean;
+  control_class: string | null;
+  monitor_present: boolean;
+}
+
 export interface CaptureResult {
   captured_text: string;
   current_text: string;
@@ -125,6 +154,7 @@ export interface CompanionClient {
   saveSettings(settings: CompanionSettings): Promise<CompanionSettings>;
   getStatus(): Promise<CompanionStatus>;
   getUiaPilotStatus(): Promise<UiaPilotStatus>;
+  probeDesktopOverlay(): Promise<DesktopOverlayProbe>;
   getLlmStatus(): Promise<LlmStatus>;
   runLlmDoctor(): Promise<LlmDoctorReport>;
   suggestWithLocalLlmForSession(): Promise<LlmSuggestion>;
@@ -147,6 +177,8 @@ export const companionClient: CompanionClient = {
     invoke<CompanionSettings>("save_companion_settings", { settings }),
   getStatus: () => invoke<CompanionStatus>("get_companion_status"),
   getUiaPilotStatus: () => invoke<UiaPilotStatus>("get_uia_pilot_status"),
+  probeDesktopOverlay: () =>
+    invoke<DesktopOverlayProbe>("probe_desktop_overlay"),
   getLlmStatus: () => invoke<LlmStatus>("get_companion_llm_status"),
   runLlmDoctor: () => invoke<LlmDoctorReport>("run_companion_llm_doctor"),
   suggestWithLocalLlmForSession: () =>
