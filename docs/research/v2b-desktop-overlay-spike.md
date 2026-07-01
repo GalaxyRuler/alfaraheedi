@@ -36,11 +36,11 @@ The support matrix below is intentionally evidence-gated.
 
 | Target | Initial classification | Evidence status | Notes |
 | --- | --- | --- | --- |
-| Notepad edit field | fallback | WhiteKnight interactive run on 2026-07-01 | Focused public-safe fixture returned `monitor_present: true`, `support: fallback`, `visible_range_rect_count: 0`; low-level visible-range dereferencing previously crashed in `uiautomationcore.dll` and is now disabled. |
-| Word document body | fallback | pending WhiteKnight run | Requires separate UIA provider proof before any overlay claim. |
-| PowerPoint text box | fallback | pending WhiteKnight run | Word proof is not PowerPoint proof. |
-| Edge or Chrome text field | fallback | pending WhiteKnight run | Browser-extension V2A remains the supported browser path. |
-| Electron text field | fallback | pending WhiteKnight run | Optional target when a safe public fixture app is available. |
+| Notepad edit field | fallback | WhiteKnight target-matrix run on 2026-07-01 | Public-safe fixture returned `monitor_present: true`, `text_pattern_supported: true`, `value_pattern_supported: true`, `visible_range_rect_count: 0`, `control_class: RichEditD2DPT`; low-level visible-range dereferencing previously crashed in `uiautomationcore.dll` and is now disabled. |
+| Word document body | fallback | WhiteKnight target-matrix run on 2026-07-01 | Public-safe fixture returned `monitor_present: true`, `text_pattern_supported: true`, `value_pattern_supported: false`, `visible_range_rect_count: 0`, `control_class: _WwG`; no desktop overlay support claim. |
+| PowerPoint text box | fallback | WhiteKnight target-matrix run on 2026-07-01 | Public-safe fixture returned `monitor_present: true`, no TextPattern, no ValuePattern, `visible_range_rect_count: 0`, `control_class: mdiClass`; Word proof does not transfer to PowerPoint. |
+| Edge or Chrome text field | fallback | WhiteKnight target-matrix run on 2026-07-01 | Public-safe browser fixture returned `monitor_present: true`, no TextPattern, no ValuePattern, `visible_range_rect_count: 0`; browser-extension V2A remains the supported browser path. |
+| Electron text field | fallback | WhiteKnight target-matrix run on 2026-07-01 | Public-safe VS Code fixture returned `monitor_present: true`, no TextPattern, no ValuePattern, `visible_range_rect_count: 0`, `control_class: Chrome_WidgetWin_1`; stays fallback. |
 | Password, credential, secure, or PIN-like controls | unsafe | source-controlled guard | Overlay and replacement must stay disabled. |
 | Unsupported windows or missing focused controls | blocked | source-controlled guard | User stays on selected-text/hotkey fallback. |
 
@@ -69,10 +69,18 @@ Stop before:
 
 ## Evidence Plan
 
-Use `scripts/qa-desktop-overlay-whiteknight.ps1` to stage public-safe evidence
-metadata. A real WhiteKnight run must use only disposable fixture text and must
-record capability counts, classification, command names, hashes, and artifact
-paths. Do not include raw text.
+Use `scripts/qa-desktop-overlay-whiteknight.ps1` to stage public-safe focused
+control metadata. Use
+`scripts/qa-desktop-overlay-whiteknight-target-matrix.ps1` for the planned
+WhiteKnight target matrix. A real WhiteKnight run must use only disposable
+fixture text and must record capability counts, classification, command names,
+hashes, and artifact paths. Do not include raw text.
+
+The current WhiteKnight target-matrix run was captured on 2026-07-01 with the
+ignored artifact root
+`dist/desktop-overlay-whiteknight-qa/target-matrix/v2b-target-matrix-20260701-040056`.
+It used public-safe fixture names only and produced fallback classifications for
+Notepad, Word, PowerPoint, Edge/Chrome, and Electron.
 
 The first useful evidence packet should answer:
 
@@ -95,7 +103,8 @@ After WhiteKnight evidence exists, make one of these recommendations:
 - keep V2B as selected-text fallback only;
 - defer desktop overlays and continue investing in browser/Office-specific paths.
 
-Current recommendation: keep V2B as selected-text fallback only. The next
-desktop-overlay slice must replace the low-level visible-range dereference path
-with a crash-safe implementation before any badge placement or `supported`
-classification work resumes.
+Current recommendation: defer desktop overlay productization and keep V2B as
+selected-text/hotkey fallback only. The next desktop-overlay slice, if it is
+authorized later, must replace the low-level visible-range dereference path with
+a crash-safe implementation before any badge placement, underline placement, or
+`supported` classification work resumes.
