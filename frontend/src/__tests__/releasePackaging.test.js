@@ -93,6 +93,41 @@ describe("desktop release packaging", () => {
     expect(readme).not.toMatch(/desktop-wide live underlines/u);
   });
 
+  it("documents V2B desktop overlay as an evidence-only spike", async () => {
+    const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+    const contract = await fs.readFile(
+      path.join(repoRoot, "docs/public/v2-product-contract.md"),
+      "utf8",
+    );
+    const researchPath = path.join(
+      repoRoot,
+      "docs/research/v2b-desktop-overlay-spike.md",
+    );
+    const scriptPath = path.join(
+      repoRoot,
+      "scripts/qa-desktop-overlay-whiteknight.ps1",
+    );
+
+    await expect(fs.access(researchPath)).resolves.toBeUndefined();
+    await expect(fs.access(scriptPath)).resolves.toBeUndefined();
+
+    const research = await fs.readFile(researchPath, "utf8");
+    const script = await fs.readFile(scriptPath, "utf8");
+
+    expect(contract).toMatch(/V2B is a later evidence-driven desktop overlay track/u);
+    expect(research).toMatch(/probe-only/u);
+    expect(research).toMatch(/support matrix/u);
+    for (const category of ["supported", "fallback", "blocked", "unsafe"]) {
+      expect(research).toMatch(new RegExp(`\\b${category}\\b`, "u"));
+    }
+    expect(research).toMatch(/No public desktop-wide overlay claim/u);
+    expect(script).toMatch(/StageOnly/u);
+    expect(script).toMatch(/probe_desktop_overlay/u);
+    expect(script).toMatch(/Do not include raw text/u);
+    expect(readme).not.toMatch(/desktop-wide live overlay support/u);
+    expect(readme).not.toMatch(/desktop-wide live underlines/u);
+  });
+
   it("defaults the optional Windows developer zip to the current release candidate", async () => {
     const source = await fs.readFile(
       path.join(repoRoot, "scripts/package-windows.ps1"),
