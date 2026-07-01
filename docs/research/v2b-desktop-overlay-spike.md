@@ -1,6 +1,6 @@
 # V2B Desktop Overlay Spike
 
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 V2B is a probe-only desktop overlay spike. It exists to answer whether Nahou can
 reliably detect focused Windows text controls, read UI Automation geometry, and
@@ -20,7 +20,9 @@ that returns sanitized metadata only:
 - support classification;
 - focused-control availability;
 - TextPattern availability;
-- visible text-range rectangle count and rectangle coordinates;
+- visible text-range rectangle count and rectangle coordinates, currently
+  hard-gated to empty results until the visible-range dereference path is
+  crash-safe;
 - ValuePattern capability;
 - control class when available;
 - monitor/window presence metadata.
@@ -34,7 +36,7 @@ The support matrix below is intentionally evidence-gated.
 
 | Target | Initial classification | Evidence status | Notes |
 | --- | --- | --- | --- |
-| Notepad edit field | fallback | pending WhiteKnight run | First target for focused control and rectangle probing. |
+| Notepad edit field | fallback | WhiteKnight interactive run on 2026-07-01 | Focused public-safe fixture returned `monitor_present: true`, `support: fallback`, `visible_range_rect_count: 0`; low-level visible-range dereferencing previously crashed in `uiautomationcore.dll` and is now disabled. |
 | Word document body | fallback | pending WhiteKnight run | Requires separate UIA provider proof before any overlay claim. |
 | PowerPoint text box | fallback | pending WhiteKnight run | Word proof is not PowerPoint proof. |
 | Edge or Chrome text field | fallback | pending WhiteKnight run | Browser-extension V2A remains the supported browser path. |
@@ -45,7 +47,9 @@ The support matrix below is intentionally evidence-gated.
 Classification meanings:
 
 - `supported`: Focused control exposes stable finite positive geometry from an
-  allowlisted native text-control class and remains safe for a probe-only badge.
+  allowlisted native text-control class through a crash-safe rectangle provider
+  and remains safe for a probe-only badge. V2B currently does not report this
+  state in live probing.
 - `fallback`: Focused control is detectable, but Nahou must keep selected-text
   or browser-extension behavior as the product path.
 - `blocked`: The control cannot be probed safely or reliably.
@@ -74,7 +78,8 @@ The first useful evidence packet should answer:
 
 - whether focused HWND detection is stable per target app;
 - whether UI Automation TextPattern is exposed;
-- whether visible range rectangles are non-empty and screen-relative;
+- whether a future crash-safe visible-range implementation can return non-empty
+  screen-relative rectangles;
 - whether rectangles are finite, positive-sized, and from an allowlisted native
   text-control class before `supported` is reported;
 - whether ValuePattern appears available without using it for replacement;
@@ -89,3 +94,8 @@ After WhiteKnight evidence exists, make one of these recommendations:
 - productize a limited app-specific badge;
 - keep V2B as selected-text fallback only;
 - defer desktop overlays and continue investing in browser/Office-specific paths.
+
+Current recommendation: keep V2B as selected-text fallback only. The next
+desktop-overlay slice must replace the low-level visible-range dereference path
+with a crash-safe implementation before any badge placement or `supported`
+classification work resumes.

@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 pub const UIA_OVERLAY_PROBE_METHOD: &str = "windows_uia_overlay_probe";
+const VISIBLE_RANGE_RECTANGLE_DEREFERENCE_ENABLED: bool = false;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -148,33 +149,18 @@ fn rect_intersects_work_area(rect: &OverlayRect, area: &MonitorWorkArea) -> bool
     right > area.left && rect.left < area.right && bottom > area.top && rect.top < area.bottom
 }
 
-fn sanitize_overlay_rectangles(rectangles: Vec<OverlayRect>) -> Vec<OverlayRect> {
-    rectangles
-        .into_iter()
-        .filter(is_valid_overlay_rect)
-        .collect()
-}
-
 #[cfg(windows)]
 mod platform {
-    use std::{ffi::c_void, ptr};
+    use std::ptr;
 
     use windows_sys::Win32::{
         Foundation::{HWND, RPC_E_CHANGED_MODE, S_FALSE, S_OK},
         Graphics::Gdi::{GetMonitorInfoW, MONITOR_DEFAULTTONULL, MONITORINFO, MonitorFromWindow},
-        System::{
-            Com::{COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize, SAFEARRAY},
-            Ole::{
-                SafeArrayDestroy, SafeArrayGetDim, SafeArrayGetElement, SafeArrayGetLBound,
-                SafeArrayGetUBound,
-            },
-        },
+        System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize},
         UI::{
             Accessibility::{
-                HUIANODE, HUIAPATTERNOBJECT, HUIATEXTRANGE, TextPattern_GetVisibleRanges,
-                TextRange_GetBoundingRectangles, UIA_TextPatternId, UIA_ValuePatternId,
+                HUIANODE, HUIAPATTERNOBJECT, UIA_TextPatternId, UIA_ValuePatternId,
                 UiaGetPatternProvider, UiaNodeFromHandle, UiaNodeRelease, UiaPatternRelease,
-                UiaTextRangeRelease,
             },
             WindowsAndMessaging::{
                 ES_PASSWORD, GUITHREADINFO, GWL_STYLE, GetClassNameW, GetForegroundWindow,
@@ -225,8 +211,14 @@ mod platform {
 
         let text_pattern = UiaPattern::from_node(&node, UIA_TextPatternId).ok();
         let value_pattern_supported = UiaPattern::from_node(&node, UIA_ValuePatternId).is_ok();
-        let visible_range_rects =
-            super::sanitize_overlay_rectangles(visible_range_rectangles(text_pattern.as_ref()));
+        let visible_range_rects = if super::VISIBLE_RANGE_RECTANGLE_DEREFERENCE_ENABLED {
+            // WhiteKnight live Notepad QA on 2026-07-01 showed the low-level
+            // visible-range path can crash inside uiautomationcore.dll. Keep
+            // V2B to capability metadata until a crash-safe COM path lands.
+            unsupported_visible_range_rectangles(text_pattern.as_ref())
+        } else {
+            Vec::new()
+        };
         let support = super::classify_support_for_rects(
             text_pattern.is_some(),
             &visible_range_rects,
@@ -237,6 +229,12 @@ mod platform {
         let reason = match support {
             OverlaySupport::Supported => {
                 "Focused control exposes UI Automation TextPattern visible range rectangles."
+            }
+            OverlaySupport::Fallback
+                if text_pattern.is_some()
+                    && !super::VISIBLE_RANGE_RECTANGLE_DEREFERENCE_ENABLED =>
+            {
+                "Focused control exposes UI Automation TextPattern, but visible range rectangle dereferencing is disabled pending a crash-safe implementation."
             }
             OverlaySupport::Fallback => {
                 "Focused control is detectable, but overlay rectangles are unavailable."
@@ -262,18 +260,10 @@ mod platform {
         }
     }
 
-    fn visible_range_rectangles(text_pattern: Option<&UiaPattern>) -> Vec<OverlayRect> {
-        let Some(text_pattern) = text_pattern else {
-            return Vec::new();
-        };
-        let Ok(ranges) = VisibleRangeArray::from_text_pattern(text_pattern) else {
-            return Vec::new();
-        };
-        let Ok(range) = ranges.first_text_range() else {
-            return Vec::new();
-        };
-
-        range.bounding_rectangles().unwrap_or_default()
+    fn unsupported_visible_range_rectangles(
+        _text_pattern: Option<&UiaPattern>,
+    ) -> Vec<OverlayRect> {
+        Vec::new()
     }
 
     struct FocusedWindow {
@@ -426,139 +416,6 @@ mod platform {
         fn drop(&mut self) {
             unsafe {
                 UiaPatternRelease(self.0);
-            }
-        }
-    }
-
-    struct VisibleRangeArray(*mut SAFEARRAY);
-
-    impl VisibleRangeArray {
-        fn from_text_pattern(pattern: &UiaPattern) -> Result<Self, String> {
-            let mut ranges = ptr::null_mut();
-            let hr = unsafe { TextPattern_GetVisibleRanges(pattern.0, &mut ranges) };
-            if succeeded(hr) && !ranges.is_null() {
-                Ok(Self(ranges))
-            } else {
-                Err(format!(
-                    "UI Automation TextPattern did not expose visible ranges: 0x{hr:08X}"
-                ))
-            }
-        }
-
-        fn first_text_range(&self) -> Result<UiaTextRange, String> {
-            let dimensions = unsafe { SafeArrayGetDim(self.0) };
-            if dimensions != 1 {
-                return Err("UI Automation returned an unexpected visible range shape.".to_owned());
-            }
-
-            let mut lower_bound = 0;
-            let mut upper_bound = 0;
-            let lower_hr = unsafe { SafeArrayGetLBound(self.0, 1, &mut lower_bound) };
-            let upper_hr = unsafe { SafeArrayGetUBound(self.0, 1, &mut upper_bound) };
-            if !succeeded(lower_hr) || !succeeded(upper_hr) || upper_bound < lower_bound {
-                return Err("UI Automation visible ranges did not contain a text range.".to_owned());
-            }
-
-            let mut range = ptr::null_mut::<c_void>();
-            let element_hr = unsafe {
-                SafeArrayGetElement(
-                    self.0,
-                    &lower_bound,
-                    &mut range as *mut *mut c_void as *mut c_void,
-                )
-            };
-            if succeeded(element_hr) && !range.is_null() {
-                Ok(UiaTextRange(range))
-            } else {
-                Err(format!(
-                    "Could not read the UI Automation visible text range: 0x{element_hr:08X}"
-                ))
-            }
-        }
-    }
-
-    impl Drop for VisibleRangeArray {
-        fn drop(&mut self) {
-            unsafe {
-                SafeArrayDestroy(self.0);
-            }
-        }
-    }
-
-    struct UiaTextRange(HUIATEXTRANGE);
-
-    impl UiaTextRange {
-        fn bounding_rectangles(&self) -> Result<Vec<OverlayRect>, String> {
-            let mut raw_rectangles = ptr::null_mut();
-            let hr = unsafe { TextRange_GetBoundingRectangles(self.0, &mut raw_rectangles) };
-            if !succeeded(hr) || raw_rectangles.is_null() {
-                return Err(format!(
-                    "Could not read UI Automation visible range rectangles: 0x{hr:08X}"
-                ));
-            }
-
-            BoundingRectangleArray(raw_rectangles).rectangles()
-        }
-    }
-
-    impl Drop for UiaTextRange {
-        fn drop(&mut self) {
-            unsafe {
-                UiaTextRangeRelease(self.0);
-            }
-        }
-    }
-
-    struct BoundingRectangleArray(*mut SAFEARRAY);
-
-    impl BoundingRectangleArray {
-        fn rectangles(&self) -> Result<Vec<OverlayRect>, String> {
-            let dimensions = unsafe { SafeArrayGetDim(self.0) };
-            if dimensions != 1 {
-                return Err(
-                    "UI Automation returned an unexpected bounding rectangle shape.".to_owned(),
-                );
-            }
-
-            let mut lower_bound = 0;
-            let mut upper_bound = 0;
-            let lower_hr = unsafe { SafeArrayGetLBound(self.0, 1, &mut lower_bound) };
-            let upper_hr = unsafe { SafeArrayGetUBound(self.0, 1, &mut upper_bound) };
-            if !succeeded(lower_hr) || !succeeded(upper_hr) || upper_bound < lower_bound {
-                return Ok(Vec::new());
-            }
-
-            let len = (upper_bound - lower_bound + 1) as usize;
-            let mut values = Vec::with_capacity(len);
-            for index in lower_bound..=upper_bound {
-                let mut value = 0f64;
-                let element_hr = unsafe {
-                    SafeArrayGetElement(self.0, &index, &mut value as *mut f64 as *mut c_void)
-                };
-                if !succeeded(element_hr) {
-                    return Err(format!(
-                        "Could not read UI Automation rectangle value: 0x{element_hr:08X}"
-                    ));
-                }
-                values.push(value);
-            }
-
-            Ok(values
-                .chunks_exact(4)
-                .map(|chunk| OverlayRect {
-                    left: chunk[0],
-                    top: chunk[1],
-                    width: chunk[2],
-                    height: chunk[3],
-                })
-                .collect())
-        }
-    }
-
-    impl Drop for BoundingRectangleArray {
-        fn drop(&mut self) {
-            unsafe {
-                SafeArrayDestroy(self.0);
             }
         }
     }
