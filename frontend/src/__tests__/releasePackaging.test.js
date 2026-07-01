@@ -123,6 +123,7 @@ describe("desktop release packaging", () => {
     expect(research).toMatch(/No public desktop-wide overlay claim/u);
     expect(script).toMatch(/StageOnly/u);
     expect(script).toMatch(/probe_desktop_overlay/u);
+    expect(script).toMatch(/--qa-probe-desktop-overlay/u);
     expect(script).toMatch(/Do not include raw text/u);
     expect(readme).not.toMatch(/desktop-wide live overlay support/u);
     expect(readme).not.toMatch(/desktop-wide live underlines/u);

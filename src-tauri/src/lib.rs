@@ -401,6 +401,10 @@ fn probe_desktop_overlay() -> uia_overlay_probe::DesktopOverlayProbe {
     uia_overlay_probe::probe()
 }
 
+pub fn desktop_overlay_probe_qa_json() -> Result<String, serde_json::Error> {
+    serde_json::to_string_pretty(&uia_overlay_probe::probe())
+}
+
 #[tauri::command]
 async fn get_companion_llm_status(
     state: State<'_, CompanionState>,
@@ -1679,5 +1683,28 @@ mod tests {
         assert!(!serialized.contains("مرحب"));
         assert_eq!(probe.support, uia_overlay_probe::OverlaySupport::Fallback);
         assert!(!probe.replacement_supported);
+    }
+
+    #[test]
+    fn desktop_overlay_probe_qa_json_is_public_safe() {
+        let json = desktop_overlay_probe_qa_json().expect("probe QA JSON serializes");
+
+        assert!(json.contains("windows_uia_overlay_probe"));
+        assert!(json.contains("visible_range_rect_count"));
+        for forbidden in [
+            "raw_text",
+            "captured_text",
+            "current_text",
+            "selected_text",
+            "clipboard_content",
+            "window_title",
+            "document_name",
+            "مرحب",
+        ] {
+            assert!(
+                !json.contains(forbidden),
+                "forbidden field leaked: {forbidden}"
+            );
+        }
     }
 }
